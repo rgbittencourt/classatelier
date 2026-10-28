@@ -332,7 +332,7 @@ function QuizEditor({ p, setP }) {
 }
 
 // ── the panel ──
-function PropertiesPanel({ block, update }) {
+function PropertiesPanel({ block, update, mergePrev }) {
   if (!block) {
     return <div style={{ padding: 24, color: "var(--tool-ink-3)", fontSize: 13, lineHeight: 1.5 }}>Selecione um bloco na página para editar suas propriedades, ou arraste um bloco da biblioteca à esquerda.</div>;
   }
@@ -376,7 +376,7 @@ function PropertiesPanel({ block, update }) {
       {/* Conteúdo estrutural por tipo */}
       <div style={ps.group}>
         <p style={ps.groupTitle}>Conteúdo</p>
-        {renderTypeContent(block, p, setP)}
+        {renderTypeContent(block, p, setP, mergePrev)}
         <div style={{ height: 8 }} />
       </div>
     </div>
@@ -543,7 +543,7 @@ function TimelineEditor({ p, setP }) {
   </>);
 }
 
-function renderTypeContent(block, p, setP) {
+function renderTypeContent(block, p, setP, mergePrev) {
   const def = window.BLOCK_BY_TYPE[block.type];
   switch (block.type) {
     case "pagebreak":
@@ -558,6 +558,7 @@ function renderTypeContent(block, p, setP) {
         <div style={{ marginTop: 12, padding: "10px 12px", background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 8, fontSize: 12, color: "var(--tool-ink-2)", lineHeight: 1.5 }}>
           {(p.children || []).length} bloco{(p.children || []).length === 1 ? "" : "s"} neste tópico.
         </div>
+        {mergePrev && <button style={{ ...addBtn, marginTop: 12 }} onClick={mergePrev} title="Move todos os blocos deste tópico para o final do tópico anterior e remove este tópico vazio; nada é apagado."><TIcon name="plus" size={14} /> Unir ao tópico anterior (sem perder conteúdo)</button>}
       </>);
     case "hero":
       return (<>

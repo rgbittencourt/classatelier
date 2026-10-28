@@ -399,11 +399,11 @@ const CHILD_TYPES = BLOCKS.filter((b) => !b.internal).map((b) => b.type).filter(
 // Nested item containers intentionally exclude themselves to keep the model
 // finite and the authoring UI understandable.
 // O "+" dentro de um tópico oferece TODAS as ferramentas de Estrutura. As de página inteira (abertura,
-// quebra de página, síntese, referências) não podem morar dentro do tópico: o editor as coloca no ponto
+// síntese, referências) não podem morar dentro do tópico: o editor as coloca no ponto
 // do "+", dividindo o tópico ao meio quando necessário. O divisor retrátil vale em tópico retrátil
 // (e converte um tópico comum nesse tipo).
-const ROOT_STRUCTURE_TYPES = ["hero", "pagebreak", "sintese", "referencias"];
-const CHILD_PICKER_TYPES = CHILD_TYPES.concat(ROOT_STRUCTURE_TYPES, ["collapsebreak"]);
+const ROOT_STRUCTURE_TYPES = ["hero", "sintese", "referencias"]; // a quebra de página entra DENTRO do tópico, sem dividi-lo
+const CHILD_PICKER_TYPES = CHILD_TYPES.concat(ROOT_STRUCTURE_TYPES, ["pagebreak", "collapsebreak"]);
 const NESTED_CHILD_TYPES = CHILD_TYPES.filter((t) => ["accordion", "linhadotempo", "columns"].indexOf(t) === -1);
 
 // A leaf block living inside a topic: no band of its own (no bg/pad).

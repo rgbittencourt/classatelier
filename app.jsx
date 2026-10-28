@@ -320,6 +320,26 @@ function AulaStudioApp() {
     const blocks = [...lesson.blocks]; blocks[bi] = { ...topic, type: "topic-collapsible", props };
     commit({ ...lesson, blocks }); setSelected(marker.id); setMode("edit");
   };
+  // Une o tópico ao anterior sem perder nenhum bloco. Se entre os dois houver uma quebra de página
+  // (raiz), ela passa a ser um marcador dentro do tópico unido.
+  const mergeInfo = (block) => {
+    if (!block || block.type !== "topic") return null;
+    const bi = lesson.blocks.findIndex((b) => b.id === block.id);
+    if (bi < 1) return null;
+    const prev = lesson.blocks[bi - 1];
+    if (prev.type === "topic") return { from: bi - 1, withBreak: false };
+    if (prev.type === "pagebreak" && bi >= 2 && lesson.blocks[bi - 2].type === "topic") return { from: bi - 2, withBreak: true };
+    return null;
+  };
+  const mergeTopicWithPrevious = (block) => {
+    const info = mergeInfo(block);
+    if (!info) return;
+    const A = lesson.blocks[info.from];
+    const kids = [...(A.props.children || []), ...(info.withBreak ? [window.newChildBlock("pagebreak")] : []), ...(block.props.children || [])];
+    const blocks = [...lesson.blocks];
+    blocks.splice(info.from, info.withBreak ? 3 : 2, setChildren(A, kids));
+    commit({ ...lesson, blocks }); setSelected(A.id);
+  };
   const insertChild = (topicId, type, idx) => {
     if (window.ROOT_STRUCTURE_TYPES.indexOf(type) !== -1) return insertRootAtChild(topicId, type, idx);
     if (type === "collapsebreak") return insertCollapseBreak(topicId, idx);
@@ -538,7 +558,7 @@ function AulaStudioApp() {
       {mode === "edit" && (
         <aside style={{ background: "var(--tool-panel)", minWidth: 0, height: "100vh", display: "flex", flexDirection: "column" }}>
           {selBlock
-            ? <window.PropertiesPanel block={selBlock} update={(patch) => updateBlock(selBlock.id, patch)} />
+            ? <window.PropertiesPanel block={selBlock} update={(patch) => updateBlock(selBlock.id, patch)} mergePrev={mergeInfo(selBlock) ? () => mergeTopicWithPrevious(selBlock) : null} />
             : <LessonMeta lesson={lesson} setLesson={(L) => setLesson(L)} />}
         </aside>
       )}
