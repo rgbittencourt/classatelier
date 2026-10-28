@@ -24,7 +24,7 @@ Em **Montar curso → Publicar no GitHub**, informe a conta (ou organização), 
 
 ## Origem e créditos
 
-O ClassAtelier foi desenvolvido por **Rogério Bittencourt (INOVALAB – IFSC)** a partir do **LumeAuthor**, criado pelo **Prof. Luís Lindner**, que é a base do editor de blocos, dos temas e da exportação SCORM. O LumeAuthor original segue sendo desenvolvido por ele, sem alterações vindas daqui; o ClassAtelier é uma evolução independente (biblioteca de aulas, pacote do curso, publicação no GitHub, integração com o ClassAuthor, nova identidade). O rodapé das aulas exportadas traz essa atribuição: *"…desenvolvida por Rogério Bittencourt, INOVALAB - IFSC, a partir do LumeAuthor, de Luís Lindner."*
+O ClassAtelier foi desenvolvido por **Rogério Bittencourt (INOVALAB – IFSC)** a partir do **LumeAuthor**, criado pelo **Prof. Luís Lindner** ([luislindner.github.io/lumeauthor](https://luislindner.github.io/lumeauthor/)), que é a base do editor de blocos, dos temas e da exportação SCORM. O LumeAuthor original segue sendo desenvolvido por ele, sem alterações vindas daqui; o ClassAtelier é uma evolução independente (biblioteca de aulas, pacote do curso, publicação no GitHub, integração com o ClassAuthor, nova identidade). O rodapé das aulas exportadas traz essa atribuição: *"…desenvolvida por Rogério Bittencourt, INOVALAB - IFSC, a partir do LumeAuthor, de Luís Lindner."* (com link para o LumeAuthor)
 
 ## Identidade visual
 
