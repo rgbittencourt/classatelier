@@ -508,7 +508,7 @@ function AulaStudioApp() {
         onNew={async () => { await switchTo(emptyLesson(), newLessonId(), null); setLibOpen(false); setMode("edit"); }}
         onCourse={(entries) => setCourseEntries(entries)} />}
       {courseEntries && <CourseDialog entries={courseEntries} onClose={() => setCourseEntries(null)}
-        onConfirm={async (opts) => { try { await window.downloadCourseSCORM(opts.lessons, opts); setCourseEntries(null); showToast("Pacote do curso gerado."); } catch (e) { alert("Erro ao gerar o pacote do curso: " + e.message); } }} />}
+        onConfirm={async (opts) => { try { await (opts.format === "site" ? window.downloadCourseSite : window.downloadCourseSCORM)(opts.lessons, opts); setCourseEntries(null); showToast("Pacote do curso gerado."); } catch (e) { alert("Erro ao gerar o pacote do curso: " + e.message); } }} />}
       {toast && <div role="status" style={{ position: "fixed", left: "50%", bottom: 24, transform: "translateX(-50%)", zIndex: 10000, maxWidth: 520, padding: "12px 18px", borderRadius: 12, background: "#14213D", color: "#fff", fontSize: 13, lineHeight: 1.5, boxShadow: "0 18px 44px rgba(20,33,61,.3)" }}>{toast}</div>}
       <window.MarkToolbar />
       <input ref={fileInputRef} type="file" accept=".json,application/json" onChange={onProjectFile} style={{ display: "none" }} />
@@ -597,10 +597,10 @@ function LibraryDialog({ currentId, onClose, onOpen, onNew, onCourse }) {
           })}
         </div>
         <footer style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px 18px", borderTop: "1px solid var(--tool-line)", background: "#fff" }}>
-          <span style={{ fontSize: 12, color: "var(--tool-ink-3)" }}>{pickedList.length ? pickedList.length + (pickedList.length === 1 ? " aula marcada" : " aulas marcadas") : "Marque as aulas para montar um pacote do curso."}</span>
+          <span style={{ fontSize: 12, color: "var(--tool-ink-3)" }}>{pickedList.length ? pickedList.length + (pickedList.length === 1 ? " aula marcada" : " aulas marcadas") : "Marque as aulas para montar o site ou o pacote do curso."}</span>
           <div style={{ display: "flex", gap: 8 }}>
             <button style={{ ...ghostBtn, width: "auto", padding: "0 12px", fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap" }} onClick={() => { const all = (items || []).length && pickedList.length === (items || []).length; setPicked(all ? {} : Object.fromEntries((items || []).map((e) => [e.id, true]))); }}>Marcar todas</button>
-            <button disabled={!pickedList.length} onClick={() => onCourse(pickedList)} style={{ ...primaryBtn, opacity: pickedList.length ? 1 : 0.45, cursor: pickedList.length ? "pointer" : "default" }}>Montar curso (SCORM)…</button>
+            <button disabled={!pickedList.length} onClick={() => onCourse(pickedList)} style={{ ...primaryBtn, opacity: pickedList.length ? 1 : 0.45, cursor: pickedList.length ? "pointer" : "default" }}>Montar curso…</button>
           </div>
         </footer>
       </section>
@@ -612,17 +612,18 @@ function CourseDialog({ entries, onClose, onConfirm }) {
   const [list, setList] = useStateA(entries);
   const [title, setTitle] = useStateA("");
   const [version, setVersion] = useStateA("1.2");
+  const [format, setFormat] = useStateA("site");
   const [busy, setBusy] = useStateA(false);
   const move = (i, d) => setList((L) => { const n = L.slice(); const j = i + d; if (j < 0 || j >= n.length) return L; [n[i], n[j]] = [n[j], n[i]]; return n; });
   const go = async () => {
     if (!title.trim()) { alert("Dê um nome ao curso."); return; }
     setBusy(true);
-    try { await onConfirm({ title: title.trim(), version, lessons: list.map((e) => e.lesson) }); } finally { setBusy(false); }
+    try { await onConfirm({ title: title.trim(), version, format, lessons: list.map((e) => e.lesson) }); } finally { setBusy(false); }
   };
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 10001, background: "rgba(20,20,28,0.42)", display: "grid", placeItems: "center" }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: "min(520px, 94vw)", maxHeight: "88vh", display: "flex", flexDirection: "column", background: "#fff", borderRadius: 14, boxShadow: "0 24px 64px rgba(0,0,0,0.3)", overflow: "hidden", fontFamily: "var(--tool-sans)" }}>
-        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--tool-line)", fontSize: 15, fontWeight: 700 }}>Montar o curso em um pacote SCORM</div>
+        <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--tool-line)", fontSize: 15, fontWeight: 700 }}>Montar o curso</div>
         <div className="tool-scroll" style={{ padding: 20, overflow: "auto" }}>
           <div style={{ marginBottom: 14 }}>
             <label style={dlgLabel}>Nome do curso</label>
@@ -641,7 +642,16 @@ function CourseDialog({ entries, onClose, onConfirm }) {
               ))}
             </div>
           </div>
-          <div style={{ marginBottom: 6 }}>
+          <div style={{ marginBottom: 14 }}>
+            <label style={dlgLabel}>Formato</label>
+            <div style={{ display: "flex", gap: 4, background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 9, padding: 3 }}>
+              {[{ id: "site", label: "Site HTML (GitHub Pages)" }, { id: "scorm", label: "Pacote SCORM" }].map((o) => (
+                <button key={o.id} onClick={() => setFormat(o.id)} style={{ flex: 1, padding: "7px 6px", border: 0, borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer", background: format === o.id ? "#fff" : "transparent", color: format === o.id ? "var(--tool-ink)" : "var(--tool-ink-3)" }}>{o.label}</button>
+              ))}
+            </div>
+            {format === "site" && <p style={{ ...menuSub, marginTop: 8 }}>Gera <b>index.html</b> (lista do curso) e <b>aula-01.html</b>, <b>aula-02.html</b>… com endereços que não mudam, mais um <b>LEIA-ME</b> com o passo a passo para publicar no GitHub e linkar no Moodle.</p>}
+          </div>
+          {format === "scorm" && <div style={{ marginBottom: 6 }}>
             <label style={dlgLabel}>Versão SCORM</label>
             <div style={{ display: "flex", gap: 4, background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 9, padding: 3 }}>
               {[{ id: "1.2", label: "SCORM 1.2 (recomendado)" }, { id: "2004", label: "SCORM 2004" }].map((o) => (
@@ -649,11 +659,11 @@ function CourseDialog({ entries, onClose, onConfirm }) {
               ))}
             </div>
             <p style={{ ...menuSub, marginTop: 8 }}>Cada aula vira um item do curso, na ordem acima. A avaliação final de cada aula (quiz marcado como avaliativo) continua enviando nota de 0 a 10 à plataforma.</p>
-          </div>
+          </div>}
         </div>
         <div style={{ padding: "14px 20px", borderTop: "1px solid var(--tool-line)", display: "flex", justifyContent: "flex-end", gap: 10 }}>
           <button onClick={onClose} style={{ ...ghostBtn, width: "auto", padding: "0 16px", fontSize: 13, fontWeight: 600 }}>Cancelar</button>
-          <button onClick={go} disabled={busy} style={primaryBtn}>{busy ? "Gerando…" : "Gerar pacote do curso (.zip)"}</button>
+          <button onClick={go} disabled={busy} style={primaryBtn}>{busy ? "Gerando…" : (format === "site" ? "Gerar site do curso (.zip)" : "Gerar pacote SCORM (.zip)")}</button>
         </div>
       </div>
     </div>

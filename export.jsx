@@ -639,4 +639,76 @@ async function downloadCourseSCORM(lessons, opts) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-Object.assign(window, { downloadExport, downloadStandaloneHTML, buildExportHTML, downloadSCORM, downloadCourseSCORM, openPrintPreview });
+// ── Site do curso (GitHub Pages): aula-01.html, aula-02.html… + índice, com endereços estáveis ──
+async function downloadCourseSite(lessons, opts) {
+  if (typeof JSZip === "undefined") throw new Error("Biblioteca de compactação (JSZip) não carregou.");
+  if (!lessons || !lessons.length) throw new Error("Escolha pelo menos uma aula.");
+  const zip = new JSZip();
+  const entries = [];
+  for (let i = 0; i < lessons.length; i++) {
+    const n = String(i + 1).padStart(2, "0");
+    const L = JSON.parse(JSON.stringify(lessons[i]));
+    L.meta = L.meta || {};
+    const label = L.meta.title || "Aula " + n;
+    const projectLesson = JSON.parse(JSON.stringify(L));
+    const images = externalizeLessonImages(L, "aula-" + n + "-");
+    const html = await buildExportHTML(L, { fonts: "external", assets: "external" });
+    zip.file("aula-" + n + ".html", html);
+    zip.file("projetos/aula-" + n + "-" + lessonSlug(label) + ".aula.json", JSON.stringify(projectLesson, null, 2));
+    images.forEach((a) => zip.file(a.path, a.base64, { base64: true }));
+    entries.push({ n, label, href: "aula-" + n + ".html" });
+  }
+  await addPackageSupportFiles(zip, []);
+  const title = opts.title || "Curso";
+  const list = entries.map((e) => `<li><a href="${xmlEscape(e.href)}"><span>${e.n}</span><strong>${xmlEscape(e.label)}</strong><i aria-hidden="true">→</i></a></li>`).join("\n");
+  zip.file("index.html", `<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${xmlEscape(title)}</title><link rel="stylesheet" href="fonts/fonts.css">
+<style>
+:root{--ink:#1b1a17;--muted:#6b6558;--paper:#fbf6ee;--line:#e5dccb;--accent:#bf4c34}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 Geist,system-ui,sans-serif}
+main{max-width:720px;margin:0 auto;padding:56px 22px 40px}
+.eyebrow{margin:0 0 10px;font:600 12px/1 Geist,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+h1{margin:0 0 28px;font:500 clamp(30px,6vw,46px)/1.05 Newsreader,Georgia,serif;letter-spacing:-.02em}
+ol{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+a{display:flex;align-items:center;gap:14px;padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:#fff;color:inherit;text-decoration:none;transition:border-color .15s,transform .15s}
+a:hover{border-color:var(--accent);transform:translateY(-1px)}a span{font:600 13px/1 Geist,system-ui,sans-serif;color:var(--accent);min-width:24px}
+a strong{flex:1;font-weight:600}a i{font-style:normal;color:var(--muted)}
+footer{margin-top:36px;font-size:12.5px;color:var(--muted)}
+</style></head><body><main>
+<p class="eyebrow">Curso</p><h1>${xmlEscape(title)}</h1>
+<ol>
+${list}
+</ol>
+<footer>Montado com ClassAtelier · INOVALAB - IFSC</footer>
+</main></body></html>`);
+  zip.file(".nojekyll", "");
+  zip.file("LEIA-ME.md", `# ${title}
+
+Site do curso, pronto para publicar no GitHub Pages.
+
+## Publicar
+1. Crie um repositório no GitHub (por exemplo \`${/^curso/.test(lessonSlug(title)) ? lessonSlug(title) : "curso-" + lessonSlug(title)}\`) e envie **todos** os arquivos desta pasta para a raiz dele.
+2. Em **Settings → Pages**, escolha **Deploy from a branch**, branch \`main\` e pasta \`/ (root)\`.
+3. Em alguns minutos o site fica em \`https://SEU-USUARIO.github.io/NOME-DO-REPOSITORIO/\`.
+
+## Links para o Moodle
+- Página do curso: \`.../index.html\`
+${entries.map((e) => `- ${e.label}: \`.../${e.href}\``).join("\n")}
+
+No Moodle, adicione cada link como recurso **URL** (ou incorpore em uma Página/Etiqueta com iframe).
+
+## Atualizar
+Gere o pacote de novo no ClassAtelier e substitua os arquivos no repositório. Os endereços (\`aula-01.html\`, \`aula-02.html\`…) seguem a **ordem das aulas**: mantendo a ordem, os links no Moodle continuam valendo.
+
+A pasta \`projetos/\` guarda o \`.aula.json\` de cada aula, para reabrir e editar no ClassAtelier.
+`);
+  const blob = await zip.generateAsync({ type: "blob" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = (lessonSlug(title) || "curso") + "-site.zip";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+Object.assign(window, { downloadExport, downloadStandaloneHTML, buildExportHTML, downloadSCORM, downloadCourseSCORM, downloadCourseSite, openPrintPreview });
