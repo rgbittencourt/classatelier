@@ -150,9 +150,9 @@ function TopBar({ lessonTitle, chapter }) {
     <header className="aula-topbar">
       <div className="aula-topbar__progress" style={{ width: `${progress}%` }}></div>
       <div className="aula-topbar__row">
-        <a href="#" className="aula-topbar__brand" aria-label="Aula">
-          <img src="../../assets/aula-mark.svg" alt="" width="24" height="24" />
-          <span className="aula-topbar__word">aula</span>
+        <a href="#" className="aula-topbar__brand" aria-label="ClassAtelier">
+          <img src="../../assets/classatelier-mark.svg" alt="" width="24" height="24" />
+          <span className="aula-topbar__word">Class<i style={{ fontFamily: "Newsreader, Georgia, serif", fontWeight: 400 }}>Atelier</i></span>
         </a>
         <div className="aula-topbar__crumbs">
           <span className="aula-topbar__chapter">{chapter}</span>

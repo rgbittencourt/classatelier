@@ -75,7 +75,7 @@ window.AULA_THEMES = {
     pdfCss: "aula-pdf.css",       // dentro do kit
     components: ["components.jsx"],
     globals: ["glossario.js"],    // na raiz do projeto
-    assets: ["assets/aula-mark.svg"],
+    assets: ["assets/classatelier-mark.svg"],
     // Tokens de ANATOMIA dos componentes (defaults Aula) — carregado
     // SEMPRE, em todo tema, logo após o CSS do tema. O que o tema não
     // redeclarar no próprio componentsCss cai nestes defaults.

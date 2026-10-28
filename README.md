@@ -32,7 +32,6 @@ O rodapé das aulas exportadas traz a atribuição: *"…baseada integralmente n
 ## Identidade visual
 
 - `assets/classatelier-mark.svg`: símbolo do ClassAtelier (janela em arco);
-- `assets/aula-mark.svg`: símbolo da marca "aula" usado dentro das aulas exportadas (tema);
 - `assets/brand/classatelier-mark.png`: símbolo raster de alta resolução;
 - `assets/brand/classatelier-logo.svg`: logo horizontal;
 - `assets/brand/classatelier-logo.png`: logo raster para documentos e apresentações;
