@@ -1,12 +1,12 @@
-# Aula Studio
+# ClassAtelier
 
-Construtor editorial de aulas com blocos editáveis, pré-visualização e exportação para diferentes destinos.
+Editor de aulas interativas, com blocos editáveis, pré-visualização e exportação para diferentes destinos. É a etapa de acabamento da aula: o texto nasce no [ClassAuthor](https://github.com/rgbittencourt/aula-generator), que também pode abrir uma semana direto aqui. (Antes se chamava Aula Studio; o endereço e o formato `.aula.json` continuam os mesmos.)
 
 ## Formatos de saída
 
 No menu **Exportar**, escolha o formato adequado:
 
-- **Projeto JSON (`.aula.json`)**: arquivo editável para reabrir e continuar no Aula Studio;
+- **Projeto JSON (`.aula.json`)**: arquivo editável para reabrir e continuar no ClassAtelier;
 - **Arquivo HTML (`.html`)**: aula renderizada em um único arquivo autocontido para abrir no navegador;
 - **Pacote HTML (`.html.zip`)**: `index.html`, JSON do projeto, imagens, fontes e assets do tema;
 - **Pacote SCORM (`.scorm.zip`)**: pacote com `imsmanifest.xml`, aula HTML e ponte SCORM para Moodle ou outro LMS;
@@ -16,14 +16,19 @@ O SCORM pode ser configurado como **1.2** — padrão de maior compatibilidade �
 
 ## Identidade visual
 
-- `assets/aula-mark.svg`: símbolo usado no editor e nos temas;
-- `assets/brand/aula-studio-mark.png`: símbolo raster de alta resolução;
-- `assets/brand/aula-studio-logo.svg`: logo horizontal;
-- `assets/brand/aula-studio-logo.png`: logo raster para documentos e apresentações;
-- `assets/brand/aula-studio-cover.svg`: capa editorial horizontal;
-- `assets/brand/aula-studio-cover.png`: capa PNG para redes sociais e compartilhamento;
+- `assets/classatelier-mark.svg`: símbolo do ClassAtelier (janela em arco);
+- `assets/aula-mark.svg`: símbolo da marca "aula" usado dentro das aulas exportadas (tema);
+- `assets/brand/classatelier-mark.png`: símbolo raster de alta resolução;
+- `assets/brand/classatelier-logo.svg`: logo horizontal;
+- `assets/brand/classatelier-logo.png`: logo raster para documentos e apresentações;
+- `assets/brand/classatelier-cover.svg`: capa editorial horizontal;
+- `assets/brand/classatelier-cover.png`: capa PNG para redes sociais e compartilhamento;
 - `assets/favicon.svg` e `assets/favicon-32.png`: favicons SVG e PNG;
 - `assets/apple-touch-icon.png`: ícone para iPhone/iPad;
 - `assets/site.webmanifest`: metadados de instalação como aplicativo.
 
-O símbolo e a capa usam uma linguagem de página aberta, autoria e centelha de aprendizagem, com terracota, papel, dourado e tinta profunda.
+O símbolo e a capa usam a janela de ateliê em arco, com o vidro dividido em quatro e um painel aceso, em azul-marinho, papel e coral. O nome se escreve **Class** (negrito) + ***Atelier*** (itálico).
+
+## Receber uma semana do ClassAuthor
+
+O ClassAuthor abre esta página em outra aba e envia a semana por `postMessage` (mensagens `aulastudio:ready`, `classauthor:lesson`, `aulastudio:loaded`). Só aceita de quem abriu a aba e pergunta antes de substituir um projeto em andamento.

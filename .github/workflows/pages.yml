@@ -1,4 +1,4 @@
-name: Deploy Aula Studio
+name: Deploy ClassAtelier
 
 on:
   push:

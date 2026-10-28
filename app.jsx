@@ -346,7 +346,7 @@ function AulaStudioApp() {
   const [busyMsg, setBusyMsg] = useStateA(null);
   const [richOpen, setRichOpen] = useStateA(false);
 
-  const slugName = (s) => (s || "aula-studio").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "aula-studio";
+  const slugName = (s) => (s || "classatelier").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "classatelier";
 
   const downloadProject = () => {
     const blob = new Blob([JSON.stringify(lesson, null, 2)], { type: "application/json" });
@@ -463,8 +463,8 @@ function Palette({ onDragType, onAdd }) {
   return (
     <aside className="tool-scroll" style={{ background: "var(--tool-panel)", overflowY: "auto", height: "100vh", padding: "14px 12px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 4px 14px" }}>
-          <img src={(window.AULA_BASE || "") + "assets/brand/aula-studio-mark.png"} alt="" width="26" height="26" style={{ display: "block", borderRadius: 7 }} />
-        <span style={{ fontWeight: 700, fontSize: 15 }}>Aula Studio</span>
+          <img src={(window.AULA_BASE || "") + "assets/brand/classatelier-mark.png"} alt="" width="26" height="26" style={{ display: "block", borderRadius: 7 }} />
+        <span style={{ fontSize: 17, lineHeight: 1, whiteSpace: "nowrap" }}><b style={{ fontWeight: 800, letterSpacing: "-.045em" }}>Class</b><i style={{ fontFamily: "var(--font-serif, Newsreader, Georgia, serif)", fontStyle: "italic", fontWeight: 400, letterSpacing: "-.02em", color: "#BF4C34" }}>Atelier</i></span>
       </div>
       {window.BLOCK_CATS.map((cat) => (
         <div key={cat} style={{ marginBottom: 16 }}>
@@ -529,7 +529,7 @@ function Topbar({ lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExport
               <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 42, background: "#fff", border: "1px solid var(--tool-line)", borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.16)", width: 248, overflow: "hidden" }}>
                 <button onClick={() => { setMenu(false); onDownloadProject(); }} style={menuItem}>
                   <span style={{ fontWeight: 600 }}>Projeto JSON (.aula.json)</span>
-                  <span style={menuSub}>Editável e próprio para reabrir no Aula Studio.</span>
+                  <span style={menuSub}>Editável e próprio para reabrir no ClassAtelier.</span>
                 </button>
                 <button onClick={() => wrap(onExportStandaloneHTML)} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
                   <span style={{ fontWeight: 600 }}>Arquivo HTML (.html)</span>
@@ -605,7 +605,7 @@ function ScormDialog({ lesson, onClose, onConfirm }) {
   const quizzes = allBlocks.filter((b) => b.type === "quiz");
   const finalQuizzes = quizzes.filter((b) => b.props.avaliativo);
   const firstFinal = finalQuizzes[0];
-  const [title, setTitle] = useStateA(lesson.meta?.title || "Aula Studio");
+  const [title, setTitle] = useStateA(lesson.meta?.title || "Aula");
   const [version, setVersion] = useStateA("1.2");
   const [passMark, setPassMark] = useStateA(firstFinal ? (firstFinal.props.passMark || 6) : 6);
   const [busy, setBusy] = useStateA(false);

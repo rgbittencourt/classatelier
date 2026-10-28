@@ -145,7 +145,7 @@ async function buildExportHTML(lesson, opts = {}) {
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>${escapeHtml(lesson.meta?.title || "Aula Studio")}</title>
+<title>${escapeHtml(lesson.meta?.title || "Aula")}</title>
 ${usesFontAwesome ? '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer" />' : ""}
 <style>
 ${fontStyle}
@@ -345,7 +345,7 @@ function escapeHtml(s) {
 }
 
 function lessonSlug(title) {
-  return (title || "aula-studio").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "aula-studio";
+  return (title || "classatelier").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "classatelier";
 }
 
 function addProjectFile(zip, lesson, packagedFiles) {
@@ -369,7 +369,7 @@ async function downloadExport(lesson) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   const name = lessonSlug(lesson.meta?.title);
-  a.href = url; a.download = (name || "aula-studio") + "-html.zip";
+  a.href = url; a.download = (name || "classatelier") + "-html.zip";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
@@ -466,7 +466,7 @@ async function addPackageSupportFiles(zip, packagedFiles) {
 }
 
 function buildManifest(opts) {
-  const title = xmlEscape(opts.title || "Aula Studio");
+  const title = xmlEscape(opts.title || "Aula");
   const id = "AULA_" + Math.random().toString(36).slice(2, 9).toUpperCase();
   const mastery = opts.avaliativo ? Number(opts.passMark) || 0 : null;
   const files = (opts.files || ["index.html"]).map((path) => `      <file href="${xmlEscape(path)}"/>`).join("\n");
@@ -557,7 +557,7 @@ async function downloadSCORM(lesson, opts) {
   const name = lessonSlug(opts.title);
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = (name || "aula-studio") + "-scorm.zip";
+  a.href = url; a.download = (name || "classatelier") + "-scorm.zip";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }

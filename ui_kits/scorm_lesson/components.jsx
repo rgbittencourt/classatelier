@@ -2027,7 +2027,7 @@ function CreditsFooter({ author, role, institution, year, aiTool, aiUse, license
 function AulaStudioMark({ withRule = true }) {
   return (
     <p className={"aula-credits__mark" + (withRule ? " aula-credits__mark--rule" : "")}>
-      Construído com <strong className="aula-credits__mark-name">Aula Studio</strong>, uma ferramenta de autoria SCORM desenvolvida por Aula Studio.
+      Aula editada com <strong className="aula-credits__mark-name">Class<i style={{ fontFamily: "Newsreader, Georgia, serif", fontWeight: 400 }}>Atelier</i></strong>, uma ferramenta de edição de aulas interativas e pacotes SCORM desenvolvida por Rogério Bittencourt, INOVALAB - IFSC.
     </p>
   );
 }

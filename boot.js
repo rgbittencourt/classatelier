@@ -12,7 +12,7 @@
 // ════════════════════════════════════════════════════════════
 (function () {
   var BASE = window.AULA_BASE || "";
-  var BUILD_REV = "20261028-classauthor-bridge";
+  var BUILD_REV = "20261028-classatelier";
   var theme = window.resolveAulaTheme();
   window.AULA_ACTIVE_THEME = theme;
 

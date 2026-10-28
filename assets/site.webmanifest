@@ -1,15 +1,15 @@
 {
-  "name": "Aula Studio",
-  "short_name": "Aula Studio",
-  "description": "Construtor editorial de aulas interativas.",
+  "name": "ClassAtelier",
+  "short_name": "ClassAtelier",
+  "description": "Editor de aulas interativas, do texto ao SCORM.",
   "lang": "pt-BR",
   "start_url": "../",
   "display": "standalone",
   "background_color": "#FBF6EE",
-  "theme_color": "#D85C3C",
+  "theme_color": "#14213D",
   "icons": [
     { "src": "./favicon-32.png", "sizes": "32x32", "type": "image/png" },
     { "src": "./apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any maskable" },
-    { "src": "./brand/aula-studio-mark.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "./brand/classatelier-mark.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
