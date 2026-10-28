@@ -2027,7 +2027,7 @@ function CreditsFooter({ author, role, institution, year, aiTool, aiUse, license
 function AulaStudioMark({ withRule = true }) {
   return (
     <p className={"aula-credits__mark" + (withRule ? " aula-credits__mark--rule" : "")}>
-      Aula editada com <strong className="aula-credits__mark-name">Class<i style={{ fontFamily: "Newsreader, Georgia, serif", fontWeight: 400 }}>Atelier</i></strong>, uma ferramenta de edição de aulas interativas e pacotes SCORM desenvolvida por Rogério Bittencourt, INOVALAB - IFSC, a partir do <a href="https://luislindner.github.io/lumeauthor/" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 2 }}>LumeAuthor</a>, de Luís Lindner.
+      Aula editada com <strong className="aula-credits__mark-name">Class<i style={{ fontFamily: "Newsreader, Georgia, serif", fontWeight: 400 }}>Atelier</i></strong>, uma ferramenta de edição de aulas interativas e pacotes SCORM desenvolvida por Rogério Bittencourt (INOVALAB - IFSC) e Luís Lindner, a partir do <a href="https://luislindner.github.io/lumeauthor/" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 2 }}>LumeAuthor</a>.
     </p>
   );
 }
