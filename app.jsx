@@ -772,6 +772,7 @@ function CourseDialog({ entries, onClose, onConfirm }) {
                     </div>
                   ))}
                   {published.commitUrl && <div style={{ marginTop: 6 }}><a href={published.commitUrl} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>Ver a publicação no GitHub</a></div>}
+                  <div style={{ marginTop: 6 }}><a href="./acervo/" target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>Administrar os cursos publicados no ClassAcervo ↗</a></div>
                 </div>
               )}
             </div>

@@ -29,6 +29,18 @@ Em **Montar curso → Publicar no GitHub**, informe a conta (ou organização), 
 
 O rodapé das aulas exportadas traz a atribuição: *"…baseada integralmente no LumeAuthor, ferramenta de autoria SCORM criada por Luís Lindner, e evoluída em coautoria com Rogério Bittencourt (INOVALAB - IFSC)."* (com link para o LumeAuthor).
 
+## ClassAcervo: administrar o que está publicado
+
+Em `acervo/` (endereço `…/aula-studio/acervo/`) há uma ferramenta gráfica separada para cuidar dos cursos publicados no GitHub Pages. Conecte-se ao repositório (conta, repositório, branch e token) e use:
+
+- **Cursos**: cartões com os cursos encontrados (pasta com `index.html` e `aula-NN.html`), link do site, link de cada aula e botão para copiar todos os links para o Moodle;
+- **Todos os arquivos**: árvore de pastas e arquivos, com tamanho, link no site e pré-visualização;
+- **Renomear/mover, duplicar e excluir** pastas e arquivos, sempre em um único commit (o histórico do GitHub guarda o anterior);
+- **Gerar índice do site**: cria um `index.html` listando os cursos (na raiz ou em qualquer pasta), marcado como gerado pela ferramenta;
+- **Ligar o GitHub Pages**, quando estiver desligado.
+
+O token vai direto do navegador ao GitHub; fica só na aba, ou neste navegador se você marcar "lembrar".
+
 ## Identidade visual
 
 - `assets/classatelier-mark.svg`: símbolo do ClassAtelier (janela em arco);
