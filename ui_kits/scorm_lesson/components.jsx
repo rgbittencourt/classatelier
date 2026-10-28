@@ -1996,7 +1996,7 @@ function CreditsFooter({ author, role, institution, year, aiTool, aiUse, license
             <div className="aula-credits__block">
               <div className="aula-credits__label">Apoio de IA</div>
               <p className="aula-credits__meta">
-                Produzido com apoio de <strong className="aula-credits__strong">{aiTool}</strong>{(() => { const u = (aiUse || "").trim(); return u ? " " + (/[.!?]$/.test(u) ? u : u + ".") : "."; })()} A curadoria, revisão e responsabilidade pelo conteúdo são humanas.
+                Produzido com apoio de <strong className="aula-credits__strong">{aiTool}</strong>{(() => { const u = (aiUse || "").trim(); return u ? (/^[,;:.]/.test(u) ? "" : " ") + (/[.!?]$/.test(u) ? u : u + ".") : "."; })()} A curadoria, revisão e responsabilidade pelo conteúdo são humanas.
               </p>
             </div>
           )}
