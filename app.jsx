@@ -149,6 +149,39 @@ function AulaStudioApp() {
     return () => clearTimeout(t);
   }, [lesson]);
 
+  // ClassAuthor (o gerador) abre este editor em outra aba e envia a semana escolhida por postMessage.
+  // Só aceita de quem abriu esta aba (window.opener) e pergunta antes de substituir um projeto em andamento.
+  const lessonRef = useRefA(lesson);
+  lessonRef.current = lesson;
+  useEffectA(() => {
+    const opener = window.opener;
+    const reply = (origin, msg) => { try { opener && opener.postMessage(msg, origin); } catch (e) {} };
+    const onMessage = (ev) => {
+      const d = ev.data;
+      if (!opener || ev.source !== opener || !d || d.type !== "classauthor:lesson") return;
+      try {
+        const project = extractProjectPayload(d.lesson);
+        const current = lessonRef.current;
+        const hasWork = JSON.stringify(current) !== JSON.stringify(STARTER) && (current.blocks || []).length > 0;
+        const label = project.meta?.title || d.fileName || "a semana enviada";
+        if (hasWork && !window.confirm("O ClassAuthor quer abrir «" + label + "» aqui.\n\nIsso substitui o projeto que está aberto neste editor (dá para desfazer com Ctrl+Z). Continuar?")) {
+          reply(ev.origin, { type: "aulastudio:declined" });
+          return;
+        }
+        history.current.push(JSON.stringify(current));
+        if (history.current.length > 50) history.current.shift();
+        setLesson(project);
+        setSelected(null);
+        reply(ev.origin, { type: "aulastudio:loaded", title: project.meta?.title || "" });
+      } catch (err) {
+        reply(ev.origin, { type: "aulastudio:error", message: String(err && err.message || err) });
+      }
+    };
+    window.addEventListener("message", onMessage);
+    reply("*", { type: "aulastudio:ready" });
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
+
   const pushHistory = useCb(() => {
     patchBurst.current = { id: null, at: 0 };
     history.current.push(JSON.stringify(lesson));
