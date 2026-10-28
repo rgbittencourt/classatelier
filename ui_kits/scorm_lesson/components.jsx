@@ -2027,7 +2027,7 @@ function CreditsFooter({ author, role, institution, year, aiTool, aiUse, license
 function AulaStudioMark({ withRule = true }) {
   return (
     <p className={"aula-credits__mark" + (withRule ? " aula-credits__mark--rule" : "")}>
-      Aula editada com <strong className="aula-credits__mark-name">Class<i style={{ fontFamily: "Newsreader, Georgia, serif", fontWeight: 400 }}>Atelier</i></strong>, uma ferramenta de edição de aulas interativas e pacotes SCORM baseada integralmente no <a href="https://luislindner.github.io/lumeauthor/" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 2 }}>LumeAuthor</a>, criado por Luís Lindner, e evoluída em coautoria com Rogério Bittencourt (INOVALAB - IFSC).
+      Aula editada com <strong className="aula-credits__mark-name">Class<i style={{ fontFamily: "Newsreader, Georgia, serif", fontWeight: 400 }}>Atelier</i></strong>, uma ferramenta de autoria de aulas interativas e pacotes SCORM, baseada integralmente no <a href="https://luislindner.github.io/lumeauthor/" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 2 }}>LumeAuthor</a>, ferramenta de autoria SCORM criada por Luís Lindner, e evoluída em coautoria com Rogério Bittencourt (INOVALAB - IFSC).
     </p>
   );
 }

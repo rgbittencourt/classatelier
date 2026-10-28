@@ -24,9 +24,9 @@ Em **Montar curso → Publicar no GitHub**, informe a conta (ou organização), 
 
 ## Origem e créditos
 
-**Toda a base do ClassAtelier é do LumeAuthor**, criado pelo **Prof. Luís Lindner** ([luislindner.github.io/lumeauthor](https://luislindner.github.io/lumeauthor/)): o editor de blocos, os temas, os componentes das aulas e a exportação SCORM. O ClassAtelier é uma evolução dessa base, feita em coautoria com **Rogério Bittencourt (INOVALAB – IFSC)**: biblioteca de aulas, pacote do curso, publicação no GitHub, integração com o ClassAuthor e nova identidade. O LumeAuthor original segue sendo desenvolvido por Luís Lindner, sem alterações vindas daqui.
+**Toda a base do ClassAtelier é do LumeAuthor**, ferramenta de autoria SCORM criada pelo **Prof. Luís Lindner** ([luislindner.github.io/lumeauthor](https://luislindner.github.io/lumeauthor/)): o editor de blocos, os temas, os componentes das aulas e a exportação SCORM. O ClassAtelier é uma evolução dessa base, feita em coautoria com **Rogério Bittencourt (INOVALAB – IFSC)**: biblioteca de aulas, pacote do curso, publicação no GitHub, integração com o ClassAuthor e nova identidade. O LumeAuthor original segue sendo desenvolvido por Luís Lindner, sem alterações vindas daqui.
 
-O rodapé das aulas exportadas traz a atribuição: *"…baseada integralmente no LumeAuthor, criado por Luís Lindner, e evoluída em coautoria com Rogério Bittencourt (INOVALAB - IFSC)."* (com link para o LumeAuthor).
+O rodapé das aulas exportadas traz a atribuição: *"…baseada integralmente no LumeAuthor, ferramenta de autoria SCORM criada por Luís Lindner, e evoluída em coautoria com Rogério Bittencourt (INOVALAB - IFSC)."* (com link para o LumeAuthor).
 
 ## Identidade visual
 
