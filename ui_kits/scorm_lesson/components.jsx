@@ -205,7 +205,7 @@ function Sumario({ label = "Sumário", scope = "#app" }) {
     const slug = (s) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 50);
     const collect = () => {
       const used = {};
-      const nodes = [...root.querySelectorAll("h2, [data-toc-section]")];
+      const nodes = [...root.querySelectorAll("h2, [data-toc-section], [data-toc-item]")];
       const list = [];
       nodes.forEach((node) => {
         const isSection = node.matches("[data-toc-section]");
@@ -253,10 +253,9 @@ function Sumario({ label = "Sumário", scope = "#app" }) {
 
   const go = (id) => {
     const el = document.getElementById(id);
-    if (el) {
-      const y = el.getBoundingClientRect().top + window.scrollY - 48;
-      window.scrollTo({ top: y, behavior: "smooth" });
-    }
+    // scrollIntoView rola o contêiner certo: a janela na aula exportada e o painel
+    // de rolagem do editor no modo Visualizar (scrollMarginTop já afasta da barra).
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     setOpen(false);
   };
 
@@ -1863,7 +1862,7 @@ function ReferenciasABNT({ title = "Referências", items = [], defaultOpen = fal
   }
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <section className={"aula-refs" + (dark ? " aula-refs--dark" : "") + (open ? " is-open" : "")}>
+    <section className={"aula-refs" + (dark ? " aula-refs--dark" : "") + (open ? " is-open" : "")} data-toc-item="" data-toc-text={title}>
       <button type="button" className="aula-refs__head" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
         <span className="aula-refs__head-left">
           <Icon name="book-marked" size={18} stroke={1.7} color="currentColor" />
