@@ -502,23 +502,23 @@ function Topbar({ lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExport
   const wrap = async (fn) => { setBusy(true); setMenu(false); try { await fn(); } finally { setBusy(false); } };
   return (
     <header style={{ height: 52, flexShrink: 0, background: "var(--tool-panel)", borderBottom: "1px solid var(--tool-line)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", position: "relative", zIndex: 40 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: "1 1 0" }}>
         <ThemePicker />
-        <span style={{ width: 1, height: 22, background: "var(--tool-line)" }} />
-        <span style={{ fontWeight: 600, fontSize: 14, color: "var(--tool-ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{lesson.meta?.title || "Nova aula"}</span>
-        <span style={{ fontSize: 12, color: "var(--tool-ink-3)" }}>· {lesson.blocks.length} blocos</span>
+        <span className="tb-title" style={{ width: 1, height: 22, background: "var(--tool-line)" }} />
+        <span className="tb-title" style={{ fontWeight: 600, fontSize: 14, color: "var(--tool-ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 40 }}>{lesson.meta?.title || "Nova aula"}</span>
+        <span className="tb-title" style={{ fontSize: 12, color: "var(--tool-ink-3)", whiteSpace: "nowrap", flexShrink: 0 }}>· {lesson.blocks.length} blocos</span>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
         <button onClick={onUndo} disabled={!canUndo} title="Desfazer (⌘Z)" style={{ ...ghostBtn, opacity: canUndo ? 1 : 0.4 }}><window.TIcon name="undo" size={15} /></button>
         <button onClick={onClear} disabled={!canClear} title="Limpar página" style={{ ...ghostBtn, opacity: canClear ? 1 : 0.4, color: canClear ? "var(--coral-deep)" : "var(--tool-ink-3)" }}><window.TIcon name="trash" size={15} /></button>
-        <button onClick={onOpenProject} title="Abrir projeto (.aula.json)" style={{ ...ghostBtn, width: "auto", padding: "0 11px", gap: 6, display: "flex", alignItems: "center", fontSize: 12.5, fontWeight: 600 }}>Abrir</button>
-        <button onClick={onDownloadProject} title="Baixar projeto para continuar depois / em outro computador" style={{ ...ghostBtn, width: "auto", padding: "0 11px", gap: 6, display: "flex", alignItems: "center", fontSize: 12.5, fontWeight: 600 }}>Salvar projeto</button>
-        <button onClick={onRichNotes} title="Revisar termos de glossário e links" style={{ ...ghostBtn, width: "auto", padding: "0 11px", fontSize: 12.5, fontWeight: 600 }}>Termos e links</button>
+        <button onClick={onOpenProject} title="Abrir projeto (.aula.json)" style={textBtn}><window.TIcon name="folder" size={15} /><span className="tb-label">Abrir</span></button>
+        <button onClick={onDownloadProject} title="Salvar projeto: baixa o arquivo para continuar depois ou em outro computador" style={textBtn}><window.TIcon name="save" size={15} /><span className="tb-label">Salvar</span></button>
+        <button onClick={onRichNotes} title="Termos e links: revisar glossário e links de toda a aula" style={textBtn}><window.TIcon name="link" size={15} /><span className="tb-label">Termos e links</span></button>
         <div style={{ display: "flex", background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 9, padding: 3 }}>
-          <button onClick={() => setMode("edit")} style={segBtn(mode === "edit")}><window.TIcon name="pencil" size={13} /> Editar</button>
-          <button onClick={() => setMode("preview")} style={segBtn(mode === "preview")}><window.TIcon name="eye" size={13} /> Visualizar</button>
+          <button onClick={() => setMode("edit")} style={segBtn(mode === "edit")}><window.TIcon name="pencil" size={13} /> <span className="tb-seg-label">Editar</span></button>
+          <button onClick={() => setMode("preview")} style={segBtn(mode === "preview")}><window.TIcon name="eye" size={13} /> <span className="tb-seg-label">Visualizar</span></button>
         </div>
-        <button onClick={onPrintPDF} title="Abrir versão PDF expandida e imprimir" style={{ ...ghostBtn, width: "auto", padding: "0 11px", gap: 6, display: "flex", alignItems: "center", fontSize: 12.5, fontWeight: 600 }}><window.TIcon name="printer" size={15} /> Imprimir PDF</button>
+        <button onClick={onPrintPDF} title="Imprimir PDF: abre a versão expandida da aula para imprimir" style={textBtn}><window.TIcon name="printer" size={15} /><span className="tb-label">Imprimir PDF</span></button>
         <div style={{ position: "relative" }}>
           <button onClick={() => setMenu((v) => !v)} disabled={busy} style={primaryBtn}>
             <window.TIcon name="download" size={14} color="#fff" /> {busy ? "Gerando…" : "Exportar"} <span style={{ fontSize: 10, opacity: 0.8 }}>▾</span>
@@ -574,11 +574,11 @@ function ThemePicker() {
     </span>
   );
   return (
-    <div style={{ position: "relative" }}>
+    <div className="tb-theme" style={{ position: "relative", flexShrink: 0 }}>
       <button onClick={() => setOpen((v) => !v)} title="Trocar tema (design system)"
         style={{ display: "flex", alignItems: "center", gap: 8, height: 32, padding: "0 9px", background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 9, cursor: "pointer", fontFamily: "inherit" }}>
         <Swatches list={current.swatches} size={13} />
-        <span style={{ fontSize: 12.5, fontWeight: 600, color: "var(--tool-ink)", whiteSpace: "nowrap" }}>{current.label}</span>
+        <span className="tb-theme-name" style={{ fontSize: 12.5, fontWeight: 600, color: "var(--tool-ink)", whiteSpace: "nowrap" }}>{current.label}</span>
         <span style={{ fontSize: 10, color: "var(--tool-ink-3)" }}>▾</span>
       </button>
       {open && (<>
@@ -690,6 +690,7 @@ function ClearDialog({ count, onClose, onConfirm }) {
 
 const dlgLabel = { display: "block", fontSize: 11.5, fontWeight: 600, color: "var(--tool-ink-2)", margin: "0 0 5px" };
 const dlgInput = { width: "100%", border: "1px solid var(--tool-line-2)", borderRadius: 8, padding: "8px 10px", fontFamily: "inherit", fontSize: 13, color: "var(--tool-ink)", boxSizing: "border-box" };
+const textBtn = { display: "flex", alignItems: "center", gap: 6, height: 34, padding: "0 11px", border: "1px solid var(--tool-line)", background: "#fff", borderRadius: 8, cursor: "pointer", color: "var(--tool-ink-2)", fontFamily: "inherit", fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0 };
 const ghostBtn = { display: "grid", placeItems: "center", width: 34, height: 34, border: "1px solid var(--tool-line)", background: "#fff", borderRadius: 8, cursor: "pointer", color: "var(--tool-ink-2)" };
 const segBtn = (on) => ({ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", border: 0, borderRadius: 6, fontSize: 12.5, fontWeight: 600, cursor: "pointer", background: on ? "#fff" : "transparent", color: on ? "var(--tool-ink)" : "var(--tool-ink-2)", boxShadow: on ? "0 1px 2px rgba(0,0,0,0.12)" : "none" });
 const primaryBtn = { display: "flex", alignItems: "center", gap: 7, padding: "8px 14px", border: 0, borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", background: "var(--tool-accent)", color: "#fff" };

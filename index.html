@@ -17,6 +17,10 @@
        injetado por boot.js a partir do tema ativo (themes.js). Nada de marca
        fica fixo aqui — trocar de tema troca tudo isso de uma vez. -->
   <style>
+    @media (max-width: 1760px) { .tb-label { display: none; } }
+    @media (max-width: 1560px) { .tb-title { display: none !important; } }
+    @media (max-width: 1280px) { .tb-theme-name { display: none; } .tb-seg-label { display: none; } }
+    @media (max-width: 1180px) { .tb-theme { display: none; } }
     /* ── Builder chrome (neutral tool UI, so the warm Aula page pops) ── */
     :root {
       --tool-bg:      #EDEEF1;
@@ -149,7 +153,7 @@
   <!-- Tema + componentes do kit + módulos do builder são injetados aqui,
        em ordem, por boot.js — a partir do tema ativo (themes.js). -->
   <script>window.AULA_BASE = "";</script>
-  <script src="themes.js?v=20261028-classatelier"></script>
-  <script src="boot.js?v=20261028-classatelier"></script>
+  <script src="themes.js?v=20261028-topbar"></script>
+  <script src="boot.js?v=20261028-topbar"></script>
 </body>
 </html>

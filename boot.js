@@ -12,7 +12,7 @@
 // ════════════════════════════════════════════════════════════
 (function () {
   var BASE = window.AULA_BASE || "";
-  var BUILD_REV = "20261028-classatelier";
+  var BUILD_REV = "20261028-topbar";
   var theme = window.resolveAulaTheme();
   window.AULA_ACTIVE_THEME = theme;
 

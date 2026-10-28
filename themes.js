@@ -85,7 +85,7 @@ window.AULA_THEMES = {
   list: [
     {
       id: "aula",
-      label: "ClassAtelier",
+      label: "Aula (padrão)",
       // 2–3 cores que representam o tema no seletor visual.
       swatches: ["#D85C3C", "#2C5B7A", "#FBF6EE"],
 
