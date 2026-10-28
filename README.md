@@ -18,6 +18,10 @@ O SCORM pode ser configurado como **1.2** — padrão de maior compatibilidade �
 
 O botão **Biblioteca** guarda, neste navegador, todas as aulas que você edita ou abre (inclusive as semanas enviadas pelo ClassAuthor), com nome e data da última edição. Marque várias aulas e use **Montar curso**: o formato **Site HTML (GitHub Pages)** gera `index.html` + `aula-01.html`, `aula-02.html`… (endereços estáveis, com LEIA-ME de publicação e links para o Moodle); o formato **Pacote SCORM** gera um único pacote com uma aula por item, na ordem escolhida, e cada aula mantém a própria avaliação final e a nota enviada ao LMS. A biblioteca é por navegador; para levar uma aula a outro computador, use **Salvar** (`.aula.json`).
 
+### Publicar direto no GitHub
+
+Em **Montar curso → Publicar no GitHub**, informe a conta (ou organização), o repositório, a branch e, se quiser, uma **pasta** (um repositório pode hospedar vários cursos, ex.: `tedpro/TGE`). O ClassAtelier envia o site num único commit, só com os arquivos que mudaram, e mostra os links de cada aula para colar no Moodle. O token de acesso é digitado a cada uso (ou lembrado neste navegador, se você marcar) e vai direto do navegador para `api.github.com`. Token fino (*fine-grained*) com **Contents** e **Pages** em *Read and write* serve para repositórios da própria conta; para repositório de outra pessoa ou organização onde você é colaborador, use token clássico com o escopo `repo`.
+
 ## Identidade visual
 
 - `assets/classatelier-mark.svg`: símbolo do ClassAtelier (janela em arco);

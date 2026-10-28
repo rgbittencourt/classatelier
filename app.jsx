@@ -614,6 +614,31 @@ function CourseDialog({ entries, onClose, onConfirm }) {
   const [version, setVersion] = useStateA("1.2");
   const [format, setFormat] = useStateA("site");
   const [busy, setBusy] = useStateA(false);
+  const PUB_KEY = "aulastudio.publish.v1";
+  const [gh, setGh] = useStateA(() => {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(PUB_KEY) || "{}") || {}; } catch (e) {}
+    return { owner: saved.owner || "", repo: saved.repo || "", branch: saved.branch || "main", folder: saved.folder || "", token: saved.token || "", remember: !!saved.token, createRepo: saved.createRepo !== false, enablePages: saved.enablePages !== false };
+  });
+  const setG = (k, v) => setGh((g) => ({ ...g, [k]: v }));
+  const [progress, setProgress] = useStateA("");
+  const [published, setPublished] = useStateA(null);
+  const [pubError, setPubError] = useStateA("");
+  const publish = async () => {
+    if (!title.trim()) { alert("Dê um nome ao curso."); return; }
+    setBusy(true); setPubError(""); setPublished(null); setProgress("Começando…");
+    try {
+      const res = await window.publishCourseToGitHub(list.map((e) => e.lesson), { title: title.trim(), ...gh }, setProgress);
+      try {
+        const keep = { owner: gh.owner, repo: gh.repo, branch: gh.branch, folder: gh.folder, createRepo: gh.createRepo, enablePages: gh.enablePages };
+        if (gh.remember) keep.token = gh.token;
+        localStorage.setItem(PUB_KEY, JSON.stringify(keep));
+      } catch (e) {}
+      setPublished(res);
+    } catch (e) { setPubError(e.message || String(e)); }
+    finally { setBusy(false); setProgress(""); }
+  };
+  const copy = (text) => { try { navigator.clipboard.writeText(text); } catch (e) {} };
   const move = (i, d) => setList((L) => { const n = L.slice(); const j = i + d; if (j < 0 || j >= n.length) return L; [n[i], n[j]] = [n[j], n[i]]; return n; });
   const go = async () => {
     if (!title.trim()) { alert("Dê um nome ao curso."); return; }
@@ -645,12 +670,51 @@ function CourseDialog({ entries, onClose, onConfirm }) {
           <div style={{ marginBottom: 14 }}>
             <label style={dlgLabel}>Formato</label>
             <div style={{ display: "flex", gap: 4, background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 9, padding: 3 }}>
-              {[{ id: "site", label: "Site HTML (GitHub Pages)" }, { id: "scorm", label: "Pacote SCORM" }].map((o) => (
+              {[{ id: "site", label: "Site HTML (.zip)" }, { id: "github", label: "Publicar no GitHub" }, { id: "scorm", label: "Pacote SCORM" }].map((o) => (
                 <button key={o.id} onClick={() => setFormat(o.id)} style={{ flex: 1, padding: "7px 6px", border: 0, borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: "pointer", background: format === o.id ? "#fff" : "transparent", color: format === o.id ? "var(--tool-ink)" : "var(--tool-ink-3)" }}>{o.label}</button>
               ))}
             </div>
             {format === "site" && <p style={{ ...menuSub, marginTop: 8 }}>Gera <b>index.html</b> (lista do curso) e <b>aula-01.html</b>, <b>aula-02.html</b>… com endereços que não mudam, mais um <b>LEIA-ME</b> com o passo a passo para publicar no GitHub e linkar no Moodle.</p>}
+            {format === "github" && <p style={{ ...menuSub, marginTop: 8 }}>Envia o site do curso direto para um repositório seu no GitHub e liga o GitHub Pages. Você precisa de um <b>token de acesso</b> (passo a passo abaixo). Ele vai só do seu navegador para o GitHub.</p>}
           </div>
+          {format === "github" && (
+            <div style={{ marginBottom: 14, padding: "12px 14px", border: "1px solid var(--tool-line)", borderRadius: 10, background: "var(--tool-surface)", display: "flex", flexDirection: "column", gap: 10 }}>
+              <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ flex: 1 }}><label style={dlgLabel}>Conta ou organização</label><input value={gh.owner} onChange={(e) => setG("owner", e.target.value)} placeholder="usuario-ou-organizacao" autoComplete="off" style={dlgInput} /></div>
+                <div style={{ flex: 1 }}><label style={dlgLabel}>Repositório</label><input value={gh.repo} onChange={(e) => setG("repo", e.target.value)} placeholder="meu-curso" autoComplete="off" style={dlgInput} /></div>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ flex: 1 }}><label style={dlgLabel}>Branch</label><input value={gh.branch} onChange={(e) => setG("branch", e.target.value)} placeholder="main" autoComplete="off" style={dlgInput} /></div>
+                <div style={{ flex: 1 }}><label style={dlgLabel}>Pasta dentro do repositório (opcional)</label><input value={gh.folder} onChange={(e) => setG("folder", e.target.value)} placeholder="ex.: tge-2026" autoComplete="off" style={dlgInput} /></div>
+              </div>
+              <p style={{ ...menuSub, margin: 0 }}>Um repositório pode hospedar vários cursos: use uma <b>pasta</b> diferente para cada um.</p>
+              <div>
+                <label style={dlgLabel}>Token de acesso do GitHub</label>
+                <input type="password" value={gh.token} onChange={(e) => setG("token", e.target.value)} placeholder="github_pat_…" autoComplete="off" spellCheck={false} style={dlgInput} />
+                <p style={{ ...menuSub, marginTop: 6, marginBottom: 0 }}>Crie em <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">github.com/settings/personal-access-tokens/new</a>: escolha <b>Only select repositories</b> (o do curso) e, em Permissions, <b>Contents: Read and write</b> e <b>Pages: Read and write</b>. Defina um prazo curto de validade.</p>
+                <p style={{ ...menuSub, marginTop: 6, marginBottom: 0 }}><b>Repositório de outra pessoa ou de uma organização onde você é colaborador?</b> O token fino não alcança esse caso. Use um token clássico, em <a href="https://github.com/settings/tokens/new?scopes=repo&description=ClassAtelier" target="_blank" rel="noopener noreferrer">github.com/settings/tokens/new</a>, marcando só a permissão <b>repo</b>.</p>
+              </div>
+              <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12.5 }}><input type="checkbox" checked={gh.createRepo} onChange={(e) => setG("createRepo", e.target.checked)} style={{ marginTop: 2 }} /><span>Criar o repositório (público) se ele ainda não existir, na minha conta</span></label>
+              <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12.5 }}><input type="checkbox" checked={gh.enablePages} onChange={(e) => setG("enablePages", e.target.checked)} style={{ marginTop: 2 }} /><span>Ligar o GitHub Pages, se estiver desligado</span></label>
+              <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12.5, color: "var(--tool-ink-3)" }}><input type="checkbox" checked={gh.remember} onChange={(e) => setG("remember", e.target.checked)} style={{ marginTop: 2 }} /><span>Lembrar o token neste navegador (não use em computador compartilhado). Se desmarcado, ele é esquecido ao fechar.</span></label>
+              {pubError && <div role="alert" style={{ padding: "10px 12px", borderRadius: 9, background: "#fdecea", color: "#8a2f18", fontSize: 12.5, lineHeight: 1.5 }}>{pubError}</div>}
+              {busy && progress && <div style={{ fontSize: 12.5, color: "var(--tool-ink-2)" }}>{progress}</div>}
+              {published && (
+                <div style={{ padding: "12px 14px", borderRadius: 10, background: "#e8f5ee", color: "#1b4d36", fontSize: 12.5, lineHeight: 1.55 }}>
+                  <div style={{ fontWeight: 700, marginBottom: 4 }}>{published.sent ? "Publicado: " + published.sent + " arquivo(s) enviado(s) de " + published.total + "." : "Nada mudou: tudo já estava publicado."}</div>
+                  <div style={{ marginBottom: 6 }}>GitHub Pages: {published.pages}. {/desligado|não consegui/.test(published.pages) ? "Em Settings → Pages do repositório, escolha a branch e a pasta raiz." : "O site pode levar alguns minutos para aparecer na primeira vez."}</div>
+                  {published.links.map((l) => (
+                    <div key={l.url} style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 0" }}>
+                      <span style={{ flexShrink: 0, fontWeight: 600 }}>{l.label}</span>
+                      <a href={l.url} target="_blank" rel="noopener noreferrer" style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "inherit" }}>{l.url}</a>
+                      <button onClick={() => copy(l.url)} style={{ ...ghostBtn, width: "auto", height: 26, padding: "0 8px", fontSize: 11.5 }}>Copiar</button>
+                    </div>
+                  ))}
+                  {published.commitUrl && <div style={{ marginTop: 6 }}><a href={published.commitUrl} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>Ver a publicação no GitHub</a></div>}
+                </div>
+              )}
+            </div>
+          )}
           {format === "scorm" && <div style={{ marginBottom: 6 }}>
             <label style={dlgLabel}>Versão SCORM</label>
             <div style={{ display: "flex", gap: 4, background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 9, padding: 3 }}>
@@ -662,8 +726,8 @@ function CourseDialog({ entries, onClose, onConfirm }) {
           </div>}
         </div>
         <div style={{ padding: "14px 20px", borderTop: "1px solid var(--tool-line)", display: "flex", justifyContent: "flex-end", gap: 10 }}>
-          <button onClick={onClose} style={{ ...ghostBtn, width: "auto", padding: "0 16px", fontSize: 13, fontWeight: 600 }}>Cancelar</button>
-          <button onClick={go} disabled={busy} style={primaryBtn}>{busy ? "Gerando…" : (format === "site" ? "Gerar site do curso (.zip)" : "Gerar pacote SCORM (.zip)")}</button>
+          <button onClick={onClose} style={{ ...ghostBtn, width: "auto", padding: "0 16px", fontSize: 13, fontWeight: 600 }}>{published ? "Fechar" : "Cancelar"}</button>
+          <button onClick={format === "github" ? publish : go} disabled={busy} style={primaryBtn}>{busy ? (format === "github" ? "Publicando…" : "Gerando…") : (format === "github" ? "Publicar no GitHub" : format === "site" ? "Gerar site do curso (.zip)" : "Gerar pacote SCORM (.zip)")}</button>
         </div>
       </div>
     </div>

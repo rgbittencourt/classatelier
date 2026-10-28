@@ -640,10 +640,9 @@ async function downloadCourseSCORM(lessons, opts) {
 }
 
 // ── Site do curso (GitHub Pages): aula-01.html, aula-02.html… + índice, com endereços estáveis ──
-async function downloadCourseSite(lessons, opts) {
-  if (typeof JSZip === "undefined") throw new Error("Biblioteca de compactação (JSZip) não carregou.");
+async function buildCourseSiteFiles(lessons, opts) {
   if (!lessons || !lessons.length) throw new Error("Escolha pelo menos uma aula.");
-  const zip = new JSZip();
+  const zip = { files: [], file(path, data, o) { this.files.push({ path, data, base64: !!(o && o.base64) }); } };
   const entries = [];
   for (let i = 0; i < lessons.length; i++) {
     const n = String(i + 1).padStart(2, "0");
@@ -703,12 +702,158 @@ Gere o pacote de novo no ClassAtelier e substitua os arquivos no repositório. O
 
 A pasta \`projetos/\` guarda o \`.aula.json\` de cada aula, para reabrir e editar no ClassAtelier.
 `);
+  return zip.files;
+}
+
+async function downloadCourseSite(lessons, opts) {
+  if (typeof JSZip === "undefined") throw new Error("Biblioteca de compactação (JSZip) não carregou.");
+  const files = await buildCourseSiteFiles(lessons, opts);
+  const zip = new JSZip();
+  files.forEach((f) => zip.file(f.path, f.data, f.base64 ? { base64: true } : undefined));
   const blob = await zip.generateAsync({ type: "blob" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = (lessonSlug(title) || "curso") + "-site.zip";
+  a.href = url; a.download = (lessonSlug(opts.title || "") || "curso") + "-site.zip";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-Object.assign(window, { downloadExport, downloadStandaloneHTML, buildExportHTML, downloadSCORM, downloadCourseSCORM, downloadCourseSite, openPrintPreview });
+// ── Publicação direta no GitHub (API REST, a partir do navegador) ──
+// O token digitado pelo professor vai só para api.github.com. Um único commit atualiza o site inteiro.
+function ghFriendly(status, data, path) {
+  const msg = (data && data.message) || "";
+  if (status === 401) return "O GitHub não aceitou o token (inválido, expirado ou digitado com espaço sobrando).";
+  if (status === 403 && /rate limit/i.test(msg)) return "O GitHub pediu uma pausa por excesso de requisições. Tente de novo em alguns minutos.";
+  if (status === 403) return "O token não tem permissão para isso. Ele precisa de \"Contents: Read and write\" neste repositório (e \"Pages: Read and write\" para ligar o site).";
+  if (status === 404) return "Não encontrei o repositório ou o token não enxerga ele. Confira o nome (conta/repositório) e se o token foi liberado para esse repositório.";
+  if (status === 409) return "O GitHub recusou por conflito (" + msg + "). Tente publicar de novo.";
+  if (status === 422) return "O GitHub recusou os dados enviados: " + msg;
+  return "Erro do GitHub (" + status + ") em " + path + (msg ? ": " + msg : "") + ".";
+}
+async function ghApi(token, method, path, body) {
+  const res = await fetch("https://api.github.com" + path, {
+    method,
+    headers: Object.assign({ Accept: "application/vnd.github+json", Authorization: "Bearer " + token, "X-GitHub-Api-Version": "2022-11-28" }, body ? { "Content-Type": "application/json" } : {}),
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  let data = null;
+  try { data = await res.json(); } catch (e) {}
+  if (!res.ok) { const err = new Error(ghFriendly(res.status, data, path)); err.status = res.status; err.data = data; throw err; }
+  return data;
+}
+function toBytes(f) {
+  if (f.base64) { const bin = atob(f.data); const out = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i); return out; }
+  if (typeof f.data === "string") return new TextEncoder().encode(f.data);
+  return new Uint8Array(f.data);
+}
+function bytesToBase64(bytes) {
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+async function gitBlobSha(bytes) {
+  const head = new TextEncoder().encode("blob " + bytes.length + "\0");
+  const all = new Uint8Array(head.length + bytes.length); all.set(head); all.set(bytes, head.length);
+  const digest = await crypto.subtle.digest("SHA-1", all);
+  return Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function publishCourseToGitHub(lessons, opts, onProgress) {
+  const say = (m) => { try { onProgress && onProgress(m); } catch (e) {} };
+  const token = String(opts.token || "").trim();
+  const owner = String(opts.owner || "").trim().replace(/^@/, "");
+  const repo = String(opts.repo || "").trim().replace(/\.git$/, "");
+  const branchWanted = String(opts.branch || "").trim() || "main";
+  const folder = String(opts.folder || "").trim().replace(/^\/+|\/+$/g, "");
+  if (!token) throw new Error("Cole o token de acesso do GitHub.");
+  if (!owner || !repo) throw new Error("Informe a conta (ou organização) e o nome do repositório.");
+  if (!/^[A-Za-z0-9._-]+$/.test(owner) || !/^[A-Za-z0-9._-]+$/.test(repo)) throw new Error("Conta e repositório só podem ter letras, números, ponto, hífen e sublinhado.");
+  if (folder && !/^[A-Za-z0-9._\/-]+$/.test(folder)) throw new Error("O nome da pasta só pode ter letras, números, ponto, hífen, sublinhado e barra.");
+
+  say("Montando os arquivos do site…");
+  const files = await buildCourseSiteFiles(lessons, opts);
+
+  say("Conferindo o repositório…");
+  let info;
+  try { info = await ghApi(token, "GET", `/repos/${owner}/${repo}`); }
+  catch (e) {
+    if (e.status === 404 && opts.createRepo) {
+      say("Criando o repositório…");
+      const me = await ghApi(token, "GET", "/user");
+      if (me.login.toLowerCase() !== owner.toLowerCase()) throw new Error("Só consigo criar o repositório na sua própria conta (" + me.login + "). Para uma organização, crie o repositório no GitHub e tente de novo.");
+      info = await ghApi(token, "POST", "/user/repos", { name: repo, description: "Curso publicado com o ClassAtelier", private: false, auto_init: true });
+    } else throw e;
+  }
+  if (info.permissions && info.permissions.push === false) throw new Error("O token enxerga o repositório, mas não pode escrever nele (precisa de \"Contents: Read and write\").");
+  const defaultBranch = info.default_branch || "main";
+  const branch = branchWanted;
+
+  // commit de partida (cria a branch se faltar; inicia o repositório se estiver vazio)
+  const getRef = async (b) => { try { return await ghApi(token, "GET", `/repos/${owner}/${repo}/git/ref/heads/${encodeURIComponent(b).replace(/%2F/g, "/")}`); } catch (e) { if (e.status === 404 || e.status === 409) return null; throw e; } };
+  let ref = await getRef(branch);
+  if (!ref) {
+    let base = await getRef(defaultBranch);
+    if (!base) {
+      say("Iniciando o repositório vazio…");
+      await ghApi(token, "PUT", `/repos/${owner}/${repo}/contents/.nojekyll`, { message: "Inicia o repositório (ClassAtelier)", content: "", branch: defaultBranch });
+      base = await getRef(defaultBranch);
+    }
+    if (branch !== defaultBranch) {
+      await ghApi(token, "POST", `/repos/${owner}/${repo}/git/refs`, { ref: "refs/heads/" + branch, sha: base.object.sha });
+    }
+    ref = await getRef(branch);
+  }
+  const headSha = ref.object.sha;
+  const headCommit = await ghApi(token, "GET", `/repos/${owner}/${repo}/git/commits/${headSha}`);
+  let existing = new Map();
+  try {
+    const tree = await ghApi(token, "GET", `/repos/${owner}/${repo}/git/trees/${headCommit.tree.sha}?recursive=1`);
+    if (!tree.truncated) (tree.tree || []).forEach((t) => { if (t.type === "blob") existing.set(t.path, t.sha); });
+  } catch (e) { existing = new Map(); }
+
+  // só envia o que mudou
+  const entries = [];
+  let done = 0, sent = 0;
+  const prefix = folder ? folder + "/" : "";
+  for (const f of files) {
+    const bytes = toBytes(f);
+    const path = prefix + f.path;
+    const sha = await gitBlobSha(bytes);
+    done++;
+    if (existing.get(path) === sha) { continue; }
+    say(`Enviando arquivos… ${done} de ${files.length}`);
+    const blob = await ghApi(token, "POST", `/repos/${owner}/${repo}/git/blobs`, { content: bytesToBase64(bytes), encoding: "base64" });
+    entries.push({ path, mode: "100644", type: "blob", sha: blob.sha });
+    sent++;
+  }
+
+  let commitUrl = null;
+  if (entries.length) {
+    say("Gravando a publicação…");
+    const tree = await ghApi(token, "POST", `/repos/${owner}/${repo}/git/trees`, { base_tree: headCommit.tree.sha, tree: entries });
+    const commit = await ghApi(token, "POST", `/repos/${owner}/${repo}/git/commits`, { message: `Publica "${opts.title || "curso"}" (ClassAtelier)`, tree: tree.sha, parents: [headSha] });
+    await ghApi(token, "PATCH", `/repos/${owner}/${repo}/git/refs/heads/${encodeURIComponent(branch).replace(/%2F/g, "/")}`, { sha: commit.sha, force: false });
+    commitUrl = `https://github.com/${owner}/${repo}/commit/${commit.sha}`;
+  }
+
+  // GitHub Pages
+  let pages = "ignorado";
+  try {
+    try { await ghApi(token, "GET", `/repos/${owner}/${repo}/pages`); pages = "ativo"; }
+    catch (e) {
+      if (e.status === 404 && opts.enablePages) {
+        say("Ligando o GitHub Pages…");
+        await ghApi(token, "POST", `/repos/${owner}/${repo}/pages`, { source: { branch, path: "/" } });
+        pages = "ligado agora";
+      } else if (e.status === 404) pages = "desligado";
+      else throw e;
+    }
+  } catch (e) { pages = "não consegui ligar (" + e.message + ")"; }
+
+  const isUserSite = repo.toLowerCase() === (owner + ".github.io").toLowerCase();
+  const base = `https://${owner.toLowerCase()}.github.io/${isUserSite ? "" : repo + "/"}${prefix}`;
+  const links = [{ label: "Página do curso", url: base + "index.html" }].concat(files.filter((f) => /^aula-\d+\.html$/.test(f.path)).map((f, i) => ({ label: (lessons[i] && lessons[i].meta && lessons[i].meta.title) || "Aula " + String(i + 1).padStart(2, "0"), url: base + f.path })));
+  return { sent, total: files.length, commitUrl, pages, links, repoUrl: `https://github.com/${owner}/${repo}`, branch };
+}
+
+Object.assign(window, { downloadExport, downloadStandaloneHTML, buildExportHTML, downloadSCORM, downloadCourseSCORM, downloadCourseSite, publishCourseToGitHub, openPrintPreview });
