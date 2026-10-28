@@ -348,8 +348,21 @@ function lessonSlug(title) {
   return (title || "classatelier").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "classatelier";
 }
 
+// Nome do arquivo de projeto: Semana01-titulo-da-aula-ClassAtelier.json (sem título, "aula").
+function projectFileName(lesson, fallbackNumber) {
+  const m = (lesson && lesson.meta) || {};
+  let n = Number(m.weekNumber) || 0;
+  if (!n) { const found = /semana\s*0*(\d+)/i.exec((m.weekLabel || "") + " " + (m.title || "")); if (found) n = Number(found[1]); }
+  if (!n && fallbackNumber) n = Number(fallbackNumber) || 0;
+  let slug = m.title ? lessonSlug(m.title) : "";
+  slug = slug.replace(/^semana-0*\d+-?/, "");
+  if (slug.length > 60) slug = slug.slice(0, 60).replace(/-[^-]*$/, "") || slug.slice(0, 60);
+  slug = slug.replace(/(-(de|da|do|das|dos|em|na|no|nas|nos|e|a|o|as|os|para|com|por|que|um|uma))+$/, "").replace(/-$/, "") || "aula";
+  return (n ? "Semana" + String(n).padStart(2, "0") + "-" : "") + slug + "-ClassAtelier.json";
+}
+
 function addProjectFile(zip, lesson, packagedFiles) {
-  const path = lessonSlug(lesson.meta?.title) + ".aula.json";
+  const path = projectFileName(lesson);
   zip.file(path, JSON.stringify(lesson, null, 2));
   if (packagedFiles) packagedFiles.push(path);
   return path;
@@ -623,7 +636,7 @@ async function downloadCourseSCORM(lessons, opts) {
     const href = "aula-" + n + ".html";
     const files = [href];
     zip.file(href, html);
-    const projectPath = "projetos/aula-" + n + "-" + lessonSlug(label) + ".aula.json";
+    const projectPath = "projetos/" + projectFileName(L, Number(n));
     zip.file(projectPath, JSON.stringify(projectLesson, null, 2));
     files.push(projectPath);
     images.forEach((a) => { zip.file(a.path, a.base64, { base64: true }); files.push(a.path); });
@@ -653,7 +666,7 @@ async function buildCourseSiteFiles(lessons, opts) {
     const images = externalizeLessonImages(L, "aula-" + n + "-");
     const html = await buildExportHTML(L, { fonts: "external", assets: "external" });
     zip.file("aula-" + n + ".html", html);
-    zip.file("projetos/aula-" + n + "-" + lessonSlug(label) + ".aula.json", JSON.stringify(projectLesson, null, 2));
+    zip.file("projetos/" + projectFileName(L, Number(n)), JSON.stringify(projectLesson, null, 2));
     images.forEach((a) => zip.file(a.path, a.base64, { base64: true }));
     entries.push({ n, label, href: "aula-" + n + ".html" });
   }
@@ -700,7 +713,7 @@ No Moodle, adicione cada link como recurso **URL** (ou incorpore em uma Página/
 ## Atualizar
 Gere o pacote de novo no ClassAtelier e substitua os arquivos no repositório. Os endereços (\`aula-01.html\`, \`aula-02.html\`…) seguem a **ordem das aulas**: mantendo a ordem, os links no Moodle continuam valendo.
 
-A pasta \`projetos/\` guarda o \`.aula.json\` de cada aula, para reabrir e editar no ClassAtelier.
+A pasta \`projetos/\` guarda o arquivo \`SemanaNN-título-ClassAtelier.json\` de cada aula, para reabrir e editar no ClassAtelier.
 `);
   return zip.files;
 }
@@ -856,4 +869,4 @@ async function publishCourseToGitHub(lessons, opts, onProgress) {
   return { sent, total: files.length, commitUrl, pages, links, repoUrl: `https://github.com/${owner}/${repo}`, branch };
 }
 
-Object.assign(window, { downloadExport, downloadStandaloneHTML, buildExportHTML, downloadSCORM, downloadCourseSCORM, downloadCourseSite, publishCourseToGitHub, openPrintPreview });
+Object.assign(window, { projectFileName, downloadExport, downloadStandaloneHTML, buildExportHTML, downloadSCORM, downloadCourseSCORM, downloadCourseSite, publishCourseToGitHub, openPrintPreview });

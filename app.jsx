@@ -122,7 +122,7 @@ function extractProjectPayload(data) {
     ...(Array.isArray(data?.weeks) ? data.weeks : []),
   ].filter(Boolean);
   const project = candidates.find((candidate) => Array.isArray(candidate.blocks) && candidate.blocks.length > 0);
-  if (!project) throw new Error("Este JSON não contém blocos editáveis. Abra o arquivo semana-XX-*.aula.json baixado em Baixar JSON, e não planejamento-geral.json ou o guia do professor.");
+  if (!project) throw new Error("Este JSON não contém blocos editáveis. Abra o arquivo Semana01-…-ClassAtelier.json (Salvar, ou o botão JSON ClassAtelier do ClassAuthor), e não planejamento-geral.json ou o guia do professor.");
   return { meta: project.meta || {}, blocks: normalizeTopicStructure(project.blocks) };
 }
 function reviseRichNotes(blocks, kind, original, next) {
@@ -174,6 +174,7 @@ function AulaStudioApp() {
   const curRef = useRefA(null);
   if (!curRef.current) curRef.current = loadCurrent();
   const [libOpen, setLibOpen] = useStateA(false);
+  const [libPre, setLibPre] = useStateA(false); // abriu pelo Exportar: já marca a aula atual
   const [courseEntries, setCourseEntries] = useStateA(null);
   const [toast, setToast] = useStateA(null);
   const toastTimer = useRefA(null);
@@ -468,7 +469,7 @@ function AulaStudioApp() {
     const blob = new Blob([JSON.stringify(lesson, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = slugName(lesson.meta?.title) + ".aula.json";
+    a.href = url; a.download = window.projectFileName(lesson);
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   };
@@ -541,7 +542,7 @@ function AulaStudioApp() {
           onUndo={undo} canUndo={history.current.length > 0}
           onExportHTML={exportHTML} onExportStandaloneHTML={exportStandaloneHTML} onExportSCORM={() => setScormOpen(true)} onPrintPDF={printPDF}
           onOpenProject={openProjectClick} onDownloadProject={downloadProject}
-          onRichNotes={() => setRichOpen(true)} onLibrary={async () => { try { await flushCurrent(); } catch (e) {} setLibOpen(true); }}
+          onRichNotes={() => setRichOpen(true)} onLibrary={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(false); setLibOpen(true); }} onCourse={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(true); setLibOpen(true); }}
           onClear={() => setClearOpen(true)} canClear={hasLessonContent}
         />
         <Canvas
@@ -563,7 +564,7 @@ function AulaStudioApp() {
         </aside>
       )}
 
-      {libOpen && <LibraryDialog currentId={curRef.current.id} onClose={() => setLibOpen(false)}
+      {libOpen && <LibraryDialog preselectCurrent={libPre} currentId={curRef.current.id} onClose={() => setLibOpen(false)}
         onOpen={async (e) => { await switchTo(e.lesson, e.id, e.source); setLibOpen(false); setMode("edit"); }}
         onNew={async () => { await switchTo(emptyLesson(), newLessonId(), null); setLibOpen(false); setMode("edit"); }}
         onCourse={(entries) => setCourseEntries(entries)} />}
@@ -609,9 +610,9 @@ function Palette({ onDragType, onAdd }) {
   );
 }
 
-function LibraryDialog({ currentId, onClose, onOpen, onNew, onCourse }) {
+function LibraryDialog({ currentId, preselectCurrent, onClose, onOpen, onNew, onCourse }) {
   const [items, setItems] = useStateA(null);
-  const [picked, setPicked] = useStateA({});
+  const [picked, setPicked] = useStateA(preselectCurrent && currentId ? { [currentId]: true } : {});
   const [failed, setFailed] = useStateA(false);
   const load = () => libAll().then((all) => setItems(all.sort((a, b) => b.updatedAt - a.updatedAt))).catch(() => setFailed(true));
   useEffectA(() => { load(); }, []);
@@ -802,7 +803,7 @@ function RichNotesDialog({ lesson, onClose, onUpdate }) {
 const emptyNote={padding:18,border:"1px dashed var(--tool-line-2)",borderRadius:9,color:"var(--tool-ink-3)",fontSize:12};
 
 // ── Top bar ──
-function Topbar({ onLibrary, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onClear, canClear }) {
+function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onClear, canClear }) {
   const [busy, setBusy] = useStateA(false);
   const [menu, setMenu] = useStateA(false);
   const wrap = async (fn) => { setBusy(true); setMenu(false); try { await fn(); } finally { setBusy(false); } };
@@ -818,7 +819,7 @@ function Topbar({ onLibrary, lesson, mode, setMode, onUndo, canUndo, onExportHTM
         <button onClick={onUndo} disabled={!canUndo} title="Desfazer (⌘Z)" style={{ ...ghostBtn, opacity: canUndo ? 1 : 0.4 }}><window.TIcon name="undo" size={15} /></button>
         <button onClick={onClear} disabled={!canClear} title="Limpar página" style={{ ...ghostBtn, opacity: canClear ? 1 : 0.4, color: canClear ? "var(--coral-deep)" : "var(--tool-ink-3)" }}><window.TIcon name="trash" size={15} /></button>
         <button onClick={onLibrary} title="Biblioteca: todas as aulas guardadas neste navegador (as semanas do ClassAuthor entram aqui)" style={textBtn}><window.TIcon name="library" size={15} /><span className="tb-label">Biblioteca</span></button>
-        <button onClick={onOpenProject} title="Abrir projeto (.aula.json)" style={textBtn}><window.TIcon name="folder" size={15} /><span className="tb-label">Abrir</span></button>
+        <button onClick={onOpenProject} title="Abrir projeto (…-ClassAtelier.json)" style={textBtn}><window.TIcon name="folder" size={15} /><span className="tb-label">Abrir</span></button>
         <button onClick={onDownloadProject} title="Salvar projeto: baixa o arquivo para continuar depois ou em outro computador" style={textBtn}><window.TIcon name="save" size={15} /><span className="tb-label">Salvar</span></button>
         <button onClick={onRichNotes} title="Termos e links: revisar glossário e links de toda a aula" style={textBtn}><window.TIcon name="link" size={15} /><span className="tb-label">Termos e links</span></button>
         <div style={{ display: "flex", background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 9, padding: 3 }}>
@@ -835,7 +836,7 @@ function Topbar({ onLibrary, lesson, mode, setMode, onUndo, canUndo, onExportHTM
               <div onClick={() => setMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 41 }} />
               <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 42, background: "#fff", border: "1px solid var(--tool-line)", borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.16)", width: 248, overflow: "hidden" }}>
                 <button onClick={() => { setMenu(false); onDownloadProject(); }} style={menuItem}>
-                  <span style={{ fontWeight: 600 }}>Projeto JSON (.aula.json)</span>
+                  <span style={{ fontWeight: 600 }}>Projeto JSON (…-ClassAtelier.json)</span>
                   <span style={menuSub}>Editável e próprio para reabrir no ClassAtelier.</span>
                 </button>
                 <button onClick={() => wrap(onExportStandaloneHTML)} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
@@ -849,6 +850,10 @@ function Topbar({ onLibrary, lesson, mode, setMode, onUndo, canUndo, onExportHTM
                 <button onClick={onExportSCORM} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
                   <span style={{ fontWeight: 600 }}>Pacote SCORM (.zip)</span>
                   <span style={menuSub}>Para subir no seu ambiente virtual (LMS). Pergunta as opções.</span>
+                </button>
+                <button onClick={() => { setMenu(false); onCourse && onCourse(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
+                  <span style={{ fontWeight: 600 }}>Curso e GitHub…</span>
+                  <span style={menuSub}>Junta várias aulas da Biblioteca em um site, pacote SCORM ou publicação direta no GitHub (links para o Moodle).</span>
                 </button>
               </div>
             </>

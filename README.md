@@ -6,9 +6,10 @@ Editor de aulas interativas, com blocos editáveis, pré-visualização e export
 
 No menu **Exportar**, escolha o formato adequado:
 
-- **Projeto JSON (`.aula.json`)**: arquivo editável para reabrir e continuar no ClassAtelier;
+- **Projeto JSON (`Semana01-título-ClassAtelier.json`)**: arquivo editável para reabrir e continuar no ClassAtelier (é também o arquivo do botão **Salvar**);
 - **Arquivo HTML (`.html`)**: aula renderizada em um único arquivo autocontido para abrir no navegador;
 - **Pacote HTML (`.html.zip`)**: `index.html`, JSON do projeto, imagens, fontes e assets do tema;
+- **Curso e GitHub…**: abre a Biblioteca com a aula atual já marcada; marque outras aulas e escolha *Montar curso* (site, SCORM ou publicação direta no GitHub);
 - **Pacote SCORM (`.scorm.zip`)**: pacote com `imsmanifest.xml`, aula HTML e ponte SCORM para Moodle ou outro LMS;
 - **Imprimir PDF**: versão estática produzida pela janela de impressão do navegador.
 
