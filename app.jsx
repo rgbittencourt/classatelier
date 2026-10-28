@@ -132,6 +132,31 @@ function reviseRichNotes(blocks, kind, original, next) {
   return (blocks||[]).map((b)=>({ ...b, props: transformRichStrings(b.props,editHtml) }));
 }
 
+// ── Biblioteca de aulas: cada aula editada fica guardada (IndexedDB) com nome e data ──
+const LIB_DB = "classatelier", LIB_STORE = "lessons", CUR_KEY = "aulastudio.current.v1";
+const libDB = () => new Promise((res, rej) => {
+  if (typeof indexedDB === "undefined") { rej(new Error("IndexedDB indisponível")); return; }
+  const r = indexedDB.open(LIB_DB, 1);
+  r.onupgradeneeded = () => r.result.createObjectStore(LIB_STORE, { keyPath: "id" });
+  r.onsuccess = () => res(r.result);
+  r.onerror = () => rej(r.error);
+});
+const libTx = (mode, fn) => libDB().then((db) => new Promise((res, rej) => {
+  const tx = db.transaction(LIB_STORE, mode); const out = fn(tx.objectStore(LIB_STORE));
+  tx.oncomplete = () => res(out && out.result); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error);
+}));
+const libPut = (entry) => libTx("readwrite", (st) => st.put(entry));
+const libAll = () => libTx("readonly", (st) => st.getAll()).then((all) => all || []);
+const libDel = (id) => libTx("readwrite", (st) => st.delete(id));
+const newLessonId = () => "l" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const isStarterLesson = (l) => JSON.stringify(l) === JSON.stringify(STARTER);
+const isBlankLesson = (l) => !(l.blocks || []).length && !(l.meta && l.meta.title);
+const makeLibEntry = (id, lesson, source) => ({ id, title: (lesson.meta && lesson.meta.title) || "Aula sem título", blocks: (lesson.blocks || []).length, updatedAt: Date.now(), source: source || null, lesson });
+function loadCurrent() {
+  try { const c = JSON.parse(localStorage.getItem(CUR_KEY) || "null"); if (c && c.id) return c; } catch (e) {}
+  return { id: newLessonId(), source: null };
+}
+
 function AulaStudioApp() {
   const [lesson, setLesson] = useStateA(loadLesson);
   const [selected, setSelected] = useStateA(null);
@@ -144,35 +169,65 @@ function AulaStudioApp() {
   const hasLessonContent = (lesson.blocks || []).length > 0 || Object.entries(lesson.meta || {}).some(([key, value]) => key !== "license" && value !== "" && value != null);
 
   // autosave
-  useEffectA(() => {
-    const t = setTimeout(() => { try { localStorage.setItem(STORE_KEY, JSON.stringify(lesson)); } catch (e) {} }, 250);
-    return () => clearTimeout(t);
-  }, [lesson]);
-
-  // ClassAuthor (o gerador) abre este editor em outra aba e envia a semana escolhida por postMessage.
-  // Só aceita de quem abriu esta aba (window.opener) e pergunta antes de substituir um projeto em andamento.
   const lessonRef = useRefA(lesson);
   lessonRef.current = lesson;
+  const curRef = useRefA(null);
+  if (!curRef.current) curRef.current = loadCurrent();
+  const [libOpen, setLibOpen] = useStateA(false);
+  const [toast, setToast] = useStateA(null);
+  const toastTimer = useRefA(null);
+  const showToast = (msg) => { setToast(msg); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(null), 7000); };
+  useEffectA(() => {
+    const t = setTimeout(() => {
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(lesson)); localStorage.setItem(CUR_KEY, JSON.stringify(curRef.current)); } catch (e) {}
+      if (!isStarterLesson(lesson) && !isBlankLesson(lesson)) libPut(makeLibEntry(curRef.current.id, lesson, curRef.current.source)).catch(() => {});
+    }, 250);
+    return () => clearTimeout(t);
+  }, [lesson]);
+  // Guarda a aula atual na biblioteca e passa a editar outra (nunca perde a anterior).
+  const flushCurrent = async () => {
+    const cur = lessonRef.current;
+    if (isStarterLesson(cur) || isBlankLesson(cur)) return;
+    await libPut(makeLibEntry(curRef.current.id, cur, curRef.current.source));
+  };
+  const switchTo = async (project, id, source) => {
+    try { await flushCurrent(); } catch (e) {}
+    history.current = [];
+    curRef.current = { id, source: source || null };
+    try { localStorage.setItem(CUR_KEY, JSON.stringify(curRef.current)); } catch (e) {}
+    setLesson(project);
+    setSelected(null);
+  };
+
+  // ClassAuthor abre este editor em outra aba e envia a semana escolhida por postMessage.
+  // Só aceita de quem abriu esta aba (window.opener). A aula que estava aberta vai para a biblioteca.
   useEffectA(() => {
     const opener = window.opener;
     const reply = (origin, msg) => { try { opener && opener.postMessage(msg, origin); } catch (e) {} };
-    const onMessage = (ev) => {
+    const fmt = (ts) => new Date(ts).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    const onMessage = async (ev) => {
       const d = ev.data;
       if (!opener || ev.source !== opener || !d || d.type !== "classauthor:lesson") return;
       try {
         const project = extractProjectPayload(d.lesson);
-        const current = lessonRef.current;
-        const hasWork = JSON.stringify(current) !== JSON.stringify(STARTER) && (current.blocks || []).length > 0;
-        const label = project.meta?.title || d.fileName || "a semana enviada";
-        if (hasWork && !window.confirm("O ClassAuthor quer abrir «" + label + "» aqui.\n\nIsso substitui o projeto que está aberto neste editor (dá para desfazer com Ctrl+Z). Continuar?")) {
+        const key = d.fileName || "";
+        const label = (project.meta && project.meta.title) || key || "a semana enviada";
+        let existing = null, libOk = true;
+        try { const all = await libAll(); existing = key ? all.find((e) => e.source && e.source.key === key) : null; } catch (e) { libOk = false; }
+        const cur = lessonRef.current;
+        const hasWork = !isStarterLesson(cur) && !isBlankLesson(cur);
+        if (existing && !window.confirm("«" + label + "» já está na biblioteca (última edição em " + fmt(existing.updatedAt) + ").\n\nSubstituir pela versão que veio do ClassAuthor? As edições feitas aqui nessa aula serão perdidas.")) {
           reply(ev.origin, { type: "aulastudio:declined" });
           return;
         }
-        history.current.push(JSON.stringify(current));
-        if (history.current.length > 50) history.current.shift();
-        setLesson(project);
-        setSelected(null);
-        reply(ev.origin, { type: "aulastudio:loaded", title: project.meta?.title || "" });
+        if (!existing && !libOk && hasWork && !window.confirm("O ClassAuthor quer abrir «" + label + "» aqui.\n\nIsso substitui o projeto que está aberto neste editor. Continuar?")) {
+          reply(ev.origin, { type: "aulastudio:declined" });
+          return;
+        }
+        await switchTo(project, existing ? existing.id : newLessonId(), { app: "classauthor", key });
+        const kept = libOk && hasWork;
+        showToast("«" + label + "» aberta, vinda do ClassAuthor." + (kept ? " A aula que estava aberta ficou na Biblioteca." : ""));
+        reply(ev.origin, { type: "aulastudio:loaded", title: (project.meta && project.meta.title) || "", savedPrevious: kept });
       } catch (err) {
         reply(ev.origin, { type: "aulastudio:error", message: String(err && err.message || err) });
       }
@@ -366,9 +421,7 @@ function AulaStudioApp() {
       try {
         const data = JSON.parse(String(r.result));
         const project = extractProjectPayload(data);
-        pushHistory();
-        setLesson(project);
-        setSelected(null);
+        switchTo(project, newLessonId(), { app: "file", key: f.name }).then(() => showToast("Projeto aberto. A aula anterior ficou na Biblioteca."));
       } catch (err) { alert("Não consegui abrir o projeto: " + err.message); }
     };
     r.readAsText(f);
@@ -427,7 +480,7 @@ function AulaStudioApp() {
           onUndo={undo} canUndo={history.current.length > 0}
           onExportHTML={exportHTML} onExportStandaloneHTML={exportStandaloneHTML} onExportSCORM={() => setScormOpen(true)} onPrintPDF={printPDF}
           onOpenProject={openProjectClick} onDownloadProject={downloadProject}
-          onRichNotes={() => setRichOpen(true)}
+          onRichNotes={() => setRichOpen(true)} onLibrary={() => setLibOpen(true)}
           onClear={() => setClearOpen(true)} canClear={hasLessonContent}
         />
         <Canvas
@@ -449,6 +502,10 @@ function AulaStudioApp() {
         </aside>
       )}
 
+      {libOpen && <LibraryDialog currentId={curRef.current.id} onClose={() => setLibOpen(false)}
+        onOpen={async (e) => { await switchTo(e.lesson, e.id, e.source); setLibOpen(false); setMode("edit"); }}
+        onNew={async () => { await switchTo(emptyLesson(), newLessonId(), null); setLibOpen(false); setMode("edit"); }} />}
+      {toast && <div role="status" style={{ position: "fixed", left: "50%", bottom: 24, transform: "translateX(-50%)", zIndex: 10000, maxWidth: 520, padding: "12px 18px", borderRadius: 12, background: "#14213D", color: "#fff", fontSize: 13, lineHeight: 1.5, boxShadow: "0 18px 44px rgba(20,33,61,.3)" }}>{toast}</div>}
       <window.MarkToolbar />
       <input ref={fileInputRef} type="file" accept=".json,application/json" onChange={onProjectFile} style={{ display: "none" }} />
       {scormOpen && <ScormDialog lesson={lesson} onClose={() => setScormOpen(false)} onConfirm={exportSCORM} />}
@@ -488,6 +545,55 @@ function Palette({ onDragType, onAdd }) {
   );
 }
 
+function LibraryDialog({ currentId, onClose, onOpen, onNew }) {
+  const [items, setItems] = useStateA(null);
+  const [failed, setFailed] = useStateA(false);
+  const load = () => libAll().then((all) => setItems(all.sort((a, b) => b.updatedAt - a.updatedAt))).catch(() => setFailed(true));
+  useEffectA(() => { load(); }, []);
+  const remove = async (e) => {
+    if (!window.confirm("Excluir «" + e.title + "» da biblioteca?\n\nIsso não pode ser desfeito. Para guardar uma cópia, abra a aula e use Salvar.")) return;
+    try { await libDel(e.id); } catch (err) {}
+    load();
+  };
+  const fmt = (ts) => new Date(ts).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(20,20,28,.48)", display: "grid", placeItems: "center", padding: 20 }} onMouseDown={onClose}>
+      <section onMouseDown={(e) => e.stopPropagation()} style={{ width: "min(720px,96vw)", maxHeight: "86vh", display: "flex", flexDirection: "column", background: "var(--tool-surface)", borderRadius: 14, overflow: "hidden", boxShadow: "0 24px 70px rgba(0,0,0,.3)" }}>
+        <header style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: 12, padding: "18px 22px", background: "#fff", borderBottom: "1px solid var(--tool-line)" }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 18 }}>Biblioteca de aulas</h2>
+            <p style={{ margin: "5px 0 0", fontSize: 12, color: "var(--tool-ink-3)" }}>Tudo o que você edita fica guardado neste navegador. As semanas que chegam do ClassAuthor entram aqui, sem apagar as outras.</p>
+          </div>
+          <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+            <button style={{ ...ghostBtn, width: "auto", padding: "0 12px", fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap" }} onClick={onNew}>+ Nova aula</button>
+            <button style={ghostBtn} onClick={onClose} title="Fechar">×</button>
+          </div>
+        </header>
+        <div className="tool-scroll" style={{ overflow: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 10 }}>
+          {failed && <p style={emptyNote}>Este navegador não permite guardar a biblioteca (modo privado ou armazenamento bloqueado). Use <b>Salvar</b> para baixar cada aula.</p>}
+          {!failed && items && !items.length && <p style={emptyNote}>Nenhuma aula guardada ainda. Comece a editar, abra um projeto ou envie uma semana pelo ClassAuthor.</p>}
+          {!failed && !items && <p style={emptyNote}>Carregando…</p>}
+          {(items || []).map((e) => {
+            const here = e.id === currentId;
+            return (
+              <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", border: "1px solid " + (here ? "var(--tool-sel)" : "var(--tool-line)"), borderRadius: 10, background: here ? "var(--tool-sel-soft)" : "#fff" }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.title}</div>
+                  <div style={{ fontSize: 11.5, color: "var(--tool-ink-3)", marginTop: 3 }}>
+                    {e.blocks} {e.blocks === 1 ? "bloco" : "blocos"} · editada em {fmt(e.updatedAt)}{e.source && e.source.app === "classauthor" ? " · veio do ClassAuthor" : ""}{here ? " · aberta agora" : ""}
+                  </div>
+                </div>
+                {!here && <button style={{ ...ghostBtn, width: "auto", padding: "0 12px", fontSize: 12.5, fontWeight: 600 }} onClick={() => onOpen(e)}>Abrir</button>}
+                {!here && <button style={{ ...ghostBtn, color: "var(--coral-deep)" }} title="Excluir da biblioteca" onClick={() => remove(e)}><window.TIcon name="trash" size={15} /></button>}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function RichNotesDialog({ lesson, onClose, onUpdate }) {
   const notes = richNotesOf(lesson.blocks);
   const Row = ({ kind, note }) => { const [a,setA]=useStateA(kind==="glossary"?note.term:note.label), [b,setB]=useStateA(kind==="glossary"?note.def:note.href); return <div style={{ border:"1px solid var(--tool-line)", borderRadius:10, padding:12, background:"#fff", marginBottom:10 }}><label style={dlgLabel}>{kind==="glossary"?"Termo":"Texto do link"}</label><input style={dlgInput} value={a} onChange={(e)=>setA(e.target.value)} /><label style={{...dlgLabel,marginTop:9}}>{kind==="glossary"?"Definição":"Endereço"}</label><textarea style={{...dlgInput,minHeight:58,resize:"vertical"}} value={b} onChange={(e)=>setB(e.target.value)} /><div style={{display:"flex",justifyContent:"space-between",marginTop:9}}><button style={{...ghostBtn,width:"auto",padding:"0 10px",color:"var(--coral-deep)"}} onClick={()=>onUpdate(kind,note,null)}>Remover</button><button style={{...primaryBtn,height:32}} onClick={()=>onUpdate(kind,note,kind==="glossary"?{term:a.trim(),def:b.trim()}:{label:a.trim(),href:b.trim()})}>Salvar</button></div></div> };
@@ -496,7 +602,7 @@ function RichNotesDialog({ lesson, onClose, onUpdate }) {
 const emptyNote={padding:18,border:"1px dashed var(--tool-line-2)",borderRadius:9,color:"var(--tool-ink-3)",fontSize:12};
 
 // ── Top bar ──
-function Topbar({ lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onClear, canClear }) {
+function Topbar({ onLibrary, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onClear, canClear }) {
   const [busy, setBusy] = useStateA(false);
   const [menu, setMenu] = useStateA(false);
   const wrap = async (fn) => { setBusy(true); setMenu(false); try { await fn(); } finally { setBusy(false); } };
@@ -511,6 +617,7 @@ function Topbar({ lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExport
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
         <button onClick={onUndo} disabled={!canUndo} title="Desfazer (⌘Z)" style={{ ...ghostBtn, opacity: canUndo ? 1 : 0.4 }}><window.TIcon name="undo" size={15} /></button>
         <button onClick={onClear} disabled={!canClear} title="Limpar página" style={{ ...ghostBtn, opacity: canClear ? 1 : 0.4, color: canClear ? "var(--coral-deep)" : "var(--tool-ink-3)" }}><window.TIcon name="trash" size={15} /></button>
+        <button onClick={onLibrary} title="Biblioteca: todas as aulas guardadas neste navegador (as semanas do ClassAuthor entram aqui)" style={textBtn}><window.TIcon name="library" size={15} /><span className="tb-label">Biblioteca</span></button>
         <button onClick={onOpenProject} title="Abrir projeto (.aula.json)" style={textBtn}><window.TIcon name="folder" size={15} /><span className="tb-label">Abrir</span></button>
         <button onClick={onDownloadProject} title="Salvar projeto: baixa o arquivo para continuar depois ou em outro computador" style={textBtn}><window.TIcon name="save" size={15} /><span className="tb-label">Salvar</span></button>
         <button onClick={onRichNotes} title="Termos e links: revisar glossário e links de toda a aula" style={textBtn}><window.TIcon name="link" size={15} /><span className="tb-label">Termos e links</span></button>
