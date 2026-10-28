@@ -134,3 +134,8 @@ main{max-width:1180px;margin:0 auto;padding:28px 24px 80px}
   .top{padding:10px 16px}
   .row2{grid-template-columns:1fr}
 }
+
+.pick{width:16px;height:16px;flex:none;margin:0;accent-color:var(--navy);cursor:pointer}
+.twisty{cursor:pointer;padding:4px 3px}
+.bulk{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fdeee9;border:1px solid #efc9bf;border-radius:10px;padding:9px 14px;margin:0 0 14px;position:sticky;top:72px;z-index:10}
+.bulk span{margin-right:auto}

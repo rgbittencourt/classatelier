@@ -15,6 +15,8 @@ const S = {
   courses: [],           // [{ path, title, lessons:[{n,file,title}], size, files }]
   titles: new Map(),     // sha do index.html -> título
   view: "cursos", selected: "", open: new Set(), openLessons: new Set(),
+  checked: new Set(),    // itens marcados na árvore (exclusão em lote)
+  loadedAt: null,
   loading: false, error: ""
 };
 
@@ -39,6 +41,7 @@ async function api(path, { method = "GET", body } = {}) {
   try {
     res = await fetch(API + path, {
       method,
+      cache: "no-store", // a API do GitHub envia max-age=60: sem isso o navegador reutiliza a leitura antiga
       headers: { Accept: "application/vnd.github+json", Authorization: "Bearer " + S.token, "X-GitHub-Api-Version": "2022-11-28", ...(body ? { "Content-Type": "application/json" } : {}) },
       body: body ? JSON.stringify(body) : undefined
     });
@@ -69,6 +72,8 @@ async function loadRepo() {
   }
   try { S.pages = await api(`${base}/pages`); } catch (e) { S.pages = e.status === 404 ? null : S.pages === undefined ? null : S.pages; }
   await detectCourses();
+  S.loadedAt = new Date();
+  for (const p of [...S.checked]) if (!S.files.has(p) && !S.dirs.has(p)) S.checked.delete(p);
 }
 
 // Curso = pasta com index.html e ao menos uma aula-NN.html (o que o ClassAtelier publica).
@@ -226,7 +231,7 @@ function renderTop() {
     const pages = S.pages === undefined ? "" : S.pages
       ? `<a class="chip ok" href="${esc(pagesBase())}" target="_blank" rel="noopener"><span class="dot"></span>Pages ligado</a>`
       : `<button class="chip warn" data-act="enable-pages" title="Ligar o GitHub Pages neste repositório"><span class="dot"></span>Pages desligado · ligar</button>`;
-    right = `<div class="conn-info"><code>${esc(S.conn.owner)}/${esc(S.conn.repo)}@${esc(S.conn.branch)}</code>${pages}</div>
+    right = `<div class="conn-info"><code>${esc(S.conn.owner)}/${esc(S.conn.repo)}@${esc(S.conn.branch)}</code>${pages}${S.loadedAt ? `<span title="Hora da última leitura do repositório">lido às ${S.loadedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>` : ""}</div>
       <button class="btn small" data-act="reload">Recarregar</button><button class="btn small ghost" data-act="logout">Sair</button>`;
   }
   $("#top").innerHTML = `<a class="brand" href="./" aria-label="${APP_NAME}">${mark}<span><span class="wordmark"><b>Class</b><i>Acervo</i></span><span class="tagline">cursos publicados no GitHub Pages</span></span></a><span class="top-spacer"></span>${right}`;
@@ -281,7 +286,7 @@ function treeRows(dir, depth) {
   return childrenOf(dir).map(([p, kind]) => {
     const isDir = kind === "dir"; const open = S.open.has(p);
     const isCourse = isDir && S.courses.some((c) => c.path === p);
-    const row = `<div class="node ${isDir ? "dir" : "file"}" role="treeitem" tabindex="0" data-act="select" data-path="${esc(p)}" data-kind="${kind}" aria-selected="${S.selected === p}" ${isDir ? `aria-expanded="${open}"` : ""} style="padding-left:${8 + depth * 18}px"><span class="twisty">${isDir ? (open ? "▾" : "▸") : ""}</span>${isDir ? ICONS.folder : iconFor(p)}<span class="name">${esc(basename(p))}</span>${isCourse ? '<span class="chip ok">curso</span>' : ""}<span class="size">${sizeOf(isDir ? dirSize(p) : S.files.get(p).size)}</span></div>`;
+    const row = `<div class="node ${isDir ? "dir" : "file"}" role="treeitem" tabindex="0" data-act="select" data-path="${esc(p)}" data-kind="${kind}" aria-selected="${S.selected === p}" ${isDir ? `aria-expanded="${open}"` : ""} style="padding-left:${6 + depth * 18}px"><input type="checkbox" class="pick" data-act="check" data-path="${esc(p)}" ${S.checked.has(p) ? "checked" : ""} aria-label="Marcar ${esc(basename(p))}"><span class="twisty" ${isDir ? `data-act="toggle" data-path="${esc(p)}" title="${open ? "Recolher" : "Expandir"}"` : ""}>${isDir ? (open ? "▾" : "▸") : ""}</span>${isDir ? ICONS.folder : iconFor(p)}<span class="name">${esc(basename(p))}</span>${isCourse ? '<span class="chip ok">curso</span>' : ""}<span class="size">${sizeOf(isDir ? dirSize(p) : S.files.get(p).size)}</span></div>`;
     return row + (isDir && open ? treeRows(p, depth + 1) : "");
   }).join("");
 }
@@ -309,19 +314,26 @@ function detailPanel() {
     <div id="preview-slot"></div></aside>`;
 }
 
+function bulkBar() {
+  const n = S.checked.size;
+  if (!n) return "";
+  return `<div class="bulk" role="region" aria-label="Itens marcados"><span><b>${n}</b> ${n === 1 ? "item marcado" : "itens marcados"}</span><button class="btn small danger" data-act="delete-checked">Excluir marcados…</button><button class="btn small" data-act="clear-checked">Desmarcar tudo</button></div>`;
+}
 function renderMain() {
   if (!S.conn) { renderConnect(); return; }
   const warn = S.head && S.head.truncated ? '<p class="note">O repositório é muito grande e a lista veio incompleta. Alguns arquivos podem não aparecer aqui.</p>' : "";
-  const readOnly = S.conn && !S.conn.canPush ? '<p class="note">Este token só tem leitura: dá para olhar, mas não alterar. Gere um token com Contents em leitura e escrita para renomear, mover ou excluir.</p>' : "";
+  const readOnly = S.conn && !S.conn.canPush ? '<p class="note">O GitHub informa que sua conta não pode alterar este repositório: dá para olhar, mas não mexer.</p>' : "";
   const tabs = `<div class="tabs" role="tablist"><button class="tab" role="tab" data-act="tab" data-view="cursos" aria-selected="${S.view === "cursos"}">Cursos (${S.courses.length})</button><button class="tab" role="tab" data-act="tab" data-view="arquivos" aria-selected="${S.view === "arquivos"}">Todos os arquivos</button></div>`;
   let body;
   if (S.view === "cursos") {
     body = `<div class="section-head"><div><h2>Cursos publicados</h2><p>Pastas com <code>index.html</code> e aulas <code>aula-NN.html</code>, como o ClassAtelier publica.</p></div><div class="actions"><button class="btn" data-act="index" data-path="">Gerar índice do site…</button><a class="btn" href="${esc(pagesBase())}" target="_blank" rel="noopener">Abrir o site ↗</a></div></div>` +
       (S.courses.length ? `<div class="grid">${S.courses.map(courseCard).join("")}</div>` : `<div class="empty"><h3>Nenhum curso encontrado neste repositório</h3><p>Publique pelo ClassAtelier em Exportar → Curso e GitHub…, ou use a aba de arquivos para ver tudo o que há aqui.</p></div>`);
   } else {
-    body = `<div class="section-head"><div><h2>Todos os arquivos</h2><p>${S.files.size} arquivos em ${S.dirs.size} pastas.</p></div></div><div class="explorer"><div class="tree" role="tree" aria-label="Arquivos do repositório">${treeRows("", 0) || '<div class="empty">Repositório vazio.</div>'}</div>${detailPanel()}</div>`;
+    body = `<div class="section-head"><div><h2>Todos os arquivos</h2><p>${S.files.size} arquivos em ${S.dirs.size} pastas. <b>Clique</b> em um item para ver detalhes e ações. <b>Marque as caixas</b> para excluir vários de uma vez.</p></div></div>${bulkBar()}<div class="explorer"><div class="tree" role="tree" aria-label="Arquivos do repositório">${treeRows("", 0) || '<div class="empty">Repositório vazio.</div>'}</div>${detailPanel()}</div>`;
   }
+  const keep = $(".tree") ? $(".tree").scrollTop : 0;
   $("#main").innerHTML = warn + readOnly + tabs + body;
+  if ($(".tree")) $(".tree").scrollTop = keep;
   if (S.view === "arquivos" && S.selected && S.files.has(S.selected)) showPreview(S.selected);
 }
 function render() { renderTop(); renderMain(); }
@@ -356,7 +368,7 @@ const closeDialog = () => { $("#dialog-root").innerHTML = ""; dialog.actions = [
 const dlgBusy = (msg) => dialog({ title: "Trabalhando…", body: `<p><span class="spinner"></span>${esc(msg)}</p>`, actions: [] });
 function dlgDone(title, html) { dialog({ title, body: `<div class="result">${html}</div>`, actions: [{ label: "Fechar", kind: "primary", onClick: closeDialog }] }); }
 function dlgError(e) { dialog({ title: "Não deu certo", body: `<p class="err">${esc(e.message || String(e))}</p>`, actions: [{ label: "Fechar", onClick: closeDialog }] }); }
-const canWrite = () => { if (S.conn.canPush) return true; dlgError(new Error("Este token só tem leitura. Gere um token com Contents em leitura e escrita.")); return false; };
+const canWrite = () => { if (S.conn.canPush) return true; dlgError(new Error("Sua conta não tem permissão de escrita neste repositório.")); return false; };
 
 async function afterChange(message, commit) {
   await loadRepo();
@@ -388,20 +400,32 @@ function actMove(path, duplicate) {
     } }]
   });
 }
-function actDelete(path) {
-  const isDir = isDirPath(path); const n = isDir ? filesUnder(path).length : 1;
-  const course = S.courses.find((c) => c.path === path);
+function actDelete(path) { actDeleteMany([path]); }
+function actDeleteMany(paths) {
+  // sem itens repetidos nem itens dentro de uma pasta que também será excluída
+  const uniq = [...new Set(paths)].filter((p) => !paths.some((q) => q !== p && isDirPath(q) && p.startsWith(q + "/")));
+  const entries = new Map();
+  for (const p of uniq) for (const e of planDelete(p)) entries.set(e.path, e);
+  const hasDir = uniq.some(isDirPath);
+  const needType = hasDir || uniq.length > 1;
+  const word = uniq.length === 1 ? basename(uniq[0]) : "excluir";
+  const names = uniq.slice(0, 8).map((p) => `<li><code>${esc(p)}</code>${isDirPath(p) ? " (pasta)" : ""}</li>`).join("") + (uniq.length > 8 ? `<li>…e mais ${uniq.length - 8}</li>` : "");
+  const courses = uniq.map((p) => S.courses.find((c) => c.path === p)).filter(Boolean);
   dialog({
-    title: `Excluir «${basename(path)}»`,
-    body: `<p>${isDir ? `Vai remover a pasta <code>${esc(path)}</code> com ${n} arquivo(s)${course ? ` (o curso “${esc(course.title)}”)` : ""}.` : `Vai remover o arquivo <code>${esc(path)}</code>.`} Os links do site para ele deixam de funcionar.</p>
+    title: uniq.length === 1 ? `Excluir «${basename(uniq[0])}»` : `Excluir ${uniq.length} itens`,
+    body: `<p>Vai remover <b>${entries.size}</b> arquivo(s) do repositório${courses.length ? `, incluindo ${courses.length === 1 ? "o curso" : "os cursos"} ${courses.map((c) => "“" + esc(c.title) + "”").join(", ")}` : ""}. Os links do site para eles deixam de funcionar.</p>
+      <ul style="margin:0 0 12px;padding-left:20px">${names}</ul>
       <p class="hint">O histórico do GitHub guarda a versão anterior: dá para recuperar pelo GitHub se precisar.</p>
-      <label class="field"><span>Para confirmar, digite o nome: <b>${esc(basename(path))}</b></span><input type="text" id="confirm-name" spellcheck="false"></label><div id="del-err"></div>`,
+      ${needType ? `<label class="field"><span>Para confirmar, digite: <b>${esc(word)}</b></span><input type="text" id="confirm-name" spellcheck="false" autocomplete="off"></label>` : ""}<div id="del-err"></div>`,
     actions: [{ label: "Cancelar", onClick: closeDialog }, { label: "Excluir", kind: "danger", onClick: async () => {
       if (!canWrite()) return;
-      if ($("#confirm-name").value.trim() !== basename(path)) { $("#del-err").innerHTML = '<p class="err">O nome digitado não confere.</p>'; return; }
-      dlgBusy("Excluindo…");
-      try { const commit = await commitChanges(planDelete(path), `Exclui ${path} (${APP_NAME})`); await afterChange("Excluído", commit); }
-      catch (e) { dlgError(e); }
+      if (needType && $("#confirm-name").value.trim().toLowerCase() !== word.toLowerCase()) { $("#del-err").innerHTML = `<p class="err">Digite exatamente “${esc(word)}” para confirmar.</p>`; return; }
+      dlgBusy("Excluindo " + entries.size + " arquivo(s)…");
+      try {
+        const commit = await commitChanges([...entries.values()], uniq.length === 1 ? `Exclui ${uniq[0]} (${APP_NAME})` : `Exclui ${uniq.length} itens (${APP_NAME})`);
+        uniq.forEach((p) => S.checked.delete(p));
+        await afterChange("Excluído", commit);
+      } catch (e) { dlgError(e); }
     } }]
   });
 }
@@ -459,7 +483,7 @@ async function connect(form) {
   try {
     S.conn = { owner: S.owner, repo: S.repo, branch: S.branch, canPush: false };
     const info = await api(`${repoPath()}`);
-    S.conn = { owner: info.owner && info.owner.login || S.owner, repo: info.name || S.repo, branch: S.branch || info.default_branch || "main", canPush: !!(info.permissions && info.permissions.push) };
+    S.conn = { owner: info.owner && info.owner.login || S.owner, repo: info.name || S.repo, branch: S.branch || info.default_branch || "main", canPush: !(info.permissions && info.permissions.push === false) }; // tokens de granularidade fina muitas vezes não informam "permissions": só bloqueia se vier false explícito; no mais, tenta e mostra o erro real do GitHub
     try { localStorage.setItem("acervo.repo", JSON.stringify({ owner: S.owner, repo: S.repo, branch: S.branch })); } catch (e) { /* sem armazenamento */ }
     try { sessionStorage.setItem("acervo.token", S.token); if (remember) localStorage.setItem("acervo.token", S.token); else localStorage.removeItem("acervo.token"); } catch (e) { /* sem armazenamento */ }
     S.loading = true; $("#main").innerHTML = '<div class="loading"><span class="spinner"></span>Lendo o repositório…</div>'; renderTop();
@@ -487,12 +511,16 @@ document.addEventListener("click", async (ev) => {
   const act = el.dataset.act; const path = el.dataset.path;
   if (act === "scrim") { if (ev.target === el && !$("#dialog-root .spinner")) closeDialog(); return; }
   if (act === "tab") { S.view = el.dataset.view; renderMain(); return; }
-  if (act === "reload") { $("#main").innerHTML = '<div class="loading"><span class="spinner"></span>Lendo o repositório…</div>'; try { await loadRepo(); render(); toast("Atualizado."); } catch (e) { render(); dlgError(e); } return; }
+  if (act === "reload") { $("#main").innerHTML = '<div class="loading"><span class="spinner"></span>Lendo o repositório…</div>'; try { await loadRepo(); render(); toast("Atualizado: " + S.courses.length + " curso(s), " + S.files.size + " arquivo(s)."); } catch (e) { render(); dlgError(e); } return; }
   if (act === "logout") { logout(); return; }
   if (act === "enable-pages") { actEnablePages(); return; }
+  if (act === "toggle") { if (S.open.has(path)) S.open.delete(path); else S.open.add(path); renderMain(); return; }
+  if (act === "check") { if (el.checked) S.checked.add(path); else S.checked.delete(path); renderMain(); return; }
+  if (act === "clear-checked") { S.checked.clear(); renderMain(); return; }
+  if (act === "delete-checked") { actDeleteMany([...S.checked]); return; }
   if (act === "select") {
     S.selected = path;
-    if (el.dataset.kind === "dir") { if (S.open.has(path)) S.open.delete(path); else S.open.add(path); }
+    if (el.dataset.kind === "dir") S.open.add(path); // clicar abre a pasta; para recolher, use a setinha
     renderMain(); return;
   }
   if (act === "goto-files") { S.view = "arquivos"; S.selected = path; let d = path; while (d) { S.open.add(d); d = dirname(d); } renderMain(); return; }
