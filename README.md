@@ -22,6 +22,10 @@ O botão **Biblioteca** guarda, neste navegador, todas as aulas que você edita 
 
 Em **Montar curso → Publicar no GitHub**, informe a conta (ou organização), o repositório, a branch e, se quiser, uma **pasta** (um repositório pode hospedar vários cursos, ex.: `tedpro/TGE`). O ClassAtelier envia o site num único commit, só com os arquivos que mudaram, e mostra os links de cada aula para colar no Moodle. O token de acesso é digitado a cada uso (ou lembrado neste navegador, se você marcar) e vai direto do navegador para `api.github.com`. Token fino (*fine-grained*) com **Contents** e **Pages** em *Read and write* serve para repositórios da própria conta; para repositório de outra pessoa ou organização onde você é colaborador, use token clássico com o escopo `repo`.
 
+## Origem e créditos
+
+O ClassAtelier foi desenvolvido por **Rogério Bittencourt (INOVALAB – IFSC)** a partir do **LumeAuthor**, criado pelo **Prof. Luís Lindner**, que é a base do editor de blocos, dos temas e da exportação SCORM. O LumeAuthor original segue sendo desenvolvido por ele, sem alterações vindas daqui; o ClassAtelier é uma evolução independente (biblioteca de aulas, pacote do curso, publicação no GitHub, integração com o ClassAuthor, nova identidade). O rodapé das aulas exportadas traz essa atribuição: *"…desenvolvida por Rogério Bittencourt, INOVALAB - IFSC, a partir do LumeAuthor, de Luís Lindner."*
+
 ## Identidade visual
 
 - `assets/classatelier-mark.svg`: símbolo do ClassAtelier (janela em arco);
