@@ -284,7 +284,47 @@ function AulaStudioApp() {
     setSelected(c.id);
     setMode("edit");
   };
-  const insertChild = (topicId, type, idx) => insertInto(topicTargetKey(topicId), type, idx);
+  // Divide o tópico no ponto do "+" e põe um bloco de página inteira (abertura, quebra de página,
+  // síntese, referências) entre as duas metades. Tópico retrátil/slide não se divide: o bloco vai
+  // antes ou depois dele.
+  const insertRootAtChild = (topicId, type, idx) => {
+    const bi = lesson.blocks.findIndex((b) => b.id === topicId);
+    if (bi < 0) return;
+    const topic = lesson.blocks[bi];
+    const kids = topic.props.children || [];
+    const nb = window.newBlock(type);
+    const at = idx == null ? kids.length : idx;
+    let replacement;
+    if (topic.type === "topic" && at > 0 && at < kids.length) {
+      const before = setChildren(topic, kids.slice(0, at));
+      const after = { ...setChildren(topic, kids.slice(at)), id: "b" + Math.random().toString(36).slice(2, 9) };
+      replacement = [before, nb, after];
+    } else replacement = at <= 0 ? [nb, topic] : [topic, nb];
+    const blocks = [...lesson.blocks]; blocks.splice(bi, 1, ...replacement);
+    commit({ ...lesson, blocks }); setSelected(nb.id); setMode("edit");
+  };
+  // Divisor retrátil: o que vem depois dele fica recolhido. Num tópico comum, vira tópico retrátil.
+  const insertCollapseBreak = (topicId, idx) => {
+    const bi = lesson.blocks.findIndex((b) => b.id === topicId);
+    if (bi < 0) return;
+    const topic = lesson.blocks[bi];
+    if (topic.type === "topic-slider") return;
+    const kids = (topic.props.children || []).filter((c) => c.type !== "collapsebreak");
+    const old = (topic.props.children || []).findIndex((c) => c.type === "collapsebreak");
+    let at = idx == null ? kids.length : idx;
+    if (old >= 0 && old < at) at -= 1; // o divisor antigo saiu da lista
+    const marker = window.newChildBlock("collapsebreak");
+    kids.splice(Math.max(0, Math.min(at, kids.length)), 0, marker);
+    const props = { ...topic.props, children: kids };
+    if (topic.type === "topic") Object.assign(props, { triggerLabel: "Clique para expandir", defaultOpen: false });
+    const blocks = [...lesson.blocks]; blocks[bi] = { ...topic, type: "topic-collapsible", props };
+    commit({ ...lesson, blocks }); setSelected(marker.id); setMode("edit");
+  };
+  const insertChild = (topicId, type, idx) => {
+    if (window.ROOT_STRUCTURE_TYPES.indexOf(type) !== -1) return insertRootAtChild(topicId, type, idx);
+    if (type === "collapsebreak") return insertCollapseBreak(topicId, idx);
+    return insertInto(topicTargetKey(topicId), type, idx);
+  };
 
   // Merge a patch into a block whether it lives at root or inside a topic.
   const patchAnywhere = (id, patch) => {
@@ -1062,13 +1102,14 @@ function BlockShell({ block, mode, selected, selectedId, setSelected, onSelect, 
   // is absolutely positioned at the item's top edge so it never breaks the
   // .aula-topic-item adjacency the spacing CSS relies on (WYSIWYG with export).
   const kids = isTopic ? (block.props.children || []) : [];
+  const childPickerTypes = window.CHILD_PICKER_TYPES.filter((t) => !(t === "collapsebreak" && block.type === "topic-slider"));
   const renderChild = (c, i) => (
     <div
       key={c.id}
       className={"aula-topic-item lz-child" + (selectedId === c.id ? " is-selected" : "")}
       data-type={c.type}
       onClick={(e) => { e.stopPropagation(); setSelected(c.id); }}>
-      <ChildInsert at={i} topicId={block.id} dragBlock={dragBlock} moveChildTo={moveChildTo} openAt={childAddAt} setOpenAt={setChildAddAt} onPick={(t) => { insertChild(block.id, t, i); setChildAddAt(null); }} />
+      <ChildInsert types={childPickerTypes} at={i} topicId={block.id} dragBlock={dragBlock} moveChildTo={moveChildTo} openAt={childAddAt} setOpenAt={setChildAddAt} onPick={(t) => { insertChild(block.id, t, i); setChildAddAt(null); }} />
       {selectedId === c.id && isEdit && (
         <Controls
           drag dragStart={(e) => { dragBlock.current = c.id; e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", c.id); }}
@@ -1125,7 +1166,7 @@ function BlockShell({ block, mode, selected, selectedId, setSelected, onSelect, 
         <window.BlockView block={{ ...block, onChange }} mode={mode} renderNestedList={renderNestedList} />
       )}
       {isTopic && isEdit && (
-        <ChildInsert at={kids.length} topicId={block.id} dragBlock={dragBlock} moveChildTo={moveChildTo} tail openAt={childAddAt} setOpenAt={setChildAddAt} onPick={(t) => { insertChild(block.id, t, kids.length); setChildAddAt(null); }} />
+        <ChildInsert types={childPickerTypes} at={kids.length} topicId={block.id} dragBlock={dragBlock} moveChildTo={moveChildTo} tail openAt={childAddAt} setOpenAt={setChildAddAt} onPick={(t) => { insertChild(block.id, t, kids.length); setChildAddAt(null); }} />
       )}
     </div>
   );
@@ -1135,7 +1176,7 @@ const shellBtn = { display: "grid", placeItems: "center", width: 26, height: 24,
 // Inline "+" to add a block INSIDE a topic. Absolutely positioned at the top
 // edge of the item it precedes (insert at that index), so it doesn't disturb
 // the topic's flow spacing. `tail` variant sits at the topic's bottom.
-function ChildInsert({ at, topicId, dragBlock, moveChildTo, tail, openAt, setOpenAt, onPick }) {
+function ChildInsert({ at, topicId, dragBlock, moveChildTo, tail, openAt, setOpenAt, onPick, types }) {
   const [dragOver, setDragOver] = useStateA(false);
   return (
     <div
@@ -1155,7 +1196,7 @@ function ChildInsert({ at, topicId, dragBlock, moveChildTo, tail, openAt, setOpe
         <window.TIcon name="plus" size={13} color="#fff" />
       </button>
       {openAt === at && (
-        <BlockPicker only={window.CHILD_TYPES} title="Inserir no tópico"
+        <BlockPicker only={types || window.CHILD_PICKER_TYPES} title="Inserir no tópico"
           onPick={onPick} onClose={() => setOpenAt(null)} />
       )}
     </div>

@@ -398,6 +398,12 @@ const STRUCTURAL_TYPES = CONTAINER_TYPES.concat(["hero", "pagebreak", "sintese",
 const CHILD_TYPES = BLOCKS.filter((b) => !b.internal).map((b) => b.type).filter((t) => STRUCTURAL_TYPES.indexOf(t) === -1);
 // Nested item containers intentionally exclude themselves to keep the model
 // finite and the authoring UI understandable.
+// O "+" dentro de um tópico oferece TODAS as ferramentas de Estrutura. As de página inteira (abertura,
+// quebra de página, síntese, referências) não podem morar dentro do tópico: o editor as coloca no ponto
+// do "+", dividindo o tópico ao meio quando necessário. O divisor retrátil vale em tópico retrátil
+// (e converte um tópico comum nesse tipo).
+const ROOT_STRUCTURE_TYPES = ["hero", "pagebreak", "sintese", "referencias"];
+const CHILD_PICKER_TYPES = CHILD_TYPES.concat(ROOT_STRUCTURE_TYPES, ["collapsebreak"]);
 const NESTED_CHILD_TYPES = CHILD_TYPES.filter((t) => ["accordion", "linhadotempo", "columns"].indexOf(t) === -1);
 
 // A leaf block living inside a topic: no band of its own (no bg/pad).
@@ -471,4 +477,4 @@ function TIcon({ name, size = 16, color = "currentColor", stroke = 1.9 }) {
   );
 }
 
-Object.assign(window, { BLOCKS, BLOCK_BY_TYPE, BLOCK_CATS, CHILD_TYPES, NESTED_CHILD_TYPES, STRUCTURAL_TYPES, CONTAINER_TYPES, BG_TONES, TONE_BG, PAD_PRESETS, PAD_BY_ID, newBlock, newChildBlock, TIcon });
+Object.assign(window, { BLOCKS, BLOCK_BY_TYPE, BLOCK_CATS, CHILD_TYPES, CHILD_PICKER_TYPES, ROOT_STRUCTURE_TYPES, NESTED_CHILD_TYPES, STRUCTURAL_TYPES, CONTAINER_TYPES, BG_TONES, TONE_BG, PAD_PRESETS, PAD_BY_ID, newBlock, newChildBlock, TIcon });
