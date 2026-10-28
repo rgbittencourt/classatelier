@@ -415,7 +415,7 @@ function xmlEscape(s) {
 
 // In a ZIP package, user-uploaded data URLs can become ordinary files. This
 // keeps index.html small and makes the assets inspectable/reusable by authors.
-function externalizeLessonImages(lesson) {
+function externalizeLessonImages(lesson, prefix) {
   const assets = [];
   const known = new Map();
   const extensions = { jpeg: "jpg", jpg: "jpg", png: "png", webp: "webp", gif: "gif", avif: "avif", svg: "svg" };
@@ -426,7 +426,7 @@ function externalizeLessonImages(lesson) {
       if (known.has(value)) return known.get(value);
       const subtype = match[1].toLowerCase().replace("svg+xml", "svg");
       const ext = extensions[subtype] || "bin";
-      const path = `assets/images/image-${String(assets.length + 1).padStart(3, "0")}.${ext}`;
+      const path = `assets/images/${prefix || ""}image-${String(assets.length + 1).padStart(3, "0")}.${ext}`;
       assets.push({ path, base64: match[2] });
       known.set(value, path);
       return path;
@@ -562,4 +562,81 @@ async function downloadSCORM(lesson, opts) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
-Object.assign(window, { downloadExport, downloadStandaloneHTML, buildExportHTML, downloadSCORM, openPrintPreview });
+// ── Curso completo: um único pacote SCORM com uma aula (SCO) por semana ──
+function buildCourseManifest(opts) {
+  const title = xmlEscape(opts.title || "Curso");
+  const id = "CURSO_" + Math.random().toString(36).slice(2, 9).toUpperCase();
+  const is2004 = opts.version === "2004";
+  const fileTags = (files) => files.map((path) => `      <file href="${xmlEscape(path)}"/>`).join("\n");
+  const items = opts.items.map((it, i) => `      <item identifier="ITEM${i + 1}" identifierref="RES${i + 1}"${is2004 ? "" : ' isvisible="true"'}>
+        <title>${xmlEscape(it.title)}</title>${!is2004 && it.mastery != null ? `\n        <adlcp:masteryscore>${it.mastery}</adlcp:masteryscore>` : ""}
+      </item>`).join("\n");
+  const resources = opts.items.map((it, i) => `    <resource identifier="RES${i + 1}" type="webcontent" adlcp:scorm${is2004 ? "Type" : "type"}="sco" href="${xmlEscape(it.href)}">
+${fileTags(it.files.concat(opts.shared))}
+    </resource>`).join("\n");
+  const head = is2004
+    ? `<?xml version="1.0" encoding="UTF-8"?>
+<manifest identifier="${id}" version="1"
+  xmlns="http://www.imsglobal.org/xsd/imscp_v1p1"
+  xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_v1p3"
+  xmlns:adlseq="http://www.adlnet.org/xsd/adlseq_v1p3"
+  xmlns:adlnav="http://www.adlnet.org/xsd/adlnav_v1p3"
+  xmlns:imsss="http://www.imsglobal.org/xsd/imsss"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <metadata><schema>ADL SCORM</schema><schemaversion>2004 4th Edition</schemaversion></metadata>`
+    : `<?xml version="1.0" encoding="UTF-8"?>
+<manifest identifier="${id}" version="1.2"
+  xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2"
+  xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <metadata><schema>ADL SCORM</schema><schemaversion>1.2</schemaversion></metadata>`;
+  return `${head}
+  <organizations default="ORG">
+    <organization identifier="ORG">
+      <title>${title}</title>
+${items}
+    </organization>
+  </organizations>
+  <resources>
+${resources}
+  </resources>
+</manifest>`;
+}
+
+async function downloadCourseSCORM(lessons, opts) {
+  if (typeof JSZip === "undefined") throw new Error("Biblioteca de compactação (JSZip) não carregou.");
+  if (!lessons || !lessons.length) throw new Error("Escolha pelo menos uma aula.");
+  const zip = new JSZip();
+  const items = [];
+  for (let i = 0; i < lessons.length; i++) {
+    const n = String(i + 1).padStart(2, "0");
+    const L = JSON.parse(JSON.stringify(lessons[i]));
+    L.meta = L.meta || {};
+    const label = L.meta.title || "Aula " + n;
+    const flat = (L.blocks || []).flatMap((b) => ["topic", "topic-collapsible", "topic-slider"].indexOf(b.type) !== -1 ? [b].concat(b.props.children || []) : [b]);
+    const finals = flat.filter((b) => b.type === "quiz" && b.props.avaliativo);
+    if (finals.length > 1) throw new Error("A aula «" + label + "» tem mais de um quiz marcado como avaliação final. Mantenha apenas um.");
+    const mastery = finals.length ? (Number(finals[0].props.passMark) || 6) : null;
+    const projectLesson = JSON.parse(JSON.stringify(L));
+    const images = externalizeLessonImages(L, "aula-" + n + "-");
+    const html = await buildExportHTML(L, { fonts: "external", assets: "external" });
+    const href = "aula-" + n + ".html";
+    const files = [href];
+    zip.file(href, html);
+    const projectPath = "projetos/aula-" + n + "-" + lessonSlug(label) + ".aula.json";
+    zip.file(projectPath, JSON.stringify(projectLesson, null, 2));
+    files.push(projectPath);
+    images.forEach((a) => { zip.file(a.path, a.base64, { base64: true }); files.push(a.path); });
+    items.push({ title: label, href, files, mastery });
+  }
+  const shared = await addPackageSupportFiles(zip, []);
+  zip.file("imsmanifest.xml", buildCourseManifest({ title: opts.title, version: opts.version, items, shared }));
+  const blob = await zip.generateAsync({ type: "blob" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = (lessonSlug(opts.title) || "curso") + "-scorm.zip";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+Object.assign(window, { downloadExport, downloadStandaloneHTML, buildExportHTML, downloadSCORM, downloadCourseSCORM, openPrintPreview });
