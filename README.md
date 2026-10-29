@@ -148,6 +148,8 @@ O **ClassAcervo** tem identidade própria, da mesma família: um arquivo em arco
 
 O símbolo e a capa do ClassAtelier usam a janela de ateliê em arco, com o vidro dividido em quatro e um painel aceso, em azul-marinho, papel e coral. O nome se escreve **Class** (negrito) + ***Atelier*** (itálico).
 
-## Receber uma semana do ClassAuthor
+## Receber uma semana do ClassAuthor e devolvê-la editada
 
 O ClassAuthor abre esta página em outra aba e envia a semana por `postMessage` (mensagens `aulastudio:ready`, `classauthor:lesson`, `aulastudio:loaded`). Só aceita de quem abriu a aba e pergunta antes de substituir um projeto em andamento.
+
+**Devolver o texto.** Em **Exportar → Enviar de volta ao ClassAuthor**, a aula editada volta para a aba do ClassAuthor que a abriu (mensagem `classatelier:lesson`, com o projeto e o texto corrido; resposta `classauthor:received`). O ClassAuthor guarda essa versão na semana de origem e passa a usá-la ao reabrir, baixar o JSON ou montar o ZIP. O item só funciona quando a aula foi aberta pelo ClassAuthor e a aba dele continua aberta; do contrário o aviso diz o que fazer. Duas saídas sempre disponíveis, que não dependem do ClassAuthor: **Copiar o texto da aula** e **Baixar o texto (.txt)** (só as palavras, em ordem, com títulos, destaques, perguntas do quiz e tabelas; sem endereços de imagem nem códigos).

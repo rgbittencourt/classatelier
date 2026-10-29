@@ -175,6 +175,8 @@ function AulaStudioApp() {
   const [courseEntries, setCourseEntries] = useStateA(null);
   const [toast, setToast] = useStateA(null);
   const toastTimer = useRefA(null);
+  // origem do ClassAuthor que abriu esta aba (aprendida na primeira mensagem dele); permite devolver a aula editada
+  const [authorOrigin, setAuthorOrigin] = useStateA(() => { try { return window.opener ? (sessionStorage.getItem("aulastudio.authorOrigin") || "") : ""; } catch (e) { return ""; } });
   const showToast = (msg) => { setToast(msg); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(null), 7000); };
   useEffectA(() => {
     const t = setTimeout(() => {
@@ -227,6 +229,8 @@ function AulaStudioApp() {
     const onMessage = async (ev) => {
       const d = ev.data;
       if (!opener || ev.source !== opener || !d || d.type !== "classauthor:lesson") return;
+      try { sessionStorage.setItem("aulastudio.authorOrigin", ev.origin); } catch (e) {}
+      setAuthorOrigin(ev.origin);
       try {
         const project = extractProjectPayload(d.lesson);
         const key = d.fileName || "";
@@ -519,6 +523,48 @@ function AulaStudioApp() {
     setTimeout(() => URL.revokeObjectURL(url), 2000);
   };
   const openProjectClick = () => fileInputRef.current && fileInputRef.current.click();
+  // ── texto da aula: copiar, baixar e devolver ao ClassAuthor ──
+  const copyLessonText = async () => {
+    const text = window.lessonToText(lessonRef.current);
+    let ok = false;
+    try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {
+      try { const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); ok = document.execCommand("copy"); ta.remove(); } catch (e2) {}
+    }
+    showToast(ok ? "Texto da aula copiado (" + text.split(/\s+/).filter(Boolean).length + " palavras)." : "Não consegui copiar sozinho. Use «Baixar o texto (.txt)».");
+  };
+  const downloadLessonText = () => {
+    const blob = new Blob([window.lessonToText(lessonRef.current)], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = window.projectFileName(lessonRef.current).replace(/(-ClassAtelier)?\.json$/i, "") + "-texto.txt";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  };
+  const sendToAuthor = () => {
+    const opener = window.opener;
+    if (!opener || opener.closed || !authorOrigin) {
+      showToast("Para devolver a aula, abra-a pelo botão «Abrir esta semana no ClassAtelier» do ClassAuthor e mantenha a aba dele aberta. Enquanto isso, use «Copiar o texto da aula».");
+      return;
+    }
+    const lesson = lessonRef.current;
+    const src = curRef.current.source;
+    const fileName = src && src.app === "classauthor" ? src.key : "";
+    const title = (lesson.meta && lesson.meta.title) || "";
+    let done = false;
+    const finish = (msg) => { if (done) return; done = true; window.removeEventListener("message", onReply); clearTimeout(timer); showToast(msg); };
+    const onReply = (ev) => {
+      const d = ev.data;
+      if (ev.source !== opener || ev.origin !== authorOrigin || !d) return;
+      if (d.type === "classauthor:received") finish("Enviada ao ClassAuthor" + (d.week ? " (semana " + d.week + ")" : "") + ". Lá, o cartão da semana passa a usar esta versão.");
+      else if (d.type === "classauthor:error") finish("O ClassAuthor não aceitou a aula: " + (d.message || "erro desconhecido") + ". Use «Copiar o texto da aula» ou «Salvar».");
+    };
+    window.addEventListener("message", onReply);
+    const timer = setTimeout(() => finish("O ClassAuthor não respondeu. A aba dele ainda está aberta? Use «Copiar o texto da aula» ou «Salvar» como alternativa."), 6000);
+    try {
+      opener.postMessage({ type: "classatelier:lesson", fileName, title, lesson: JSON.parse(JSON.stringify(lesson)), text: window.lessonToText(lesson) }, authorOrigin);
+      snap("manual", "Enviada ao ClassAuthor").catch(() => {});
+    } catch (e) { finish("Não consegui enviar ao ClassAuthor: " + String(e && e.message || e)); }
+  };
   const onProjectFile = (e) => {
     const f = e.target.files && e.target.files[0];
     e.target.value = ""; // allow re-opening the same file
@@ -589,7 +635,7 @@ function AulaStudioApp() {
           onExportHTML={exportHTML} onExportStandaloneHTML={exportStandaloneHTML} onExportSCORM={() => setScormOpen(true)} onPrintPDF={printPDF}
           onOpenProject={openProjectClick} onDownloadProject={downloadProject}
           onRichNotes={() => setRichOpen(true)} onA11y={() => setA11yOpen((v) => !v)} a11yOpen={a11yOpen} a11yCount={a11yCount} onLibrary={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(false); setLibOpen(true); }} onCourse={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(true); setLibOpen(true); }}
-          onClear={() => setClearOpen(true)} canClear={hasLessonContent} onVersions={() => setVersionsOpen(true)} onRepublish={() => setRepublishOpen(true)} onMoodle={() => setMoodle({ links: [] })}
+          onClear={() => setClearOpen(true)} canClear={hasLessonContent} onVersions={() => setVersionsOpen(true)} onRepublish={() => setRepublishOpen(true)} onMoodle={() => setMoodle({ links: [] })} onCopyText={copyLessonText} onDownloadText={downloadLessonText} onToAuthor={sendToAuthor} authorLinked={!!authorOrigin && !!window.opener}
         />
         <Canvas
           lesson={lesson} mode={mode} selected={selected} setSelected={setSelected}
@@ -955,7 +1001,7 @@ function RichNotesDialog({ lesson, onClose, onUpdate }) {
 const emptyNote={padding:18,border:"1px dashed var(--tool-line-2)",borderRadius:9,color:"var(--tool-ink-3)",fontSize:12};
 
 // ── Top bar ──
-function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear, onVersions, onRepublish, onMoodle }) {
+function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear, onVersions, onRepublish, onMoodle, onCopyText, onDownloadText, onToAuthor, authorLinked }) {
   const [busy, setBusy] = useStateA(false);
   const [menu, setMenu] = useStateA(false);
   const [more, setMore] = useStateA(false);
@@ -1002,7 +1048,7 @@ function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, o
           {menu && (
             <>
               <div onClick={() => setMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 41 }} />
-              <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 42, background: "#fff", border: "1px solid var(--tool-line)", borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.16)", width: 248, overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 42, background: "#fff", border: "1px solid var(--tool-line)", borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.16)", width: 248, overflowX: "hidden", overflowY: "auto", maxHeight: "calc(100vh - 80px)" }}>
                 <button onClick={() => { setMenu(false); onDownloadProject(); }} style={menuItem}>
                   <span style={{ fontWeight: 600 }}>Projeto JSON (…-ClassAtelier.json)</span>
                   <span style={menuSub}>Editável e próprio para reabrir no ClassAtelier.</span>
@@ -1026,6 +1072,17 @@ function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, o
                 <button onClick={() => { setMenu(false); onMoodle && onMoodle(); }} data-act="moodle-menu" style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
                   <span style={{ fontWeight: 600 }}>Colocar no Moodle…</span>
                   <span style={menuSub}>Gera o link (Recurso URL) e o código iframe de uma aula publicada.</span>
+                </button>
+                <button onClick={() => { setMenu(false); onToAuthor && onToAuthor(); }} data-act="to-author" style={{ ...menuItem, borderTop: "1px solid var(--tool-line)", opacity: authorLinked ? 1 : 0.6 }}>
+                  <span style={{ fontWeight: 600 }}>Enviar de volta ao ClassAuthor</span>
+                  <span style={menuSub}>{authorLinked ? "Devolve a aula editada (projeto e texto) para a semana de origem." : "Disponível quando a aula é aberta pelo ClassAuthor."}</span>
+                </button>
+                <button onClick={() => { setMenu(false); onCopyText && onCopyText(); }} data-act="copy-text" style={menuItem}>
+                  <span style={{ fontWeight: 600 }}>Copiar o texto da aula</span>
+                  <span style={menuSub}>Só as palavras, em ordem, para colar onde quiser.</span>
+                </button>
+                <button onClick={() => { setMenu(false); onDownloadText && onDownloadText(); }} data-act="download-text" style={menuItem}>
+                  <span style={{ fontWeight: 600 }}>Baixar o texto (.txt)</span>
                 </button>
                 <button onClick={() => { setMenu(false); onRepublish && onRepublish(); }} data-act="republish" style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
                   <span style={{ fontWeight: 600 }}>Atualizar uma aula já publicada…</span>
@@ -1066,12 +1123,12 @@ function ThemePicker() {
       <button onClick={() => setOpen((v) => !v)} title="Trocar tema (design system)"
         style={{ display: "flex", alignItems: "center", gap: 8, height: 32, padding: "0 9px", background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 9, cursor: "pointer", fontFamily: "inherit" }}>
         <Swatches list={current.swatches} size={13} />
-        <span className="tb-theme-name" style={{ fontSize: 12.5, fontWeight: 600, color: "var(--tool-ink)", whiteSpace: "nowrap" }}>{current.label}</span>
+        <span className="tb-theme-name" style={{ fontSize: 12.5, fontWeight: 600, color: "var(--tool-ink)", whiteSpace: "nowrap" }}>{String(current.label).split(" — ")[0].replace(/ \(inspirado\)$/, "")}</span>
         <span style={{ fontSize: 10, color: "var(--tool-ink-3)" }}>▾</span>
       </button>
       {open && (<>
         <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 41 }} />
-        <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 42, background: "#fff", border: "1px solid var(--tool-line)", borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.16)", width: 240, overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 42, background: "#fff", border: "1px solid var(--tool-line)", borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.16)", width: 250, overflow: "auto", maxHeight: "calc(100vh - 80px)" }}>
           <div style={{ padding: "9px 13px", fontSize: 10.5, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--tool-ink-3)", borderBottom: "1px solid var(--tool-line)" }}>Tema (design system)</div>
           {themes.map((t) => (
             <button key={t.id} onClick={() => pick(t.id)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left", padding: "10px 13px", border: 0, background: t.id === active ? "var(--tool-sel-soft)" : "#fff", cursor: "pointer", fontFamily: "inherit" }}>
