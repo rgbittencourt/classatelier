@@ -73,6 +73,7 @@ async function loadRepo() {
   try { S.pages = await api(`${base}/pages`); } catch (e) { S.pages = e.status === 404 ? null : S.pages === undefined ? null : S.pages; }
   await detectCourses();
   S.loadedAt = new Date();
+  if (!S.treeInit) { S.treeInit = true; for (const d of S.dirs) if (!d.includes("/")) S.open.add(d); } // 1ª leitura: abre as pastas de cima, a árvore não parece vazia
   for (const p of [...S.checked]) if (!S.files.has(p) && !S.dirs.has(p)) S.checked.delete(p);
 }
 
@@ -376,7 +377,7 @@ function renderMain() {
   const tabs = `<div class="tabs" role="tablist"><button class="tab" role="tab" data-act="tab" data-view="cursos" aria-selected="${S.view === "cursos"}">Cursos (${S.courses.length})</button><button class="tab" role="tab" data-act="tab" data-view="arquivos" aria-selected="${S.view === "arquivos"}">Todos os arquivos</button></div>`;
   let body;
   if (S.view === "cursos") {
-    body = `<div class="section-head"><div><h2>Cursos publicados</h2><p>Pastas com <code>index.html</code> e aulas <code>aula-NN.html</code>, como o ClassAtelier publica.</p></div><div class="actions"><button class="btn" data-act="index" data-path="">Gerar índice do site…</button><a class="btn" href="${esc(pagesBase())}" target="_blank" rel="noopener">Abrir o site ↗</a></div></div>` +
+    body = `<div class="section-head"><div><h2>Cursos publicados</h2><p>Cada curso é uma pasta com um <code>index.html</code> e as páginas das aulas (<code>.html</code>), como o ClassAtelier publica. Os nomes das aulas podem ser livres.</p></div><div class="actions"><button class="btn" data-act="index" data-path="">Gerar índice do site…</button><a class="btn" href="${esc(pagesBase())}" target="_blank" rel="noopener">Abrir o site ↗</a></div></div>` +
       (S.courses.length ? `<div class="grid">${S.courses.map(courseCard).join("")}</div>` : `<div class="empty"><h3>Nenhum curso encontrado neste repositório</h3><p>Publique pelo ClassAtelier em Exportar → Curso e GitHub…, ou use a aba de arquivos para ver tudo o que há aqui.</p></div>`);
   } else {
     body = `<div class="section-head"><div><h2>Todos os arquivos</h2><p>${S.files.size} arquivos em ${S.dirs.size} pastas. <b>Clique</b> em um item para ver detalhes e ações. <b>Marque as caixas</b> para excluir vários de uma vez.</p></div></div>${bulkBar()}<div class="explorer"><div class="tree" role="tree" aria-label="Arquivos do repositório">${treeRows("", 0) || '<div class="empty">Repositório vazio.</div>'}</div>${detailPanel()}</div>`;

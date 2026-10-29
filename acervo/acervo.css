@@ -96,7 +96,7 @@ main{max-width:1180px;margin:0 auto;padding:28px 24px 80px}
 .node{display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:8px;cursor:pointer;font-size:14px;min-height:30px}
 .node:hover{background:var(--sand)}
 .node[aria-selected=true]{background:#f9e3da}
-.node .twisty{width:16px;flex:none;color:var(--ink-3);font-size:11px;text-align:center}
+.node .twisty{width:20px;flex:none;color:var(--ink-2);font-size:14px;line-height:1;text-align:center}
 .node svg{flex:none;color:var(--ink-3)}
 .node.dir svg{color:var(--coral-deep)}
 .node .name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
