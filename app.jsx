@@ -642,26 +642,110 @@ function AulaStudioApp() {
 }
 
 // ── Left: block palette ──
+// Palavras-chave extras para achar o bloco pelo que ele FAZ (não só pelo nome).
+const PALETTE_KEYS = {
+  topic: "seção secao bloco container agrupar faixa fundo conteudo",
+  "topic-collapsible": "recolher expandir abrir fechar sanfona colapsar esconder",
+  "topic-slider": "carrossel deslizar passar páginas paginas",
+  hero: "capa abertura início inicio topo título titulo cabeçalho cabecalho banner",
+  divider: "capítulo capitulo separador separar seção secao",
+  pagebreak: "pdf imprimir página pagina quebra impressão impressao",
+  titulo: "heading subtítulo subtitulo h2 h3 h4 cabeçalho cabecalho",
+  sintese: "resumo conclusão conclusao fim encerrar fechamento final",
+  referencias: "bibliografia abnt citações citacoes livros artigos fontes",
+  prose: "texto parágrafo paragrafo corpo escrever conteúdo conteudo",
+  citacao: "frase autor epígrafe epigrafe aspas depoimento",
+  eyebrow: "sobrelinha rótulo rotulo chamada pequeno",
+  destaque: "nota importante veja bem dica caixa realçar realcar",
+  atencao: "cuidado alerta aviso perigo warning",
+  reflexao: "pergunta pensar refletir provocação provocacao questão questao",
+  pitaco: "comentário comentario balão balao fala conversa opinião opiniao",
+  imagem: "foto figura ilustração ilustracao imagem legenda picture",
+  parallax: "foto fundo larga panorâmica panoramica efeito rolagem",
+  video: "youtube vídeo filme assistir aula gravada",
+  audio: "podcast som áudio mp3 ouvir episódio episodio",
+  cases: "casos exemplos cartões cartoes cards estudo de caso",
+  feature: "ícones icones destaques grade lista benefícios beneficios",
+  textoimagem: "lado a lado imagem e texto duas colunas figura",
+  filmstrip: "carrossel galeria fotos slides tira rolagem horizontal",
+  tabela: "dados linhas colunas planilha quadro comparar comparativo",
+  flashcards: "cartões cartoes memorizar revisar frente verso estudo",
+  slider: "sequência sequencia passo a passo etapas deslizar slides",
+  accordion: "faq perguntas frequentes sanfona expandir respostas dúvidas duvidas",
+  collapsebreak: "retrátil retratil recolher esconder dividir expansível expansivel",
+  columns: "colunas lado a lado layout duas três tres dividir",
+  externalembed: "iframe incorporar embed site padlet google forms mapa miro jamboard externo",
+  linhadotempo: "cronologia história historia datas marcos etapas tempo",
+  quiz: "pergunta perguntas questões questoes avaliação avaliacao prova teste múltipla escolha multipla exercício exercicio nota",
+  materiais: "links leitura complementar download arquivos pdf anexos recursos extras",
+};
+const palNorm = (x) => String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+function paletteMatches(b, q) {
+  const terms = palNorm(q).split(/\s+/).filter(Boolean);
+  if (!terms.length) return true;
+  // casa no COMEÇO de uma palavra («vid» acha «vídeo», não «divisor»)
+  const hay = " " + palNorm(b.label + " " + b.type + " " + b.cat + " " + (PALETTE_KEYS[b.type] || "")).replace(/[^a-z0-9]+/g, " ");
+  return terms.every((t) => hay.includes(" " + t));
+}
 function Palette({ onDragType, onAdd }) {
+  const [q, setQ] = useStateA("");
+  const inputRef = useRefA(null);
+  const searching = q.trim().length > 0;
+  const groups = window.BLOCK_CATS.map((cat) => ({ cat, items: window.BLOCKS.filter((b) => b.cat === cat && paletteMatches(b, q)) })).filter((g) => g.items.length);
+  const total = groups.reduce((n, g) => n + g.items.length, 0);
+  const first = groups[0] && groups[0].items[0];
+  // atalho "/" foca a busca (fora de campos de texto)
+  useEffectA(() => {
+    const on = (e) => {
+      if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target, tag = (t.tagName || "").toLowerCase();
+      if (t.isContentEditable || tag === "input" || tag === "textarea" || tag === "select") return;
+      e.preventDefault(); inputRef.current && inputRef.current.focus();
+    };
+    window.addEventListener("keydown", on); return () => window.removeEventListener("keydown", on);
+  }, []);
+  const mark = (text) => {
+    if (!searching) return text;
+    const terms = palNorm(q).split(/\s+/).filter(Boolean); const n = palNorm(text); const hit = new Array(text.length).fill(false);
+    terms.forEach((t) => { let i = n.indexOf(t); while (i >= 0) { if (i === 0 || !/[a-z0-9]/.test(n[i - 1])) for (let k = i; k < i + t.length && k < hit.length; k++) hit[k] = true; i = n.indexOf(t, i + 1); } });
+    const out = []; let buf = "", on = false;
+    for (let i = 0; i < text.length; i++) { if (hit[i] !== on) { out.push(on ? <mark key={i} style={{ background: "var(--tool-accent-soft, #f7dcd3)", color: "inherit", borderRadius: 2 }}>{buf}</mark> : buf); buf = ""; on = hit[i]; } buf += text[i]; }
+    out.push(on ? <mark key="e" style={{ background: "var(--tool-accent-soft, #f7dcd3)", color: "inherit", borderRadius: 2 }}>{buf}</mark> : buf);
+    return out;
+  };
   return (
     <aside className="tool-scroll" style={{ background: "var(--tool-panel)", overflowY: "auto", height: "100vh", padding: "14px 12px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 4px 14px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 4px 12px" }}>
           <img src={(window.AULA_BASE || "") + "assets/brand/classatelier-mark.png"} alt="" width="26" height="26" style={{ display: "block", borderRadius: 7 }} />
-        <span style={{ fontSize: 17, lineHeight: 1, whiteSpace: "nowrap" }}><b style={{ fontWeight: 800, letterSpacing: "-.045em" }}>Class</b><i style={{ fontFamily: "var(--font-serif, Newsreader, Georgia, serif)", fontStyle: "italic", fontWeight: 400, letterSpacing: "-.02em", color: "#BF4C34" }}>Atelier</i></span>
+        <span style={{ fontSize: 17, lineHeight: 1, whiteSpace: "nowrap" }}><b style={{ fontWeight: 800, letterSpacing: "-.045em" }}>Class</b><i style={{ fontFamily: "var(--font-serif, Newsreader, Georgia, serif)", fontStyle: "italic", fontWeight: 400, letterSpacing: "-.02em" }}>Atelier</i></span>
       </div>
-      {window.BLOCK_CATS.map((cat) => (
+      <div style={{ position: "sticky", top: -14, zIndex: 5, background: "var(--tool-panel)", margin: "0 -2px 12px", padding: "2px 2px 6px" }}>
+        <div style={{ position: "relative" }}>
+          <input ref={inputRef} value={q} data-pal="search" type="search" role="searchbox" aria-label="Buscar blocos" placeholder="Buscar bloco…  ( / )" autoComplete="off" spellCheck={false}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") { if (q) setQ(""); else e.target.blur(); }
+              if (e.key === "Enter" && first) { e.preventDefault(); onAdd(first.type); }
+            }}
+            style={{ width: "100%", boxSizing: "border-box", border: "1px solid var(--tool-line-2)", borderRadius: 9, padding: "8px 30px 8px 10px", fontSize: 12.5, fontFamily: "inherit", background: "#fff", color: "var(--tool-ink)", outline: "none" }} />
+          {q && <button onClick={() => { setQ(""); inputRef.current && inputRef.current.focus(); }} aria-label="Limpar a busca" title="Limpar a busca" style={{ position: "absolute", right: 4, top: 4, width: 24, height: 24, border: 0, background: "none", fontSize: 17, lineHeight: 1, cursor: "pointer", color: "var(--tool-ink-3)" }}>×</button>}
+        </div>
+        {searching && <p data-pal="count" role="status" style={{ margin: "6px 4px 0", fontSize: 11.5, color: "var(--tool-ink-3)" }}>{total ? total + " bloco" + (total > 1 ? "s" : "") + " · Enter insere o primeiro" : "Nenhum bloco encontrado"}</p>}
+      </div>
+      {searching && !total && <p style={{ fontSize: 12, lineHeight: 1.5, color: "var(--tool-ink-3)", margin: "0 4px" }}>Tente outra palavra: o que o bloco faz (ex.: «pergunta», «linha do tempo», «vídeo», «tabela») ou o nome dele.</p>}
+      {groups.map(({ cat, items }) => (
         <div key={cat} style={{ marginBottom: 16 }}>
           <p style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--tool-ink-3)", margin: "0 4px 8px" }}>{cat}</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-            {window.BLOCKS.filter((b) => b.cat === cat).map((b) => (
-              <div key={b.type} className="palette-item" draggable
+            {items.map((b) => (
+              <div key={b.type} className="palette-item" draggable data-pal-type={b.type}
                 onDragStart={(e) => { onDragType(b.type); e.dataTransfer.effectAllowed = "copy"; e.dataTransfer.setData("text/plain", b.type); }}
                 onDragEnd={() => onDragType(null)}
                 onDoubleClick={() => onAdd(b.type)}
                 title={"Arraste para a página · ou clique duas vezes para inserir"}
-                style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 9px", borderRadius: 8, border: "1px solid var(--tool-line)", background: "var(--tool-surface)", cursor: "grab" }}>
+                style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 9px", borderRadius: 8, border: "1px solid " + (searching && b === first ? "var(--tool-accent)" : "var(--tool-line)"), background: "var(--tool-surface)", cursor: "grab" }}>
                 <window.Icon name={b.icon} size={16} stroke={1.8} color="var(--tool-ink-2)" />
-                <span style={{ fontSize: 12.5, fontWeight: 500, color: "var(--tool-ink)" }}>{b.label}</span>
+                <span style={{ fontSize: 12.5, fontWeight: 500, color: "var(--tool-ink)" }}>{mark(b.label)}</span>
               </div>
             ))}
           </div>

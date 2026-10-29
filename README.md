@@ -102,6 +102,10 @@ Depois de publicar (em «Curso e GitHub…» ou «Atualizar uma aula já publica
 
 Também está em **Exportar → Colocar no Moodle…**, onde basta colar o endereço de uma aula já publicada. Como o Moodle só aponta para a página do GitHub Pages, ao atualizar a aula lá o Moodle já mostra a versão nova.
 
+## Buscar blocos
+
+No alto da coluna de blocos há uma caixa de busca (atalho: tecle **/**). Ela acha pelo nome e pelo que o bloco faz: «pergunta» leva a Reflexão, Accordion e Quiz; «sanfona», aos blocos retráteis; «iframe», ao conteúdo externo; «cronologia», à linha do tempo. Ignora acentos e maiúsculas, casa no começo das palavras e destaca o trecho. **Enter** insere o primeiro resultado, **Esc** limpa a busca.
+
 ## Identidade visual
 
 - `assets/classatelier-mark.svg`: símbolo do ClassAtelier (janela em arco);
