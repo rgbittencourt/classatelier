@@ -570,6 +570,23 @@ const EQ_SYMS = [
   ["±", "\\pm "], ["×", "\\times "], ["·", "\\cdot "], ["÷", "\\div "], ["≤", "\\leq "], ["≥", "\\geq "], ["≠", "\\neq "], ["≈", "\\approx "],
   ["∞", "\\infty "], ["→", "\\rightarrow "], ["⇒", "\\Rightarrow "], ["°", "^{\\circ}"], ["∝", "\\propto "], ["∈", "\\in "],
 ];
+const EQ_SETS = [
+  ["∪", "\\cup ", "União"], ["∩", "\\cap ", "Interseção"], ["∖", "\\setminus ", "Diferença (A menos B)"], ["△", "\\triangle ", "Diferença simétrica"],
+  ["Ā", "\\overline{¤}", "Complementar (barra)"], ["Aᶜ", "^{c}", "Complementar (expoente c)"], ["∅", "\\emptyset ", "Conjunto vazio"],
+  ["∈", "\\in ", "Pertence"], ["∉", "\\notin ", "Não pertence"], ["⊂", "\\subset ", "Contido (próprio)"], ["⊆", "\\subseteq ", "Contido ou igual"],
+  ["⊄", "\\not\\subset ", "Não contido"], ["⊃", "\\supset ", "Contém (próprio)"], ["⊇", "\\supseteq ", "Contém ou igual"], ["A×B", "\\times ", "Produto cartesiano"],
+  ["{ }", "\\left\\{ ¤ \\right\\}", "Conjunto entre chaves"], ["{x|}", "\\left\\{ x \\mid ¤ \\right\\}", "Conjunto por propriedade"], ["|A|", "\\left| ¤ \\right|", "Cardinalidade"],
+  ["⋃", "\\bigcup_{i=1}^{n} ¤", "União de vários conjuntos"], ["⋂", "\\bigcap_{i=1}^{n} ¤", "Interseção de vários conjuntos"], ["𝒫", "\\mathcal{P}(¤)", "Conjunto das partes"],
+  ["ℕ", "\\mathbb{N}", "Naturais"], ["ℤ", "\\mathbb{Z}", "Inteiros"], ["ℚ", "\\mathbb{Q}", "Racionais"], ["ℝ", "\\mathbb{R}", "Reais"], ["ℂ", "\\mathbb{C}", "Complexos"],
+];
+const EQ_LOGIC = [
+  ["∧", "\\land ", "E (conjunção)"], ["∨", "\\lor ", "OU (disjunção)"], ["¬", "\\neg ", "Negação"], ["⊕", "\\oplus ", "OU exclusivo (XOR)"],
+  ["→", "\\rightarrow ", "Implicação"], ["↔", "\\leftrightarrow ", "Bicondicional"], ["⇒", "\\Rightarrow ", "Implica (⇒)"], ["⇔", "\\Leftrightarrow ", "Se e somente se (⇔)"],
+  ["≡", "\\equiv ", "Equivalente"], ["∀", "\\forall ", "Para todo"], ["∃", "\\exists ", "Existe"], ["∄", "\\nexists ", "Não existe"],
+  ["⊤", "\\top ", "Verdadeiro"], ["⊥", "\\bot ", "Falso"], ["∴", "\\therefore ", "Portanto"], ["∵", "\\because ", "Pois"],
+  ["⊢", "\\vdash ", "Prova (deriva)"], ["⊨", "\\models ", "Satisfaz (modela)"], ["↑", "\\uparrow ", "NAND (barra de Sheffer)"], ["↓", "\\downarrow ", "NOR (seta de Peirce)"],
+  ["p̄", "\\overline{¤}", "Negação (barra em cima)"],
+];
 const EQ_EXAMPLES = [
   ["Teorema de Pitágoras", "a^{2} + b^{2} = c^{2}"],
   ["Fórmula de Bhaskara", "x = \\frac{-b \\pm \\sqrt{b^{2} - 4ac}}{2a}"],
@@ -582,6 +599,12 @@ const EQ_EXAMPLES = [
   ["Derivada (definição)", "\\frac{dy}{dx} = \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}"],
   ["Teorema fundamental do cálculo", "\\int_{a}^{b} f(x)\\,dx = F(b) - F(a)"],
   ["Média aritmética", "\\bar{x} = \\frac{1}{n} \\sum_{i=1}^{n} x_i"],
+  ["Conjuntos: união e interseção", "\\left| A \\cup B \\right| = \\left| A \\right| + \\left| B \\right| - \\left| A \\cap B \\right|"],
+  ["Conjuntos: diferença", "A \\setminus B = \\left\\{ x \\mid x \\in A \\land x \\notin B \\right\\}"],
+  ["Conjuntos: De Morgan", "\\overline{A \\cup B} = \\overline{A} \\cap \\overline{B}"],
+  ["Lógica: De Morgan", "\\neg (p \\land q) \\equiv \\neg p \\lor \\neg q"],
+  ["Lógica: condicional", "p \\rightarrow q \\equiv \\neg p \\lor q"],
+  ["Lógica: quantificadores", "\\forall x \\in A,\\ \\exists y \\in B : P(x, y)"],
 ];
 function EquationPanel({ p, setP, onRenumber }) {
   const ref = React.useRef(null);
@@ -614,6 +637,16 @@ function EquationPanel({ p, setP, onRenumber }) {
         {EQ_SYMS.map(([l, s]) => <button key={l} type="button" title={s.trim()} aria-label={"Inserir " + s.trim()} onClick={() => insert(s)} style={btn}>{l}</button>)}
       </div>
     </Field>
+    <Field label="Operações de conjuntos">
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+        {EQ_SETS.map(([l, s, t]) => <button key={t} type="button" title={t} aria-label={t} onClick={() => insert(s)} style={btn}>{l}</button>)}
+      </div>
+    </Field>
+    <Field label="Operadores lógicos">
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+        {EQ_LOGIC.map(([l, s, t]) => <button key={t} type="button" title={t} aria-label={t} onClick={() => insert(s)} style={btn}>{l}</button>)}
+      </div>
+    </Field>
     <Field label="Exemplos prontos">
       <select value="" onChange={(e) => { const ex = EQ_EXAMPLES[Number(e.target.value)]; if (ex) setP({ latex: ex[1] }); }} style={ps.input}>
         <option value="">Substituir por um exemplo…</option>
@@ -621,6 +654,15 @@ function EquationPanel({ p, setP, onRenumber }) {
       </select>
     </Field>
     <div style={{ borderTop: "1px solid var(--tool-line)", margin: "4px 0 14px" }} />
+    <Field label={"Tamanho da letra da fórmula: " + (Number(p.size) || 100) + "%"}>
+      <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+        {[["Pequena", 75], ["Normal", 100], ["Grande", 130]].map(([l, v]) => <button key={v} type="button" onClick={() => setP({ size: v })} aria-pressed={(Number(p.size) || 100) === v} style={{ ...btn, flex: 1, padding: "6px 4px", fontWeight: (Number(p.size) || 100) === v ? 700 : 400, borderColor: (Number(p.size) || 100) === v ? "var(--tool-accent)" : undefined }}>{l}</button>)}
+      </div>
+      <input type="range" min="40" max="160" step="5" value={Number(p.size) || 100} onChange={(e) => setP({ size: Number(e.target.value) })} aria-label="Tamanho da letra da fórmula, em porcentagem" style={{ width: "100%" }} />
+    </Field>
+    <Field><Toggle value={p.framed !== false} onChange={(v) => setP({ framed: v })} label="Mostrar moldura (caixa com borda)" /></Field>
+    <Field><Toggle value={p.autoFit !== false} onChange={(v) => setP({ autoFit: v })} label="Reduzir sozinha para caber (sem barra de rolagem)" /></Field>
+    <p style={hint}>Com o ajuste ligado, uma fórmula comprida diminui só o necessário para caber na largura da página. Desligue para manter exatamente o tamanho escolhido.</p>
     <Field><Toggle value={p.showNumber !== false} onChange={(v) => setP({ showNumber: v })} label="Mostrar número da equação" /></Field>
     {p.showNumber !== false && (
       <Field label="Número da equação">

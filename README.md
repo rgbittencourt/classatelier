@@ -17,7 +17,7 @@ O SCORM pode ser configurado como **1.2** — padrão de maior compatibilidade �
 
 ## Versão do aplicativo
 
-ClassAtelier **1.1.0** e ClassAcervo **1.0.0** (Versionamento Semântico, cada um com a sua). O histórico está em [`CHANGELOG.md`](CHANGELOG.md).
+ClassAtelier **1.2.0** e ClassAcervo **1.0.0** (Versionamento Semântico, cada um com a sua). O histórico está em [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Biblioteca e pacote do curso
 
@@ -110,7 +110,7 @@ Também está em **Exportar → Colocar no Moodle…**, onde basta colar o ender
 
 ## Equações e fórum
 
-- **Equação** (Texto): escreva em LaTeX (ex.: `E = mc^{2}`) ou use os botões de estruturas e símbolos do painel. A fórmula fica centralizada, numa caixa com borda; o número (`(1)`, `(1.1)`, `Eq. 1`…) fica à direita, fora da caixa, e se edita direto na página. A primeira equação da aula é (1) e cada nova recebe o próximo número; **Renumerar todas** refaz a sequência. Para pôr uma fórmula no meio de um parágrafo, clique no ponto desejado e use **Inserir equação no cursor** no painel do Parágrafo. Desenhada com KaTeX 0.19.1 (MIT).
+- **Equação** (Texto): escreva em LaTeX (ex.: `E = mc^{2}`) ou use os botões de estruturas e símbolos do painel. A fórmula fica centralizada, numa caixa com borda; o número (`(1)`, `(1.1)`, `Eq. 1`…) fica à direita, fora da caixa, e se edita direto na página. A primeira equação da aula é (1) e cada nova recebe o próximo número; **Renumerar todas** refaz a sequência. O painel traz o **tamanho da letra** (com ajuste automático para caber, sem rolagem), a **moldura** opcional, grupos de **estruturas**, **símbolos**, **operações de conjuntos** e **operadores lógicos**. Para pôr uma fórmula no meio de um parágrafo, clique no ponto desejado e use **Inserir equação no cursor** no painel do Parágrafo. Desenhada com KaTeX 0.19.1 (MIT).
 - **Fórum de discussão** (Interativos): pergunta, prazos, regras, critérios opcionais, botão para o fórum de verdade (Moodle, Padlet, Teams…) e rascunho da mensagem salvo no navegador do aluno.
 
 ## Buscar blocos

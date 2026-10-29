@@ -10,7 +10,8 @@
   var CSS = [
     ".aula-eq{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;column-gap:16px;margin:.4em 0;max-width:100%}",
     ".aula-eq__box{grid-column:2;min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;border:1.5px solid var(--ink,#1B1A17);border-radius:6px;padding:.55em 1.1em;text-align:center;background:transparent}",
-    ".aula-eq__math{font-size:1.2em;line-height:1.3}",
+    ".aula-eq--plain .aula-eq__box{border:0;padding-left:.4em;padding-right:.4em;border-radius:0}",
+    ".aula-eq__math{line-height:1.3;white-space:nowrap}",
     ".aula-eq .katex-display{margin:0;overflow:visible}",
     ".aula-eq .katex-mathml{position:absolute!important;clip:rect(1px,1px,1px,1px);padding:0!important;border:0!important;height:1px!important;width:1px!important;overflow:hidden}",
     ".aula-eq .katex-display>.katex{white-space:nowrap}",
@@ -18,7 +19,7 @@
     ".aula-eq__err{font:12.5px/1.4 ui-monospace,Menlo,Consolas,monospace;color:#9a2f1b;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere}",
     ".aula-eq__err b{display:block;font-family:inherit;margin-bottom:2px}",
     "@media (max-width:560px){.aula-eq{grid-template-columns:minmax(0,1fr);row-gap:4px}.aula-eq__box{grid-column:1;justify-self:center}.aula-eq__num{grid-column:1;justify-self:end}}",
-    "@media print{.aula-eq__box{border-color:#000;overflow:visible}.aula-eq{break-inside:avoid}}"
+    "@media print{.aula-eq__box{border-color:#000;overflow:visible}.aula-eq--plain .aula-eq__box{border:0}.aula-eq{break-inside:avoid}}"
   ].join("\n");
 
   function injectCss() {
@@ -86,16 +87,41 @@
       var n = 0, t = setInterval(function () { n++; if (window.katex || n > 40) { clearInterval(t); setTick(function (x) { return x + 1; }); } }, 250);
       return function () { clearInterval(t); };
     }, [r.loading]);
+    var size = Math.max(40, Math.min(200, Number(props.size) || 100)) / 100;
+    var autoFit = props.autoFit !== false;
+    var boxRef = React.useRef(null), mathRef = React.useRef(null), figRef = React.useRef(null);
+    // Ajuste automático: se a fórmula não cabe na caixa, reduz a letra (até 40%) em vez de criar barra de rolagem.
+    var fit = function () {
+      var box = boxRef.current, m = mathRef.current;
+      if (!box || !m) return;
+      var base = 1.2 * size;
+      m.style.fontSize = base + "em";
+      if (!autoFit) return;
+      var cs = window.getComputedStyle(box), scale = 1;
+      var pad = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+      for (var i = 0; i < 10; i++) {
+        var avail = box.clientWidth - pad, need = m.scrollWidth;
+        if (need <= avail + 1 || scale <= 0.4) break;
+        scale = Math.max(0.4, scale * (avail / need) * 0.98);
+        m.style.fontSize = (base * scale) + "em";
+      }
+    };
+    React.useLayoutEffect(fit, [r.html, size, autoFit, props.number]);
+    useEffect(function () {
+      var f = figRef.current; if (!f || !window.ResizeObserver || !autoFit) return;
+      var w = f.clientWidth, ro = new ResizeObserver(function () { if (f.clientWidth !== w) { w = f.clientWidth; fit(); } });
+      ro.observe(f); return function () { ro.disconnect(); };
+    }, [r.html, size, autoFit]);
     var showNumber = props.showNumber !== false;
     var plainNum = String(typeof props.numberText === "string" ? props.numberText : "").replace(/<[^>]+>/g, "").trim();
     var label = props.ariaLabel || ("Equação" + (showNumber && plainNum ? " " + plainNum : ""));
     var inner;
-    if (r.html) inner = h("div", { className: "aula-eq__math", dangerouslySetInnerHTML: { __html: r.html } });
+    if (r.html) inner = h("div", { className: "aula-eq__math", ref: mathRef, style: { fontSize: (1.2 * size) + "em" }, dangerouslySetInnerHTML: { __html: r.html } });
     else if (r.error) inner = h("div", { className: "aula-eq__err", role: "note" }, h("b", null, "Fórmula com erro de sintaxe"), r.error, "\n\n", String(props.latex || ""));
     else if (r.empty) inner = h("div", { className: "aula-eq__err", style: { color: "inherit", opacity: .6 } }, "Escreva a fórmula no painel à direita.");
     else inner = h("div", { className: "aula-eq__err", style: { color: "inherit", opacity: .7 } }, String(props.latex || ""));
-    return h("figure", { className: "aula-eq", role: "group", "aria-label": label, style: { margin: ".4em 0" } },
-      h("div", { className: "aula-eq__box" }, inner),
+    return h("figure", { className: "aula-eq" + (props.framed === false ? " aula-eq--plain" : ""), ref: figRef, role: "group", "aria-label": label, style: { margin: ".4em 0" } },
+      h("div", { className: "aula-eq__box", ref: boxRef }, inner),
       showNumber ? h("div", { className: "aula-eq__num" }, props.number) : null
     );
   }

@@ -130,7 +130,7 @@ const BLOCKS = [
     type: "equacao", label: "Equação", icon: "sigma", cat: "Texto",
     kind: "text", bg: "neutral-default", pad: "tight",
     fields: [{ key: "number", placeholder: "(1)", single: true }],
-    props: { latex: "E = mc^{2}", number: "(1)", showNumber: true, ariaLabel: "", autoNumber: true },
+    props: { latex: "E = mc^{2}", number: "(1)", showNumber: true, ariaLabel: "", autoNumber: true, size: 100, autoFit: true, framed: true },
   },
   {
     type: "eyebrow", label: "Eyebrow (sobrelinha)", icon: "heading", cat: "Texto",

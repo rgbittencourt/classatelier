@@ -162,6 +162,7 @@ function BlockCore({ block, mode, renderNestedList }) {
           numberText={p.number}
           showNumber={p.showNumber !== false}
           ariaLabel={p.ariaLabel}
+          size={p.size} autoFit={p.autoFit} framed={p.framed}
         />
       );
 

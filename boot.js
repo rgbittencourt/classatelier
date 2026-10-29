@@ -13,8 +13,8 @@
 (function () {
   var BASE = window.AULA_BASE || "";
   // Versão do ClassAtelier (Versionamento Semântico; histórico em CHANGELOG.md).
-  window.CLASSATELIER_VERSION = "1.1.0";
-  var BUILD_REV = "20261029-v1.1.0";
+  window.CLASSATELIER_VERSION = "1.2.0";
+  var BUILD_REV = "20261029-v1.2.0";
   var theme = window.resolveAulaTheme();
   window.AULA_ACTIVE_THEME = theme;
 

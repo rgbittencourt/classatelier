@@ -4,12 +4,20 @@ Este repositório tem dois aplicativos, cada um com a própria versão, em [Vers
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.1.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.2.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.0.0** | subtítulo do cabeçalho, rodapé de créditos e rodapé dos índices que ele gera; constante `APP_VERSION` em `acervo/acervo.js` |
 
 Ao mudar a versão, altere os dois lugares de cada aplicativo e a data abaixo.
 
 ## ClassAtelier
+
+### 1.2.0 · 29/10/2026 · equações: tamanho, moldura, conjuntos e lógica
+
+**Acrescentado ao bloco Equação**
+- **Tamanho da letra** (40% a 160%, com atalhos Pequena, Normal e Grande) e **Reduzir sozinha para caber**: uma fórmula comprida diminui só o necessário para caber na largura da página, sem barra de rolagem (acompanha a largura da tela, inclusive no celular). Desligando o ajuste, vale exatamente o tamanho escolhido.
+- **Moldura opcional**: a caixa com borda pode ser desligada; o número continua à direita.
+- Novos grupos de botões no painel: **Operações de conjuntos** (união, interseção, diferença, diferença simétrica, complementar, vazio, pertence, contido, produto cartesiano, chaves, conjunto por propriedade, cardinalidade, união e interseção de vários conjuntos, conjunto das partes, ℕ ℤ ℚ ℝ ℂ) e **Operadores lógicos** (e, ou, não, XOR, implicação, bicondicional, equivalência, ∀, ∃, ∄, verdadeiro, falso, portanto, pois, prova, satisfaz, NAND, NOR, negação com barra).
+- Seis exemplos prontos novos (união e interseção, diferença, De Morgan em conjuntos e em lógica, condicional, quantificadores).
 
 ### 1.1.0 · 29/10/2026 · equações, fórum e ícones
 
