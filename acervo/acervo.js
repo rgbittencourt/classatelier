@@ -294,11 +294,11 @@ function renderConnect() {
     <p class="lead">Veja o que está no GitHub, renomeie, mova, duplique ou apague pastas de cursos, copie os links das aulas para o Moodle e gere uma página-índice do site.</p>
     <form class="panel" id="connect-form" autocomplete="off">
       ${S.error ? `<p class="err" role="alert">${esc(S.error)}</p>` : ""}
-      <div class="row2">
+      <div class="row3">
         <label class="field"><span>Conta ou organização</span><input type="text" name="owner" value="${esc(S.owner)}" placeholder="rgbittencourt" required></label>
         <label class="field"><span>Repositório</span><input type="text" name="repo" value="${esc(S.repo)}" placeholder="moodle-ifsc" required></label>
+        <label class="field"><span>Branch (opcional)</span><input type="text" name="branch" value="${esc(S.branch)}" placeholder="principal" title="Deixe em branco para usar a branch principal."></label>
       </div>
-      <label class="field"><span>Branch (opcional)</span><input type="text" name="branch" value="${esc(S.branch)}" placeholder="main"><small>Deixe em branco para usar a branch principal.</small></label>
       <label class="field"><span>Token do GitHub</span><input type="password" name="token" value="${esc(S.token)}" placeholder="github_pat_…" required><small>Token fine-grained só deste repositório, com Contents e Pages em leitura e escrita.</small></label>
       <label class="check"><input type="checkbox" name="remember" ${localStorage.getItem("acervo.token") ? "checked" : ""}><span>Lembrar o token neste navegador (marque só em computador seu). Sem marcar, ele vale só enquanto a aba estiver aberta.</span></label>
       <button class="btn primary" type="submit" ${S.loading ? "disabled" : ""}>${S.loading ? '<span class="spinner"></span>Conectando…' : "Conectar"}</button>

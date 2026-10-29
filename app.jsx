@@ -623,7 +623,7 @@ function ClassAtelierApp() {
   }, [selected, lesson]);
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: mode === "preview" ? "1fr" : "248px 1fr " + (rightOpen ? "320px" : "40px"), height: "100vh", overflow: "hidden", transition: "grid-template-columns 160ms ease" }}>
+    <div style={{ display: "grid", gridTemplateColumns: mode === "preview" ? "1fr" : "248px 1fr " + (rightOpen ? "320px" : "40px"), height: "calc(100vh - var(--credits-h, 0px))", overflow: "hidden", transition: "grid-template-columns 160ms ease" }}>
       {mode === "edit" && (
         <Palette onDragType={setDragType} onAdd={(t) => insertBlock(t, null)} />
       )}
@@ -649,7 +649,7 @@ function ClassAtelierApp() {
       </div>
 
       {mode === "edit" && (
-        <aside aria-label="Propriedades" style={{ background: "var(--tool-panel)", minWidth: 0, height: "100vh", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
+        <aside aria-label="Propriedades" style={{ background: "var(--tool-panel)", minWidth: 0, height: "calc(100vh - var(--credits-h, 0px))", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
           {rightOpen ? (<>
             <button onClick={() => setRightOpen(false)} title="Recolher painel de propriedades" aria-label="Recolher painel de propriedades" aria-expanded="true"
               style={{ position: "absolute", top: 11, right: 10, zIndex: 6, width: 28, height: 28, display: "grid", placeItems: "center", border: "1px solid var(--tool-line)", background: "#fff", borderRadius: 7, cursor: "pointer", color: "var(--tool-ink-2)", fontSize: 15, lineHeight: 1 }}>»</button>
@@ -760,7 +760,7 @@ function Palette({ onDragType, onAdd }) {
     return out;
   };
   return (
-    <aside className="tool-scroll" style={{ background: "var(--tool-panel)", overflowY: "auto", height: "100vh", padding: "14px 12px" }}>
+    <aside className="tool-scroll" style={{ background: "var(--tool-panel)", overflowY: "auto", height: "calc(100vh - var(--credits-h, 0px))", padding: "14px 12px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 4px 12px" }}>
           <img src={(window.AULA_BASE || "") + "assets/brand/classatelier-mark.png"} alt="" width="26" height="26" style={{ display: "block", borderRadius: 7 }} />
         <div style={{ display: "flex", flexDirection: "column", gap: 3 }}><span style={{ fontSize: 17, lineHeight: 1, whiteSpace: "nowrap" }}><b style={{ fontWeight: 800, letterSpacing: "-.045em" }}>Class</b><i style={{ fontFamily: "var(--font-serif, Newsreader, Georgia, serif)", fontStyle: "italic", fontWeight: 400, letterSpacing: "-.02em" }}>Atelier</i></span>
