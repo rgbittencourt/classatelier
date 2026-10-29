@@ -31,7 +31,7 @@ O rodapé das aulas exportadas traz a atribuição: *"…baseada integralmente n
 
 ## ClassAcervo: administrar o que está publicado
 
-Em `acervo/` (endereço `…/aula-studio/acervo/`) há uma ferramenta gráfica separada para cuidar dos cursos publicados no GitHub Pages. Conecte-se ao repositório (conta, repositório, branch e token) e use:
+Em `acervo/` (endereço `…/classatelier/acervo/`) há uma ferramenta gráfica separada para cuidar dos cursos publicados no GitHub Pages. Conecte-se ao repositório (conta, repositório, branch e token) e use:
 
 - **Cursos**: cartões com os cursos encontrados (pasta com `index.html` e `aula-NN.html`), link do site, link de cada aula e botão para copiar todos os links para o Moodle;
 - **Todos os arquivos**: árvore de pastas e arquivos, com tamanho, link no site e pré-visualização;
