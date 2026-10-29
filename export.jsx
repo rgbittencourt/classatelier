@@ -533,7 +533,19 @@ ${files}
 </manifest>`;
 }
 
+function saveBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
 async function downloadSCORM(lesson, opts) {
+  const { blob, name } = await buildSCORMBlob(lesson, opts);
+  saveBlob(blob, (name || "classatelier") + "-scorm.zip");
+}
+// Monta o pacote em memória (para baixar ou para conferir antes).
+async function buildSCORMBlob(lesson, opts) {
   if (typeof JSZip === "undefined") throw new Error("Biblioteca de compactação (JSZip) não carregou.");
   // If marked avaliativo, ensure every quiz reports its grade (0–10).
   const L = JSON.parse(JSON.stringify(lesson));
@@ -566,13 +578,7 @@ async function downloadSCORM(lesson, opts) {
   zip.file("imsmanifest.xml", buildManifest({ ...opts, files: packagedFiles }));
 
   const blob = await zip.generateAsync({ type: "blob" });
-
-  const name = lessonSlug(opts.title);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = (name || "classatelier") + "-scorm.zip";
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  return { blob, name: lessonSlug(opts.title) };
 }
 
 // ── Curso completo: um único pacote SCORM com uma aula (SCO) por semana ──
@@ -617,6 +623,10 @@ ${resources}
 }
 
 async function downloadCourseSCORM(lessons, opts) {
+  const { blob, name } = await buildCourseSCORMBlob(lessons, opts);
+  saveBlob(blob, (name || "curso") + "-scorm.zip");
+}
+async function buildCourseSCORMBlob(lessons, opts) {
   if (typeof JSZip === "undefined") throw new Error("Biblioteca de compactação (JSZip) não carregou.");
   if (!lessons || !lessons.length) throw new Error("Escolha pelo menos uma aula.");
   const zip = new JSZip();
@@ -645,11 +655,7 @@ async function downloadCourseSCORM(lessons, opts) {
   const shared = await addPackageSupportFiles(zip, []);
   zip.file("imsmanifest.xml", buildCourseManifest({ title: opts.title, version: opts.version, items, shared }));
   const blob = await zip.generateAsync({ type: "blob" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = (lessonSlug(opts.title) || "curso") + "-scorm.zip";
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  return { blob, name: lessonSlug(opts.title) };
 }
 
 // ── Site do curso (GitHub Pages): aula-01.html, aula-02.html… + índice, com endereços estáveis ──
@@ -869,4 +875,4 @@ async function publishCourseToGitHub(lessons, opts, onProgress) {
   return { sent, total: files.length, commitUrl, pages, links, repoUrl: `https://github.com/${owner}/${repo}`, branch };
 }
 
-Object.assign(window, { projectFileName, downloadExport, downloadStandaloneHTML, buildExportHTML, downloadSCORM, downloadCourseSCORM, downloadCourseSite, publishCourseToGitHub, openPrintPreview });
+Object.assign(window, { buildSCORMBlob, buildCourseSCORMBlob, projectFileName, downloadExport, downloadStandaloneHTML, buildExportHTML, downloadSCORM, downloadCourseSCORM, downloadCourseSite, publishCourseToGitHub, openPrintPreview });

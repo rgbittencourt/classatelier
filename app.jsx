@@ -462,6 +462,7 @@ function AulaStudioApp() {
   // ── project file (download / open) — images travel embedded in props ──
   const fileInputRef = useRefA(null);
   const [scormOpen, setScormOpen] = useStateA(false);
+  const [scormCheck, setScormCheck] = useStateA(null);
   const [clearOpen, setClearOpen] = useStateA(false);
   const [busyMsg, setBusyMsg] = useStateA(null);
   const [richOpen, setRichOpen] = useStateA(false);
@@ -596,12 +597,13 @@ function AulaStudioApp() {
         onOpen={async (e) => { await switchTo(e.lesson, e.id, e.source); setLibOpen(false); setMode("edit"); }}
         onNew={async () => { await switchTo(emptyLesson(), newLessonId(), null); setLibOpen(false); setMode("edit"); }}
         onCourse={(entries) => setCourseEntries(entries)} />}
-      {courseEntries && <CourseDialog entries={courseEntries} onClose={() => setCourseEntries(null)}
+      {courseEntries && <CourseDialog entries={courseEntries} onClose={() => setCourseEntries(null)} onCheck={(title, load) => setScormCheck({ title, load })}
         onConfirm={async (opts) => { try { await (opts.format === "site" ? window.downloadCourseSite : window.downloadCourseSCORM)(opts.lessons, opts); setCourseEntries(null); showToast("Pacote do curso gerado."); } catch (e) { alert("Erro ao gerar o pacote do curso: " + e.message); } }} />}
       {toast && <div role="status" style={{ position: "fixed", left: "50%", bottom: 24, transform: "translateX(-50%)", zIndex: 10000, maxWidth: 520, padding: "12px 18px", borderRadius: 12, background: "#14213D", color: "#fff", fontSize: 13, lineHeight: 1.5, boxShadow: "0 18px 44px rgba(20,33,61,.3)" }}>{toast}</div>}
       <window.MarkToolbar />
       <input ref={fileInputRef} type="file" accept=".json,application/json" onChange={onProjectFile} style={{ display: "none" }} />
-      {scormOpen && <ScormDialog lesson={lesson} onClose={() => setScormOpen(false)} onConfirm={exportSCORM} />}
+      {scormOpen && <ScormDialog lesson={lesson} onClose={() => setScormOpen(false)} onConfirm={exportSCORM} onCheck={(title, load) => setScormCheck({ title, load })} />}
+      {scormCheck && <ScormCheckDialog title={scormCheck.title} load={scormCheck.load} onClose={() => setScormCheck(null)} />}
       {clearOpen && <ClearDialog count={(lesson.blocks || []).length} onClose={() => setClearOpen(false)} onConfirm={clearLesson} />}
       {a11yOpen && <window.A11yPanel lesson={lesson} onClose={() => setA11yOpen(false)} onGoto={gotoBlock} ignored={(lesson.meta && lesson.meta.a11yIgnored) || []} onIgnored={(list) => setLesson((L) => ({ ...L, meta: { ...(L.meta || {}), a11yIgnored: list } }))} />}
       {richOpen && <RichNotesDialog lesson={lesson} onClose={() => setRichOpen(false)} onUpdate={(kind, original, next) => { pushHistory(); setLesson((L) => ({ ...L, blocks: reviseRichNotes(L.blocks, kind, original, next) })); }} />}
@@ -698,7 +700,7 @@ function LibraryDialog({ currentId, preselectCurrent, onClose, onOpen, onNew, on
   );
 }
 
-function CourseDialog({ entries, onClose, onConfirm }) {
+function CourseDialog({ entries, onClose, onConfirm, onCheck }) {
   const [list, setList] = useStateA(entries);
   const [title, setTitle] = useStateA("");
   const [version, setVersion] = useStateA("1.2");
@@ -730,6 +732,10 @@ function CourseDialog({ entries, onClose, onConfirm }) {
   };
   const copy = (text) => { try { navigator.clipboard.writeText(text); } catch (e) {} };
   const move = (i, d) => setList((L) => { const n = L.slice(); const j = i + d; if (j < 0 || j >= n.length) return L; [n[i], n[j]] = [n[j], n[i]]; return n; });
+  const checkCourse = () => {
+    if (!title.trim()) { alert("Dê um nome ao curso."); return; }
+    onCheck(title.trim() + " (SCORM " + version + ")", async () => (await window.buildCourseSCORMBlob(list.map((e) => e.lesson), { title: title.trim(), version })).blob);
+  };
   const go = async () => {
     if (!title.trim()) { alert("Dê um nome ao curso."); return; }
     setBusy(true);
@@ -814,6 +820,7 @@ function CourseDialog({ entries, onClose, onConfirm }) {
               ))}
             </div>
             <p style={{ ...menuSub, marginTop: 8 }}>Cada aula vira um item do curso, na ordem acima. A avaliação final de cada aula (quiz marcado como avaliativo) continua enviando nota de 0 a 10 à plataforma.</p>
+            <button onClick={checkCourse} data-act="course-scorm-check" style={{ ...ghostBtn, width: "auto", padding: "0 12px", height: 32, fontSize: 12.5, fontWeight: 650, marginTop: 4, border: "1px solid var(--tool-line-2)" }}>Conferir pacote antes de gerar</button>
           </div>}
         </div>
         <div style={{ padding: "14px 20px", borderTop: "1px solid var(--tool-line)", display: "flex", justifyContent: "flex-end", gap: 10 }}>
@@ -956,7 +963,7 @@ function ThemePicker() {
 }
 
 // ── SCORM options dialog ──
-function ScormDialog({ lesson, onClose, onConfirm }) {
+function ScormDialog({ lesson, onClose, onConfirm, onCheck }) {
   const allBlocks = (lesson.blocks || []).flatMap((b) => isTopicType(b.type) ? [b].concat(b.props.children || []) : [b]);
   const quizzes = allBlocks.filter((b) => b.type === "quiz");
   const finalQuizzes = quizzes.filter((b) => b.props.avaliativo);
@@ -966,6 +973,11 @@ function ScormDialog({ lesson, onClose, onConfirm }) {
   const [passMark, setPassMark] = useStateA(firstFinal ? (firstFinal.props.passMark || 6) : 6);
   const [busy, setBusy] = useStateA(false);
   const diagnosticCount = quizzes.length - finalQuizzes.length;
+  const zipInput = React.useRef(null);
+  const checkNow = () => {
+    if (finalQuizzes.length > 1) { alert("Mantenha apenas um quiz marcado como avaliação final. Os demais devem ser diagnósticos sem nota."); return; }
+    onCheck(title + " (SCORM " + version + ")", async () => (await window.buildSCORMBlob(lesson, { title, version, avaliativo: finalQuizzes.length > 0, passMark: Number(passMark) || 0 })).blob);
+  };
   const go = async () => {
     if (finalQuizzes.length > 1) {
       alert("Mantenha apenas um quiz marcado como avaliação final. Os demais devem ser diagnósticos sem nota.");
@@ -1007,7 +1019,11 @@ function ScormDialog({ lesson, onClose, onConfirm }) {
             )}
           </div>
         </div>
-        <div style={{ padding: "14px 20px", borderTop: "1px solid var(--tool-line)", display: "flex", justifyContent: "flex-end", gap: 10 }}>
+        <div style={{ padding: "12px 20px 0", fontSize: 12.5, color: "var(--tool-ink-2)", borderTop: "1px solid var(--tool-line)" }}>
+          Antes de enviar à plataforma, <button onClick={checkNow} data-act="scorm-check" style={{ border: 0, background: "none", padding: 0, color: "var(--tool-accent)", cursor: "pointer", textDecoration: "underline", font: "inherit", fontWeight: 700 }}>confira o pacote</button> (estrutura e simulador de plataforma) ou <button onClick={() => zipInput.current && zipInput.current.click()} data-act="scorm-check-file" style={{ border: 0, background: "none", padding: 0, color: "var(--tool-accent)", cursor: "pointer", textDecoration: "underline", font: "inherit", fontWeight: 700 }}>confira um .zip que você já tem</button>.
+          <input ref={zipInput} type="file" accept=".zip,application/zip" style={{ display: "none" }} onChange={(e) => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) onCheck(f.name, async () => f); }} />
+        </div>
+        <div style={{ padding: "14px 20px", display: "flex", justifyContent: "flex-end", gap: 10 }}>
           <button onClick={onClose} style={{ ...ghostBtn, width: "auto", padding: "0 16px", fontSize: 13, fontWeight: 600 }}>Cancelar</button>
           <button onClick={go} disabled={busy} style={primaryBtn}>{busy ? "Gerando…" : "Gerar pacote .zip"}</button>
         </div>

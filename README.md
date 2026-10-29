@@ -59,6 +59,15 @@ O que é verificado automaticamente:
 
 Não substitui o teste humano: o painel traz a lista do que só uma pessoa confere (teclado, zoom, leitor de tela, legendas).
 
+## Conferência do SCORM
+
+Antes de subir um pacote ao ambiente virtual, dá para conferi-lo dentro do ClassAtelier. Em **Exportar → Pacote SCORM**, clique em *confira o pacote* (ou em *confira um .zip que você já tem*, para qualquer pacote, mesmo de outra ferramenta). Em **Curso e GitHub… → Pacote SCORM**, use *Conferir pacote antes de gerar*.
+
+- **1. Estrutura do pacote** — abre o .zip de verdade e confere: `imsmanifest.xml` na raiz e bem formado; versão (1.2 ou 2004) coerente em namespaces e `schemaversion`; organização, itens e recursos; grafia de `adlcp:scormtype`/`scormType`; arquivos declarados e imagens/estilos referenciados que faltam no .zip; página de abertura com o código SCORM; nomes de arquivo com acento ou espaço; arquivos pesados e tamanho total; dependências externas (bibliotecas e mídias da internet).
+- **2. Simulador de plataforma** — roda a aula num LMS de mentira (SCORM 1.2 ou 2004) dentro de um iframe isolado e mostra, ao vivo, o que a aula envia: `Initialize`, estado, nota, `Commit`, `Terminate`. O LMS de mentira recusa o que a norma proíbe (valor fora do vocabulário, nota fora da faixa, escrita em campo só de leitura, chamada antes de `Initialize`) e o registro destaca essas recusas. Botões: *Rolar até o fim*, *Simular conclusão*, *Encerrar sessão*.
+
+Limite: isto confere o pacote e o comportamento da aula, não substitui o aceite da sua plataforma. O teste final é subir num curso de rascunho do Moodle.
+
 ## Identidade visual
 
 - `assets/classatelier-mark.svg`: símbolo do ClassAtelier (janela em arco);
