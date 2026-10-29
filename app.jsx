@@ -161,6 +161,9 @@ function AulaStudioApp() {
   const [lesson, setLesson] = useStateA(loadLesson);
   const [selected, setSelected] = useStateA(null);
   const [mode, setMode] = useStateA("edit"); // edit | preview
+  // painel de propriedades (direita) recolhível; a escolha fica guardada neste navegador
+  const [rightOpen, setRightOpenRaw] = useStateA(() => { try { return localStorage.getItem("aulastudio.rightOpen") !== "0"; } catch (e) { return true; } });
+  const setRightOpen = (v) => { setRightOpenRaw(v); try { localStorage.setItem("aulastudio.rightOpen", v ? "1" : "0"); } catch (e) {} };
   const history = useRefA([]);
   const patchBurst = useRefA({ id: null, at: 0 });
   const [dragType, setDragType] = useStateA(null); // palette drag
@@ -466,7 +469,7 @@ function AulaStudioApp() {
   // contagem de erros+avisos (regras de conteúdo) para o selo do botão
   const a11yCount = React.useMemo(() => { try { return window.A11y.audit(lesson).filter((i) => i.sev !== "tip").length; } catch (e) { return 0; } }, [lesson]);
   const gotoBlock = (id, trail, findText) => {
-    setMode("edit");
+    setMode("edit"); if (id) setRightOpen(true); // para corrigir o item, o painel de propriedades precisa estar aberto
     setTimeout(() => {
       let el = null;
       if (id) { el = document.querySelector('[data-bid="' + id + '"]'); for (let k = (trail || []).length - 1; !el && k >= 0; k--) el = document.querySelector('[data-bid="' + trail[k] + '"]'); if (id) setSelected(el && el.getAttribute("data-bid") ? el.getAttribute("data-bid") : id); }
@@ -546,7 +549,7 @@ function AulaStudioApp() {
   }, [selected, lesson]);
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: mode === "preview" ? "1fr" : "248px 1fr 320px", height: "100vh", overflow: "hidden" }}>
+    <div style={{ display: "grid", gridTemplateColumns: mode === "preview" ? "1fr" : "248px 1fr " + (rightOpen ? "320px" : "40px"), height: "100vh", overflow: "hidden", transition: "grid-template-columns 160ms ease" }}>
       {mode === "edit" && (
         <Palette onDragType={setDragType} onAdd={(t) => insertBlock(t, null)} />
       )}
@@ -572,10 +575,20 @@ function AulaStudioApp() {
       </div>
 
       {mode === "edit" && (
-        <aside style={{ background: "var(--tool-panel)", minWidth: 0, height: "100vh", display: "flex", flexDirection: "column" }}>
-          {selBlock
-            ? <window.PropertiesPanel block={selBlock} update={(patch) => updateBlock(selBlock.id, patch)} mergePrev={mergeInfo(selBlock) ? () => mergeTopicWithPrevious(selBlock) : null} />
-            : <LessonMeta lesson={lesson} setLesson={(L) => setLesson(L)} />}
+        <aside aria-label="Propriedades" style={{ background: "var(--tool-panel)", minWidth: 0, height: "100vh", display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
+          {rightOpen ? (<>
+            <button onClick={() => setRightOpen(false)} title="Recolher painel de propriedades" aria-label="Recolher painel de propriedades" aria-expanded="true"
+              style={{ position: "absolute", top: 11, right: 10, zIndex: 6, width: 28, height: 28, display: "grid", placeItems: "center", border: "1px solid var(--tool-line)", background: "#fff", borderRadius: 7, cursor: "pointer", color: "var(--tool-ink-2)", fontSize: 15, lineHeight: 1 }}>»</button>
+            {selBlock
+              ? <window.PropertiesPanel block={selBlock} update={(patch) => updateBlock(selBlock.id, patch)} mergePrev={mergeInfo(selBlock) ? () => mergeTopicWithPrevious(selBlock) : null} />
+              : <LessonMeta lesson={lesson} setLesson={(L) => setLesson(L)} />}
+          </>) : (
+            <button onClick={() => setRightOpen(true)} title="Abrir painel de propriedades" aria-label="Abrir painel de propriedades" aria-expanded="false"
+              style={{ flex: 1, border: 0, background: "none", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 14, paddingTop: 14, color: "var(--tool-ink-2)" }}>
+              <span aria-hidden="true" style={{ width: 28, height: 28, display: "grid", placeItems: "center", border: "1px solid var(--tool-line)", background: "#fff", borderRadius: 7, fontSize: 15, lineHeight: 1 }}>«</span>
+              <span style={{ writingMode: "vertical-rl", fontSize: 12, fontWeight: 650, letterSpacing: ".06em" }}>{selBlock ? "PROPRIEDADES DO BLOCO" : "DADOS DA AULA"}</span>
+            </button>
+          )}
         </aside>
       )}
 
@@ -823,9 +836,10 @@ const emptyNote={padding:18,border:"1px dashed var(--tool-line-2)",borderRadius:
 function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear }) {
   const [busy, setBusy] = useStateA(false);
   const [menu, setMenu] = useStateA(false);
+  const [more, setMore] = useStateA(false);
   const wrap = async (fn) => { setBusy(true); setMenu(false); try { await fn(); } finally { setBusy(false); } };
   return (
-    <header style={{ height: 52, flexShrink: 0, background: "var(--tool-panel)", borderBottom: "1px solid var(--tool-line)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", position: "relative", zIndex: 40 }}>
+    <header className="tb" style={{ height: 52, flexShrink: 0, background: "var(--tool-panel)", borderBottom: "1px solid var(--tool-line)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", position: "relative", zIndex: 40 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: "1 1 0" }}>
         <ThemePicker />
         <span className="tb-title" style={{ width: 1, height: 22, background: "var(--tool-line)" }} />
@@ -834,17 +848,29 @@ function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, o
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
         <button onClick={onUndo} disabled={!canUndo} title="Desfazer (⌘Z)" style={{ ...ghostBtn, opacity: canUndo ? 1 : 0.4 }}><window.TIcon name="undo" size={15} /></button>
-        <button onClick={onClear} disabled={!canClear} title="Limpar página" style={{ ...ghostBtn, opacity: canClear ? 1 : 0.4, color: canClear ? "var(--coral-deep)" : "var(--tool-ink-3)" }}><window.TIcon name="trash" size={15} /></button>
+        <button className="tb-sec" onClick={onClear} disabled={!canClear} title="Limpar página" style={{ ...ghostBtn, opacity: canClear ? 1 : 0.4, color: canClear ? "var(--coral-deep)" : "var(--tool-ink-3)" }}><window.TIcon name="trash" size={15} /></button>
         <button onClick={onLibrary} title="Biblioteca: todas as aulas guardadas neste navegador (as semanas do ClassAuthor entram aqui)" style={textBtn}><window.TIcon name="library" size={15} /><span className="tb-label">Biblioteca</span></button>
-        <button onClick={onOpenProject} title="Abrir projeto (…-ClassAtelier.json)" style={textBtn}><window.TIcon name="folder" size={15} /><span className="tb-label">Abrir</span></button>
+        <button className="tb-sec" onClick={onOpenProject} title="Abrir projeto (…-ClassAtelier.json)" style={textBtn}><window.TIcon name="folder" size={15} /><span className="tb-label">Abrir</span></button>
         <button onClick={onDownloadProject} title="Salvar projeto: baixa o arquivo para continuar depois ou em outro computador" style={textBtn}><window.TIcon name="save" size={15} /><span className="tb-label">Salvar</span></button>
-        <button onClick={onRichNotes} title="Termos e links: revisar glossário e links de toda a aula" style={textBtn}><window.TIcon name="link" size={15} /><span className="tb-label">Termos e links</span></button>
-        <button onClick={onA11y} aria-pressed={!!a11yOpen} title="Acessibilidade: verifica imagens sem descrição, contraste, títulos, links, vídeos e tabelas" style={{ ...textBtn, position: "relative", background: a11yOpen ? "var(--tool-surface)" : undefined }}><window.TIcon name="eye" size={15} /><span className="tb-label">Acessibilidade</span>{a11yCount > 0 && <span aria-label={a11yCount + " itens para revisar"} style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 999, background: "#b3372a", color: "#fff", fontSize: 10.5, fontWeight: 800, display: "inline-grid", placeItems: "center", marginLeft: 2 }}>{a11yCount > 99 ? "99+" : a11yCount}</span>}</button>
+        <button className="tb-sec" onClick={onRichNotes} title="Termos e links: revisar glossário e links de toda a aula" style={textBtn}><window.TIcon name="link" size={15} /><span className="tb-label">Termos e links</span></button>
+        <button onClick={onA11y} aria-pressed={!!a11yOpen} title="Acessibilidade: verifica imagens sem descrição, contraste, títulos, links, vídeos e tabelas" style={{ ...textBtn, position: "relative", background: a11yOpen ? "var(--tool-surface)" : undefined }}><window.TIcon name="a11y" size={15} /><span className="tb-label">Acessibilidade</span>{a11yCount > 0 && <span aria-label={a11yCount + " itens para revisar"} style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 999, background: "#b3372a", color: "#fff", fontSize: 10.5, fontWeight: 800, display: "inline-grid", placeItems: "center", marginLeft: 2 }}>{a11yCount > 99 ? "99+" : a11yCount}</span>}</button>
         <div style={{ display: "flex", background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 9, padding: 3 }}>
           <button onClick={() => setMode("edit")} style={segBtn(mode === "edit")}><window.TIcon name="pencil" size={13} /> <span className="tb-seg-label">Editar</span></button>
           <button onClick={() => setMode("preview")} style={segBtn(mode === "preview")}><window.TIcon name="eye" size={13} /> <span className="tb-seg-label">Visualizar</span></button>
         </div>
-        <button onClick={onPrintPDF} title="Imprimir PDF: abre a versão expandida da aula para imprimir" style={textBtn}><window.TIcon name="printer" size={15} /><span className="tb-label">Imprimir PDF</span></button>
+        <button className="tb-sec" onClick={onPrintPDF} title="Imprimir PDF: abre a versão expandida da aula para imprimir" style={textBtn}><window.TIcon name="printer" size={15} /><span className="tb-label">Imprimir PDF</span></button>
+        <div className="tb-more" style={{ position: "relative" }}>
+          <button onClick={() => setMore((v) => !v)} title="Mais ações: abrir projeto, termos e links, imprimir PDF, limpar página" aria-haspopup="menu" aria-expanded={more} aria-label="Mais ações" style={{ ...ghostBtn, fontSize: 18, lineHeight: 1, paddingBottom: 5 }}>⋯</button>
+          {more && (<>
+            <div onClick={() => setMore(false)} style={{ position: "fixed", inset: 0, zIndex: 41 }} />
+            <div role="menu" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 42, background: "#fff", border: "1px solid var(--tool-line)", borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.16)", width: 236, overflow: "hidden" }}>
+              <button role="menuitem" onClick={() => { setMore(false); onOpenProject(); }} style={menuItem}><span style={{ fontWeight: 600 }}>Abrir projeto…</span><span style={menuSub}>Reabre um arquivo …-ClassAtelier.json.</span></button>
+              <button role="menuitem" onClick={() => { setMore(false); onRichNotes(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Termos e links</span><span style={menuSub}>Revisar glossário e links de toda a aula.</span></button>
+              <button role="menuitem" onClick={() => { setMore(false); onPrintPDF(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Imprimir PDF</span><span style={menuSub}>Abre a versão expandida para imprimir.</span></button>
+              <button role="menuitem" disabled={!canClear} onClick={() => { setMore(false); onClear(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)", opacity: canClear ? 1 : 0.45, color: "var(--coral-deep)" }}><span style={{ fontWeight: 600 }}>Limpar página</span><span style={menuSub}>Remove todos os blocos (dá para desfazer).</span></button>
+            </div>
+          </>)}
+        </div>
         <div style={{ position: "relative" }}>
           <button onClick={() => setMenu((v) => !v)} disabled={busy} style={primaryBtn}>
             <window.TIcon name="download" size={14} color="#fff" /> {busy ? "Gerando…" : "Exportar"} <span style={{ fontSize: 10, opacity: 0.8 }}>▾</span>

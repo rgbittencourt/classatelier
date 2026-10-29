@@ -17,10 +17,13 @@
        injetado por boot.js a partir do tema ativo (themes.js). Nada de marca
        fica fixo aqui — trocar de tema troca tudo isso de uma vez. -->
   <style>
-    @media (max-width: 1760px) { .tb-label { display: none; } }
-    @media (max-width: 1560px) { .tb-title { display: none !important; } }
-    @media (max-width: 1280px) { .tb-theme-name { display: none; } .tb-seg-label { display: none; } }
-    @media (max-width: 1180px) { .tb-theme { display: none; } }
+    /* A barra superior responde à LARGURA DELA (coluna do meio), não da janela:
+       os painéis laterais comem espaço, então medir a janela não bastava. */
+    .tb { container-type: inline-size; container-name: tb; }
+    .tb-more { display: none; }
+    @container tb (max-width: 1180px) { .tb-label { display: none; } .tb-title { display: none !important; } }
+    @container tb (max-width: 960px) { .tb-theme-name { display: none; } .tb-seg-label { display: none; } .tb-sec { display: none !important; } .tb-more { display: block; } }
+    @container tb (max-width: 600px) { .tb-theme { display: none; } }
     /* ── Builder chrome (neutral tool UI, so the warm Aula page pops) ── */
     :root {
       --tool-bg:      #EDEEF1;
@@ -154,6 +157,6 @@
        em ordem, por boot.js — a partir do tema ativo (themes.js). -->
   <script>window.AULA_BASE = "";</script>
   <script src="themes.js?v=20261028-publish"></script>
-  <script src="boot.js?v=20261028-acervo"></script>
+  <script src="boot.js?v=20261028-layout"></script>
 </body>
 </html>
