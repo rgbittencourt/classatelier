@@ -93,6 +93,15 @@ Em **Exportar → Atualizar uma aula já publicada…**, o ClassAtelier troca no
 
 Só mexe nos arquivos daquela aula: a página, as imagens dela, o projeto `projetos/SemanaNN-…json` e, se você deixar marcado, o nome dela na página do curso (`index.html`). Imagens e projeto antigos que deixaram de ser usados são apagados. As outras aulas e **os endereços usados no Moodle não mudam**, mesmo que você tenha renomeado os arquivos à mão. Se o repositório mudar enquanto você prepara a atualização, nada é enviado e o ClassAtelier avisa.
 
+## Colocar no Moodle
+
+Depois de publicar (em «Curso e GitHub…» ou «Atualizar uma aula já publicada…»), o botão **Colocar no Moodle** mostra, para cada aula:
+
+- **A) Recurso URL (recomendado):** o endereço para colar em *Adicionar uma atividade ou recurso → URL*, com *Exibir* em «Incorporar» ou «Em uma nova janela».
+- **B) Código iframe:** para colar no modo HTML do editor de uma Página ou Rótulo, com a altura da janela à escolha (600 a 1500 px). Alguns Moodles bloqueiam iframe em textos; nesse caso use a opção A.
+
+Também está em **Exportar → Colocar no Moodle…**, onde basta colar o endereço de uma aula já publicada. Como o Moodle só aponta para a página do GitHub Pages, ao atualizar a aula lá o Moodle já mostra a versão nova.
+
 ## Identidade visual
 
 - `assets/classatelier-mark.svg`: símbolo do ClassAtelier (janela em arco);

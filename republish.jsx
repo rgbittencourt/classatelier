@@ -58,11 +58,13 @@
     const meta = (currentLesson && currentLesson.meta) || {};
     const nowTitle = norm(meta.title);
     const week = (/^Semana0*(\d+)-/.exec(window.projectFileName(currentLesson || {}, 0)) || [])[1];
+    const isUserSite = ctx.repo.toLowerCase() === (ctx.owner + ".github.io").toLowerCase();
+    const siteBase = `https://${ctx.owner.toLowerCase()}.github.io/${isUserSite ? "" : ctx.repo + "/"}${ctx.prefix}`;
     const list = htmls.map((file) => {
       const label = labels.get(file) || file;
       const digits = (/(\d+)/.exec(file) || [])[1];
       const same = nowTitle && norm(label) && (norm(label) === nowTitle || norm(label).includes(nowTitle) || nowTitle.includes(norm(label)));
-      return { file, label, suggested: !!same || (!!week && digits != null && Number(digits) === Number(week) && !nowTitle) };
+      return { file, label, url: siteBase + encodeURI(file), suggested: !!same || (!!week && digits != null && Number(digits) === Number(week) && !nowTitle) };
     });
     // se nenhuma bateu pelo título, sugere pelo número da semana
     if (!list.some((x) => x.suggested) && week) list.forEach((x) => { const d = (/(\d+)/.exec(x.file) || [])[1]; if (d != null && Number(d) === Number(week)) x.suggested = true; });
@@ -151,7 +153,7 @@
     const commit = await ctx.api("POST", "/git/commits", { message: `Atualiza a aula "${p.title || p.targetFile}" (ClassAtelier)`, tree: tree.sha, parents: [ctx.headSha] });
     await ctx.api("PATCH", `/git/refs/heads/${enc(ctx.branch)}`, { sha: commit.sha, force: false });
     const isUserSite = ctx.repo.toLowerCase() === (ctx.owner + ".github.io").toLowerCase();
-    const url = `https://${ctx.owner.toLowerCase()}.github.io/${isUserSite ? "" : ctx.repo + "/"}${ctx.prefix}${p.targetFile}`;
+    const url = `https://${ctx.owner.toLowerCase()}.github.io/${isUserSite ? "" : ctx.repo + "/"}${ctx.prefix}${encodeURI(p.targetFile)}`;
     return { sent: p.send.length, deleted: p.del.length, commitUrl: `https://github.com/${ctx.owner}/${ctx.repo}/commit/${commit.sha}`, url };
   }
 
@@ -173,6 +175,7 @@ function RepublishDialog({ lesson, onClose }) {
   const [updIdx, setUpdIdx] = React.useState(true);
   const [pl, setPl] = React.useState(null);
   const [done, setDone] = React.useState(null);
+  const [moodle, setMoodle] = React.useState(null);
 
   const save = () => { try { const keep = { owner: gh.owner, repo: gh.repo, branch: gh.branch, folder: gh.folder }; let old = {}; try { old = JSON.parse(localStorage.getItem(PUB_KEY) || "{}") || {}; } catch (e) {} localStorage.setItem(PUB_KEY, JSON.stringify({ ...old, ...keep, ...(gh.remember ? { token: gh.token } : { token: undefined }) })); } catch (e) {} };
   const search = async () => {
@@ -236,7 +239,7 @@ function RepublishDialog({ lesson, onClose }) {
                 </label>))}
             </div>
             {found.hasIndex && <label style={{ display: "flex", gap: 8, fontSize: 12.5, margin: "12px 0 0" }}><input type="checkbox" checked={updIdx} onChange={(e) => { setUpdIdx(e.target.checked); setPl(null); }} /> Atualizar também o nome da aula na página do curso (index.html), se o título mudou</label>}
-            <div style={{ marginTop: 12 }}><button onClick={preview} disabled={!pick || !!busy} style={{ ...btn, opacity: pick ? 1 : 0.5 }} data-rp="preview">Ver o que será enviado</button></div>
+            <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}><button onClick={() => setMoodle(found.list.map((x) => ({ label: x.label, url: x.url })))} style={btn} data-rp="moodle-all">Código para o Moodle (todas as aulas da pasta)</button><button onClick={preview} disabled={!pick || !!busy} style={{ ...btn, opacity: pick ? 1 : 0.5 }} data-rp="preview">Ver o que será enviado</button></div>
           </div>)}
 
           {pl && (<div style={{ marginTop: 14 }} data-rp="plan">
@@ -254,10 +257,12 @@ function RepublishDialog({ lesson, onClose }) {
             <b>Aula atualizada.</b> {done.sent} arquivo(s) enviado(s){done.deleted ? ", " + done.deleted + " apagado(s)" : ""}. O GitHub Pages pode levar alguns minutos para mostrar a mudança.<br />
             <a href={done.url} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", wordBreak: "break-all" }}>{done.url}</a>{" · "}
             <a href={done.commitUrl} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>ver no GitHub</a>
+            <div style={{ marginTop: 8 }}><button onClick={() => setMoodle([{ label: title, url: done.url }])} style={{ ...btn, padding: "5px 11px", fontSize: 12 }} data-rp="moodle">Código para o Moodle desta aula</button></div>
           </div>)}
         </div>
         <footer style={{ padding: "12px 20px", borderTop: "1px solid var(--tool-line)", display: "flex", justifyContent: "flex-end" }}><button onClick={onClose} style={btn}>{done ? "Fechar" : "Cancelar"}</button></footer>
       </section>
+      {moodle && <MoodleDialog links={moodle} onClose={() => setMoodle(null)} />}
     </div>
   );
 }

@@ -488,6 +488,7 @@ function AulaStudioApp() {
   const [scormCheck, setScormCheck] = useStateA(null);
   const [versionsOpen, setVersionsOpen] = useStateA(false);
   const [republishOpen, setRepublishOpen] = useStateA(false);
+  const [moodle, setMoodle] = useStateA(null); // {links}
   const [clearOpen, setClearOpen] = useStateA(false);
   const [busyMsg, setBusyMsg] = useStateA(null);
   const [richOpen, setRichOpen] = useStateA(false);
@@ -588,7 +589,7 @@ function AulaStudioApp() {
           onExportHTML={exportHTML} onExportStandaloneHTML={exportStandaloneHTML} onExportSCORM={() => setScormOpen(true)} onPrintPDF={printPDF}
           onOpenProject={openProjectClick} onDownloadProject={downloadProject}
           onRichNotes={() => setRichOpen(true)} onA11y={() => setA11yOpen((v) => !v)} a11yOpen={a11yOpen} a11yCount={a11yCount} onLibrary={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(false); setLibOpen(true); }} onCourse={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(true); setLibOpen(true); }}
-          onClear={() => setClearOpen(true)} canClear={hasLessonContent} onVersions={() => setVersionsOpen(true)} onRepublish={() => setRepublishOpen(true)}
+          onClear={() => setClearOpen(true)} canClear={hasLessonContent} onVersions={() => setVersionsOpen(true)} onRepublish={() => setRepublishOpen(true)} onMoodle={() => setMoodle({ links: [] })}
         />
         <Canvas
           lesson={lesson} mode={mode} selected={selected} setSelected={setSelected}
@@ -623,12 +624,13 @@ function AulaStudioApp() {
         onOpen={async (e) => { await switchTo(e.lesson, e.id, e.source); setLibOpen(false); setMode("edit"); }}
         onNew={async () => { await switchTo(emptyLesson(), newLessonId(), null); setLibOpen(false); setMode("edit"); }}
         onCourse={(entries) => setCourseEntries(entries)} />}
-      {courseEntries && <CourseDialog entries={courseEntries} onClose={() => setCourseEntries(null)} onCheck={(title, load) => setScormCheck({ title, load })}
+      {courseEntries && <CourseDialog entries={courseEntries} onMoodle={(links) => setMoodle({ links })} onClose={() => setCourseEntries(null)} onCheck={(title, load) => setScormCheck({ title, load })}
         onConfirm={async (opts) => { try { await (opts.format === "site" ? window.downloadCourseSite : window.downloadCourseSCORM)(opts.lessons, opts); setCourseEntries(null); showToast("Pacote do curso gerado."); } catch (e) { alert("Erro ao gerar o pacote do curso: " + e.message); } }} />}
       {toast && <div role="status" style={{ position: "fixed", left: "50%", bottom: 24, transform: "translateX(-50%)", zIndex: 10000, maxWidth: 520, padding: "12px 18px", borderRadius: 12, background: "#14213D", color: "#fff", fontSize: 13, lineHeight: 1.5, boxShadow: "0 18px 44px rgba(20,33,61,.3)" }}>{toast}</div>}
       <window.MarkToolbar />
       <input ref={fileInputRef} type="file" accept=".json,application/json" onChange={onProjectFile} style={{ display: "none" }} />
       {scormOpen && <ScormDialog lesson={lesson} onClose={() => setScormOpen(false)} onConfirm={exportSCORM} onCheck={(title, load) => setScormCheck({ title, load })} />}
+      {moodle && <window.MoodleDialog links={moodle.links} onClose={() => setMoodle(null)} />}
       {republishOpen && <window.RepublishDialog lesson={lesson} onClose={() => setRepublishOpen(false)} />}
       {versionsOpen && <window.VersionsDialog lessonId={curRef.current.id} lesson={lesson} onClose={() => setVersionsOpen(false)} onRestore={restoreVersion} onApplyBlock={applyVersionBlock} />}
       {scormCheck && <ScormCheckDialog title={scormCheck.title} load={scormCheck.load} onClose={() => setScormCheck(null)} />}
@@ -728,7 +730,7 @@ function LibraryDialog({ currentId, preselectCurrent, onClose, onOpen, onNew, on
   );
 }
 
-function CourseDialog({ entries, onClose, onConfirm, onCheck }) {
+function CourseDialog({ entries, onClose, onConfirm, onCheck, onMoodle }) {
   const [list, setList] = useStateA(entries);
   const [title, setTitle] = useStateA("");
   const [version, setVersion] = useStateA("1.2");
@@ -834,6 +836,7 @@ function CourseDialog({ entries, onClose, onConfirm, onCheck }) {
                       <button onClick={() => copy(l.url)} style={{ ...ghostBtn, width: "auto", height: 26, padding: "0 8px", fontSize: 11.5 }}>Copiar</button>
                     </div>
                   ))}
+                  <div style={{ marginTop: 8 }}><button onClick={() => onMoodle && onMoodle(published.links)} data-act="moodle" style={{ ...ghostBtn, width: "auto", height: 30, padding: "0 12px", fontSize: 12.5, fontWeight: 700, background: "#fff", border: "1px solid #b9d9c7" }}>Colocar no Moodle: endereços e código iframe</button></div>
                   {published.commitUrl && <div style={{ marginTop: 6 }}><a href={published.commitUrl} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>Ver a publicação no GitHub</a></div>}
                   <div style={{ marginTop: 6 }}><a href="./acervo/" target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>Administrar os cursos publicados no ClassAcervo ↗</a></div>
                 </div>
@@ -868,7 +871,7 @@ function RichNotesDialog({ lesson, onClose, onUpdate }) {
 const emptyNote={padding:18,border:"1px dashed var(--tool-line-2)",borderRadius:9,color:"var(--tool-ink-3)",fontSize:12};
 
 // ── Top bar ──
-function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear, onVersions, onRepublish }) {
+function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear, onVersions, onRepublish, onMoodle }) {
   const [busy, setBusy] = useStateA(false);
   const [menu, setMenu] = useStateA(false);
   const [more, setMore] = useStateA(false);
@@ -935,6 +938,10 @@ function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, o
                 <button onClick={() => { setMenu(false); onCourse && onCourse(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
                   <span style={{ fontWeight: 600 }}>Curso e GitHub…</span>
                   <span style={menuSub}>Junta várias aulas da Biblioteca em um site, pacote SCORM ou publicação direta no GitHub (links para o Moodle).</span>
+                </button>
+                <button onClick={() => { setMenu(false); onMoodle && onMoodle(); }} data-act="moodle-menu" style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
+                  <span style={{ fontWeight: 600 }}>Colocar no Moodle…</span>
+                  <span style={menuSub}>Gera o link (Recurso URL) e o código iframe de uma aula publicada.</span>
                 </button>
                 <button onClick={() => { setMenu(false); onRepublish && onRepublish(); }} data-act="republish" style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
                   <span style={{ fontWeight: 600 }}>Atualizar uma aula já publicada…</span>
