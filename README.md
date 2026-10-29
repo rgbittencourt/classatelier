@@ -15,6 +15,10 @@ No menu **Exportar**, escolha o formato adequado:
 
 O SCORM pode ser configurado como **1.2** — padrão de maior compatibilidade — ou **2004**. Quizzes avaliativos podem enviar nota e status de aprovação para o LMS.
 
+## Versão do aplicativo
+
+ClassAtelier **1.0.0** e ClassAcervo **1.0.0** (Versionamento Semântico, cada um com a sua). O histórico está em [`CHANGELOG.md`](CHANGELOG.md).
+
 ## Biblioteca e pacote do curso
 
 O botão **Biblioteca** guarda, neste navegador, todas as aulas que você edita ou abre (inclusive as semanas enviadas pelo ClassAuthor), com nome e data da última edição. Marque várias aulas e use **Montar curso**: o formato **Site HTML (GitHub Pages)** gera `index.html` + `aula-01.html`, `aula-02.html`… (endereços estáveis, com LEIA-ME de publicação e links para o Moodle); o formato **Pacote SCORM** gera um único pacote com uma aula por item, na ordem escolhida, e cada aula mantém a própria avaliação final e a nota enviada ao LMS. A biblioteca é por navegador; para levar uma aula a outro computador, use **Salvar** (`.aula.json`).

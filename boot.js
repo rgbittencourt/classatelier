@@ -12,7 +12,9 @@
 // ════════════════════════════════════════════════════════════
 (function () {
   var BASE = window.AULA_BASE || "";
-  var BUILD_REV = "20261029-rename";
+  // Versão do ClassAtelier (Versionamento Semântico; histórico em CHANGELOG.md).
+  window.CLASSATELIER_VERSION = "1.0.0";
+  var BUILD_REV = "20261029-v1.0.0";
   var theme = window.resolveAulaTheme();
   window.AULA_ACTIVE_THEME = theme;
 

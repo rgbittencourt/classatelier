@@ -2,6 +2,7 @@
 // (os que o ClassAtelier envia em "Curso e GitHub…"). Página estática: fala direto com a API do
 // GitHub a partir do navegador; o token fica só na sessão (ou neste navegador, se você pedir).
 const APP_NAME = "ClassAcervo";
+const APP_VERSION = "1.0.0"; // Versionamento Semântico; igual ao número em index.html e CHANGELOG.md
 const API = "https://api.github.com";
 const MARKER = "gerado-pelo-classacervo";
 
@@ -250,7 +251,7 @@ footer{margin-top:44px;font-size:13px;color:var(--mute);border-top:1px solid var
 </style></head><body><main>
 <p class="eyebrow">Cursos</p><h1>${esc(title)}</h1>${subtitle ? `<p class="sub">${esc(subtitle)}</p>` : `<p class="sub"></p>`}
 ${body || "<p>Nenhum curso publicado ainda.</p>"}
-<footer>Índice gerado com ${APP_NAME} · desenvolvido pelo Prof. Rogério G. Bittencourt, INOVALAB - IFSC (Câmpus Florianópolis–Continente) · atualizado em ${today}</footer>
+<footer>Índice gerado com ${APP_NAME} ${APP_VERSION} · desenvolvido pelo Prof. Rogério G. Bittencourt, INOVALAB - IFSC (Câmpus Florianópolis–Continente) · atualizado em ${today}</footer>
 </main></body></html>
 `;
 }
@@ -284,7 +285,7 @@ function renderTop() {
     right = `<div class="conn-info"><code>${esc(S.conn.owner)}/${esc(S.conn.repo)}@${esc(S.conn.branch)}</code>${pages}${S.loadedAt ? `<span title="Hora da última leitura do repositório">lido às ${S.loadedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>` : ""}</div>
       <button class="btn small" data-act="reload">Recarregar</button><button class="btn small ghost" data-act="logout">Sair</button>`;
   }
-  $("#top").innerHTML = `<a class="brand" href="./" aria-label="${APP_NAME}">${mark}<span><span class="wordmark"><b>Class</b><i>Acervo</i></span><span class="tagline">cursos publicados no GitHub Pages</span></span></a><span class="top-spacer"></span><a class="btn" href="../" target="_blank" rel="noopener" title="Abrir o ClassAtelier (editor das aulas) em outra aba">ClassAtelier ↗</a>${right}`;
+  $("#top").innerHTML = `<a class="brand" href="./" aria-label="${APP_NAME}">${mark}<span><span class="wordmark"><b>Class</b><i>Acervo</i></span><span class="tagline">cursos publicados no GitHub Pages · v${APP_VERSION}</span></span></a><span class="top-spacer"></span><a class="btn" href="../" target="_blank" rel="noopener" title="Abrir o ClassAtelier (editor das aulas) em outra aba">ClassAtelier ↗</a>${right}`;
 }
 
 function renderConnect() {
