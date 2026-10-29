@@ -106,6 +106,10 @@ Também está em **Exportar → Colocar no Moodle…**, onde basta colar o ender
 
 No alto da coluna de blocos há uma caixa de busca (atalho: tecle **/**). Ela acha pelo nome e pelo que o bloco faz: «pergunta» leva a Reflexão, Accordion e Quiz; «sanfona», aos blocos retráteis; «iframe», ao conteúdo externo; «cronologia», à linha do tempo. Ignora acentos e maiúsculas, casa no começo das palavras e destaca o trecho. **Enter** insere o primeiro resultado, **Esc** limpa a busca.
 
+## Prévia em celular e tablet
+
+No modo **Visualizar**, a barra «Ver como» troca o aparelho: Computador, Tablet (820 × 1180), Celular (390 × 844) e Celular pequeno (360 × 640). **Deitar** gira o aparelho; **Recarregar** volta ao começo da aula. A aula roda num quadro com a largura real do aparelho, então o layout responsivo (menu, colunas, tamanhos) aparece como no celular do aluno. É a mesma página que a exportação gera, montada com a aula como está agora (para ver uma edição nova, volte a Editar e entre em Visualizar de novo). A escolha do aparelho fica guardada neste navegador.
+
 ## Identidade visual
 
 - `assets/classatelier-mark.svg`: símbolo do ClassAtelier (janela em arco);

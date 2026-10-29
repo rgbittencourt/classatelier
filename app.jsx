@@ -1196,6 +1196,11 @@ const primaryBtn = { display: "flex", alignItems: "center", gap: 7, padding: "8p
 function Canvas({ lesson, mode, selected, setSelected, updateBlock, dragType, setDragType, dropIdx, setDropIdx, insertBlock, insertChild, insertInto, reorderTo, moveChildTo, dragBlock, onRemove, onDuplicate, onMove }) {
   const isEdit = mode === "edit";
   const [inserterAt, setInserterAt] = useStateA(null);
+  // prévia em aparelhos (só no modo Visualizar); a escolha fica guardada neste navegador
+  const [device, setDeviceRaw] = useStateA(() => { try { return localStorage.getItem("aulastudio.device") || "desktop"; } catch (e) { return "desktop"; } });
+  const [landscape, setLandscape] = useStateA(false);
+  const [devKey, setDevKey] = useStateA(0);
+  const setDevice = (d) => { setDeviceRaw(d); try { localStorage.setItem("aulastudio.device", d); } catch (e) {} };
 
   const handleDropAt = (idx) => {
     if (dragType) { insertBlock(dragType, idx); setDragType(null); }
@@ -1204,11 +1209,23 @@ function Canvas({ lesson, mode, selected, setSelected, updateBlock, dragType, se
   };
 
   if (mode === "preview") {
+    const devs = window.PREVIEW_DEVICES || [];
+    const tbtn = (on) => ({ border: 0, borderRadius: 6, padding: "5px 10px", fontSize: 12, fontWeight: 650, cursor: "pointer", fontFamily: "inherit", background: on ? "#fff" : "transparent", color: on ? "var(--tool-ink)" : "var(--tool-ink-3)", boxShadow: on ? "0 1px 2px rgba(0,0,0,.15)" : "none" });
     return (
-      <div className="tool-scroll canvas-mat" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
-        <div data-lz-canvas style={{ background: "var(--paper)" }}>
-          <window.LessonRenderer lesson={lesson} mode="preview" chrome={true} />
+      <div className="canvas-mat" style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+        <div data-dp="bar" style={{ flex: "none", display: "flex", gap: 10, alignItems: "center", justifyContent: "center", flexWrap: "wrap", padding: "8px 12px", borderBottom: "1px solid var(--tool-line)", background: "var(--tool-panel)" }}>
+          <span style={{ fontSize: 12, color: "var(--tool-ink-3)" }}>Ver como:</span>
+          <div role="group" aria-label="Aparelho da prévia" style={{ display: "flex", background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 8, padding: 2 }}>
+            {devs.map((d) => <button key={d.id} data-dev={d.id} onClick={() => setDevice(d.id)} aria-pressed={device === d.id} style={tbtn(device === d.id)}>{d.label}</button>)}
+          </div>
+          {device !== "desktop" && <>
+            <button onClick={() => setLandscape((v) => !v)} aria-pressed={landscape} data-dp="rotate" title="Girar o aparelho" style={{ ...ghostBtn, width: "auto", height: 30, padding: "0 10px", fontSize: 12, fontWeight: 650 }}>{landscape ? "Em pé" : "Deitar"}</button>
+            <button onClick={() => setDevKey((k) => k + 1)} data-dp="reload" title="Recarregar a prévia (volta ao começo da aula)" style={{ ...ghostBtn, width: "auto", height: 30, padding: "0 10px", fontSize: 12, fontWeight: 650 }}>Recarregar</button>
+          </>}
         </div>
+        {device === "desktop"
+          ? <div className="tool-scroll" style={{ flex: 1, minHeight: 0, overflowY: "auto" }}><div data-lz-canvas style={{ background: "var(--paper)" }}><window.LessonRenderer lesson={lesson} mode="preview" chrome={true} /></div></div>
+          : <window.DevicePreview lesson={lesson} device={device} landscape={landscape} reloadKey={devKey} />}
       </div>
     );
   }

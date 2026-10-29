@@ -21,6 +21,7 @@
        os painéis laterais comem espaço, então medir a janela não bastava. */
     .tb { container-type: inline-size; container-name: tb; }
     .tb-more { display: none; }
+    @container tb (max-width: 1560px) { .tb-title { display: none !important; } }
     @container tb (max-width: 1180px) { .tb-label { display: none; } .tb-title { display: none !important; } }
     @container tb (max-width: 960px) { .tb-theme-name { display: none; } .tb-seg-label { display: none; } .tb-sec { display: none !important; } .tb-more { display: block; } }
     @container tb (max-width: 600px) { .tb-theme { display: none; } }
@@ -157,6 +158,6 @@
        em ordem, por boot.js — a partir do tema ativo (themes.js). -->
   <script>window.AULA_BASE = "";</script>
   <script src="themes.js?v=20261028-publish"></script>
-  <script src="boot.js?v=20261028-busca"></script>
+  <script src="boot.js?v=20261028-aparelhos"></script>
 </body>
 </html>
