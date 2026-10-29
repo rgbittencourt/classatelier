@@ -91,8 +91,21 @@ function rewriteThemeAssets(source, assets, mode) {
 // Inline the kit so the exported file is self-contained and offline-capable.
 // opts.fonts: "embed"  → fonts as base64 inside the HTML (single-file export)
 //             "external" → keep @import url("fonts/fonts.css") (SCORM: fonts/ in zip)
+// Bibliotecas que vão DENTRO dos pacotes .zip (pasta vendor/), para a aula abrir sem internet.
+const VENDOR_FILES = [
+  "vendor/react.production.min.js",
+  "vendor/react-dom.production.min.js",
+  "vendor/babel.min.js",
+  "vendor/fontawesome/css/all.min.css",
+  "vendor/fontawesome/webfonts/fa-brands-400.woff2",
+  "vendor/fontawesome/webfonts/fa-regular-400.woff2",
+  "vendor/fontawesome/webfonts/fa-solid-900.woff2",
+  "vendor/fontawesome/webfonts/fa-v4compatibility.woff2",
+];
 async function buildExportHTML(lesson, opts = {}) {
   const fontsMode = opts.fonts || "embed";
+  // Pacote .zip (fontes externas) → bibliotecas locais em vendor/. Arquivo único → CDN (senão passaria de 3 MB).
+  const localLibs = opts.vendor ? opts.vendor === "local" : fontsMode === "external";
   // Tema ativo (themes.js) decide O QUE carregar. base = raiz do projeto.
   const theme = window.AULA_ACTIVE_THEME || (window.resolveAulaTheme ? window.resolveAulaTheme() : null);
   const base = window.AULA_BASE != null ? window.AULA_BASE : "../";
@@ -146,7 +159,7 @@ async function buildExportHTML(lesson, opts = {}) {
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>${escapeHtml(lesson.meta?.title || "Aula")}</title>
-${usesFontAwesome ? '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer" />' : ""}
+${usesFontAwesome ? (localLibs ? '<link rel="stylesheet" href="vendor/fontawesome/css/all.min.css" />' : '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer" />') : ""}
 <style>
 ${fontStyle}
 </style>
@@ -166,9 +179,11 @@ ${pdfCss}
 <button id="aula-print-button" type="button" data-pdf-hide aria-label="Imprimir versão PDF" title="Imprimir versão PDF" style="position:fixed;right:20px;bottom:20px;z-index:9999;width:48px;height:48px;border:0;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--paper);box-shadow:0 8px 28px rgba(0,0,0,.22);cursor:pointer;font:600 20px/1 sans-serif">&#128424;</button>
 <div id="app-root"></div>
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"><\/script>
+${localLibs ? `<script src="vendor/react.production.min.js"><\/script>
+<script src="vendor/react-dom.production.min.js"><\/script>
+<script src="vendor/babel.min.js"><\/script>` : `<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"><\/script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"><\/script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"><\/script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"><\/script>`}
 
 <script>
 ${safeInline(imgSlot)}
@@ -475,6 +490,15 @@ async function addPackageSupportFiles(zip, packagedFiles) {
       files.push("fonts/" + file);
     }));
   } catch (e) { /* packages still work with system fonts */ }
+  // bibliotecas locais (React, Babel, Font Awesome): sem elas a aula não abre offline
+  const usesFA = !!(theme && theme.usesFontAwesome);
+  for (const f of VENDOR_FILES) {
+    if (!usesFA && f.includes("fontawesome")) continue;
+    const res = await fetch(base + f);
+    if (!res.ok) throw new Error("Biblioteca não encontrada para o pacote: " + f);
+    zip.file(f, await res.arrayBuffer());
+    files.push(f);
+  }
   return files;
 }
 

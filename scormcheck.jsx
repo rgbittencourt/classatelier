@@ -188,7 +188,7 @@
     const bad = names.filter((n) => /[^\x21-\x7E]/.test(n) || /[\\:*?"<>|]/.test(n) || n.length > 140 || n.split("/").some((s) => s === ".." || s.startsWith("/")));
     if (bad.length) add("warn", "names", "Nomes de arquivo com espaço, acento ou caracteres especiais", "Alguns servidores e ambientes virtuais tratam mal esses nomes. Prefira letras sem acento, números e hífens.", bad.slice(0, 10).concat(bad.length > 10 ? ["…e mais " + (bad.length - 10)] : []));
     else add("ok", "names", "Nomes de arquivo seguros (sem espaços nem acentos)");
-    const big = names.filter((n) => files.get(n).length > 2 * MB && !/\.(ttf|woff2?|otf)$/i.test(n)).sort((a, b) => files.get(b).length - files.get(a).length);
+    const big = names.filter((n) => files.get(n).length > 2 * MB && !/\.(ttf|woff2?|otf)$/i.test(n) && !n.startsWith("vendor/")).sort((a, b) => files.get(b).length - files.get(a).length);
     if (big.length) add("warn", "big-files", "Arquivos grandes", "Imagens muito pesadas deixam a aula lenta no celular. Reduza para no máximo ~1 MB.", big.slice(0, 6).map((n) => `${n} (${sizeOf(files.get(n).length)})`));
     if (total > 100 * MB) add("error", "size", `Pacote muito grande: ${sizeOf(total)}`, "Acima de 100 MB muitas plataformas recusam o envio. Reduza imagens e mídias.");
     else if (total > 50 * MB) add("warn", "size", `Pacote grande: ${sizeOf(total)}`, "O limite de envio de arquivos costuma ser 50 a 100 MB; confira o da sua plataforma.");
@@ -267,7 +267,7 @@
   }
 
   // Monta o HTML da aula com o LMS simulado, assets embutidos (data:) e sem fontes pesadas.
-  const MIME = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", svg: "image/svg+xml", avif: "image/avif", css: "text/css", json: "application/json", mp3: "audio/mpeg", mp4: "video/mp4" };
+  const MIME = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", svg: "image/svg+xml", avif: "image/avif", css: "text/css", js: "text/javascript", json: "application/json", mp3: "audio/mpeg", mp4: "video/mp4" };
   const b64 = (u8) => { let s = ""; const CH = 0x8000; for (let i = 0; i < u8.length; i += CH) s += String.fromCharCode.apply(null, u8.subarray(i, i + CH)); return btoa(s); };
   function simulatorHtml(files, entry, version) {
     const cache = new Map();

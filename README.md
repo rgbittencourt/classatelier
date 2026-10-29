@@ -66,6 +66,8 @@ Antes de subir um pacote ao ambiente virtual, dá para conferi-lo dentro do Clas
 - **1. Estrutura do pacote** — abre o .zip de verdade e confere: `imsmanifest.xml` na raiz e bem formado; versão (1.2 ou 2004) coerente em namespaces e `schemaversion`; organização, itens e recursos; grafia de `adlcp:scormtype`/`scormType`; arquivos declarados e imagens/estilos referenciados que faltam no .zip; página de abertura com o código SCORM; nomes de arquivo com acento ou espaço; arquivos pesados e tamanho total; dependências externas (bibliotecas e mídias da internet).
 - **2. Simulador de plataforma** — roda a aula num LMS de mentira (SCORM 1.2 ou 2004) dentro de um iframe isolado e mostra, ao vivo, o que a aula envia: `Initialize`, estado, nota, `Commit`, `Terminate`. O LMS de mentira recusa o que a norma proíbe (valor fora do vocabulário, nota fora da faixa, escrita em campo só de leitura, chamada antes de `Initialize`) e o registro destaca essas recusas. Botões: *Rolar até o fim*, *Simular conclusão*, *Encerrar sessão*.
 
+Os pacotes .zip (HTML, SCORM, curso, GitHub) já levam React, Babel e Font Awesome na pasta `vendor/`, então a aula abre **sem internet** e sem depender de unpkg/cdnjs (o pacote fica uns 3 MB maior). Só o *arquivo HTML único* continua buscando essas bibliotecas na internet.
+
 Limite: isto confere o pacote e o comportamento da aula, não substitui o aceite da sua plataforma. O teste final é subir num curso de rascunho do Moodle.
 
 ## Identidade visual
