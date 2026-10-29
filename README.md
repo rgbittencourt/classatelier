@@ -53,7 +53,9 @@ O token vai direto do navegador ao GitHub; fica só na aba, ou neste navegador s
 - `assets/apple-touch-icon.png`: ícone para iPhone/iPad;
 - `assets/site.webmanifest`: metadados de instalação como aplicativo.
 
-O símbolo e a capa usam a janela de ateliê em arco, com o vidro dividido em quatro e um painel aceso, em azul-marinho, papel e coral. O nome se escreve **Class** (negrito) + ***Atelier*** (itálico).
+O **ClassAcervo** tem identidade própria, da mesma família: um arquivo em arco com três gavetas, a do meio acesa em coral. Arquivos: `assets/classacervo-mark.svg`, `assets/classacervo-favicon.svg` (+ `-32.png` e `classacervo-apple-touch-icon.png`), `assets/classacervo.webmanifest`, `assets/brand/classacervo-mark.png`, `classacervo-logo.svg/.png` e `classacervo-cover.svg/.png`. O nome se escreve **Class** (negrito) + ***Acervo*** (itálico).
+
+O símbolo e a capa do ClassAtelier usam a janela de ateliê em arco, com o vidro dividido em quatro e um painel aceso, em azul-marinho, papel e coral. O nome se escreve **Class** (negrito) + ***Atelier*** (itálico).
 
 ## Receber uma semana do ClassAuthor
 

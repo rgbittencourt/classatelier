@@ -225,7 +225,7 @@ async function copy(text, okMsg = "Copiado.") {
 }
 
 function renderTop() {
-  const mark = '<img src="../assets/classatelier-mark.svg" alt="" width="34" height="34">';
+  const mark = '<img src="../assets/classacervo-mark.svg" alt="" width="34" height="34">';
   let right = "";
   if (S.conn) {
     const pages = S.pages === undefined ? "" : S.pages
