@@ -12,7 +12,7 @@
 // ════════════════════════════════════════════════════════════
 (function () {
   var BASE = window.AULA_BASE || "";
-  var BUILD_REV = "20261028-marca";
+  var BUILD_REV = "20261028-acervo";
   var theme = window.resolveAulaTheme();
   window.AULA_ACTIVE_THEME = theme;
 
