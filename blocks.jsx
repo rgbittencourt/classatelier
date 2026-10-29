@@ -171,7 +171,7 @@ function BlockCore({ block, mode, renderNestedList }) {
     case "imagem":
       return (
         <ImagemLegenda
-          src={p.src} slotId={p.slotId || block.id} ratio={p.ratio}
+          src={p.src} slotId={p.slotId || block.id} ratio={p.ratio} alt={p.alt} decorative={p.decorative}
           caption={E("caption", { single: true, placeholder: "Legenda" })}
           credit={isEdit ? E("credit", { single: true, placeholder: "Crédito / fonte" }) : p.credit}
         />
@@ -179,7 +179,7 @@ function BlockCore({ block, mode, renderNestedList }) {
     case "parallax":
       return (
         <ParallaxImage
-          src={p.src} slotId={p.slotId || block.id} height={p.height || "70vh"}
+          src={p.src} slotId={p.slotId || block.id} height={p.height || "70vh"} alt={p.alt} decorative={p.decorative}
           overlayTitle={E("overlayTitle", { single: true, placeholder: "Título sobre a imagem (opcional)" })}
           caption={E("caption", { single: true, placeholder: "Legenda" })}
           credit={isEdit ? E("credit", { single: true, placeholder: "Crédito / fonte" }) : p.credit}
@@ -199,7 +199,7 @@ function BlockCore({ block, mode, renderNestedList }) {
       return (
         <TextoImagem
           ordem={p.ordem} largura={p.largura} sangria={p.sangria}
-          src={p.src} slotId={p.slotId || block.id} fonte={p.fonte}
+          src={p.src} slotId={p.slotId || block.id} fonte={p.fonte} alt={p.alt} decorative={p.decorative}
           legenda={E("legenda", { single: true, placeholder: "Legenda da figura" })}
         >
           {E("body", { placeholder: "Escreva o texto que contorna a imagem…" })}

@@ -462,6 +462,21 @@ function AulaStudioApp() {
   const [clearOpen, setClearOpen] = useStateA(false);
   const [busyMsg, setBusyMsg] = useStateA(null);
   const [richOpen, setRichOpen] = useStateA(false);
+  const [a11yOpen, setA11yOpen] = useStateA(false);
+  // contagem de erros+avisos (regras de conteúdo) para o selo do botão
+  const a11yCount = React.useMemo(() => { try { return window.A11y.audit(lesson).filter((i) => i.sev !== "tip").length; } catch (e) { return 0; } }, [lesson]);
+  const gotoBlock = (id, trail, findText) => {
+    setMode("edit");
+    setTimeout(() => {
+      let el = null;
+      if (id) { el = document.querySelector('[data-bid="' + id + '"]'); for (let k = (trail || []).length - 1; !el && k >= 0; k--) el = document.querySelector('[data-bid="' + trail[k] + '"]'); if (id) setSelected(el && el.getAttribute("data-bid") ? el.getAttribute("data-bid") : id); }
+      else if (findText) {
+        const root = document.querySelector("[data-lz-canvas]");
+        if (root) { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n; const needle = findText.replace(/…$/, "").slice(0, 30); while ((n = w.nextNode())) { if (n.textContent && n.textContent.replace(/\s+/g, " ").includes(needle)) { el = n.parentElement; break; } } }
+      }
+      if (el) { el.scrollIntoView({ block: "center", behavior: "smooth" }); el.animate([{ outline: "3px solid #e76f51", outlineOffset: "4px" }, { outline: "3px solid transparent", outlineOffset: "4px" }], { duration: 1600 }); }
+    }, 80);
+  };
 
   const slugName = (s) => (s || "classatelier").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "classatelier";
 
@@ -542,7 +557,7 @@ function AulaStudioApp() {
           onUndo={undo} canUndo={history.current.length > 0}
           onExportHTML={exportHTML} onExportStandaloneHTML={exportStandaloneHTML} onExportSCORM={() => setScormOpen(true)} onPrintPDF={printPDF}
           onOpenProject={openProjectClick} onDownloadProject={downloadProject}
-          onRichNotes={() => setRichOpen(true)} onLibrary={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(false); setLibOpen(true); }} onCourse={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(true); setLibOpen(true); }}
+          onRichNotes={() => setRichOpen(true)} onA11y={() => setA11yOpen((v) => !v)} a11yOpen={a11yOpen} a11yCount={a11yCount} onLibrary={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(false); setLibOpen(true); }} onCourse={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(true); setLibOpen(true); }}
           onClear={() => setClearOpen(true)} canClear={hasLessonContent}
         />
         <Canvas
@@ -575,6 +590,7 @@ function AulaStudioApp() {
       <input ref={fileInputRef} type="file" accept=".json,application/json" onChange={onProjectFile} style={{ display: "none" }} />
       {scormOpen && <ScormDialog lesson={lesson} onClose={() => setScormOpen(false)} onConfirm={exportSCORM} />}
       {clearOpen && <ClearDialog count={(lesson.blocks || []).length} onClose={() => setClearOpen(false)} onConfirm={clearLesson} />}
+      {a11yOpen && <window.A11yPanel lesson={lesson} onClose={() => setA11yOpen(false)} onGoto={gotoBlock} />}
       {richOpen && <RichNotesDialog lesson={lesson} onClose={() => setRichOpen(false)} onUpdate={(kind, original, next) => { pushHistory(); setLesson((L) => ({ ...L, blocks: reviseRichNotes(L.blocks, kind, original, next) })); }} />}
     </div>
   );
@@ -804,7 +820,7 @@ function RichNotesDialog({ lesson, onClose, onUpdate }) {
 const emptyNote={padding:18,border:"1px dashed var(--tool-line-2)",borderRadius:9,color:"var(--tool-ink-3)",fontSize:12};
 
 // ── Top bar ──
-function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onClear, canClear }) {
+function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear }) {
   const [busy, setBusy] = useStateA(false);
   const [menu, setMenu] = useStateA(false);
   const wrap = async (fn) => { setBusy(true); setMenu(false); try { await fn(); } finally { setBusy(false); } };
@@ -823,6 +839,7 @@ function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, o
         <button onClick={onOpenProject} title="Abrir projeto (…-ClassAtelier.json)" style={textBtn}><window.TIcon name="folder" size={15} /><span className="tb-label">Abrir</span></button>
         <button onClick={onDownloadProject} title="Salvar projeto: baixa o arquivo para continuar depois ou em outro computador" style={textBtn}><window.TIcon name="save" size={15} /><span className="tb-label">Salvar</span></button>
         <button onClick={onRichNotes} title="Termos e links: revisar glossário e links de toda a aula" style={textBtn}><window.TIcon name="link" size={15} /><span className="tb-label">Termos e links</span></button>
+        <button onClick={onA11y} aria-pressed={!!a11yOpen} title="Acessibilidade: verifica imagens sem descrição, contraste, títulos, links, vídeos e tabelas" style={{ ...textBtn, position: "relative", background: a11yOpen ? "var(--tool-surface)" : undefined }}><window.TIcon name="eye" size={15} /><span className="tb-label">Acessibilidade</span>{a11yCount > 0 && <span aria-label={a11yCount + " itens para revisar"} style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 999, background: "#b3372a", color: "#fff", fontSize: 10.5, fontWeight: 800, display: "inline-grid", placeItems: "center", marginLeft: 2 }}>{a11yCount > 99 ? "99+" : a11yCount}</span>}</button>
         <div style={{ display: "flex", background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 9, padding: 3 }}>
           <button onClick={() => setMode("edit")} style={segBtn(mode === "edit")}><window.TIcon name="pencil" size={13} /> <span className="tb-seg-label">Editar</span></button>
           <button onClick={() => setMode("preview")} style={segBtn(mode === "preview")}><window.TIcon name="eye" size={13} /> <span className="tb-seg-label">Visualizar</span></button>
@@ -1133,7 +1150,7 @@ function BlockShell({ block, mode, selected, selectedId, setSelected, onSelect, 
     <div
       key={c.id}
       className={"aula-topic-item lz-child" + (selectedId === c.id ? " is-selected" : "")}
-      data-type={c.type}
+      data-type={c.type} data-bid={c.id}
       onClick={(e) => { e.stopPropagation(); setSelected(c.id); }}>
       <ChildInsert types={childPickerTypes} at={i} topicId={block.id} dragBlock={dragBlock} moveChildTo={moveChildTo} openAt={childAddAt} setOpenAt={setChildAddAt} onPick={(t) => { insertChild(block.id, t, i); setChildAddAt(null); }} />
       {selectedId === c.id && isEdit && (
@@ -1167,7 +1184,7 @@ function BlockShell({ block, mode, selected, selectedId, setSelected, onSelect, 
   }
 
   return (
-    <div
+    <div data-bid={block.id}
       className={"lz-block" + (selected ? " is-selected" : "") + (isTopic ? " lz-topic-block" : "") + (topicDragOver ? " is-child-dragover" : "")}
       onDragOver={(e) => { if (isTopic && dragBlock.current) { e.preventDefault(); setTopicDragOver(true); } }}
       onDragLeave={(e) => { if (isTopic && !e.currentTarget.contains(e.relatedTarget)) setTopicDragOver(false); }}

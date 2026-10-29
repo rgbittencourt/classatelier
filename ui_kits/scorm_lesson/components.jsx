@@ -711,13 +711,13 @@ function RecursoLink({ rotulo = "Assista em", href }) {
 }
 
 // IMAGEM COM LEGENDA — image with serif italic caption
-function ImagemLegenda({ src, slotId, caption, credit, ratio = "16/9" }) {
+function ImagemLegenda({ src, slotId, caption, credit, ratio = "16/9", alt, decorative }) {
   return (
     <figure className="aula-figura">
       {src ? (
         // Real image: full width, height follows the image's own proportions.
         <div className="aula-figura__frame aula-figura__frame--auto">
-          <img src={src} alt="" className="aula-figura__img" />
+          <img src={src} alt={decorative ? "" : (alt || "")} className="aula-figura__img" />
         </div>
       ) : (
         // Placeholder via image-slot web component keeps a ratio so it has height.
@@ -948,7 +948,7 @@ function AudioFilePlayer({ src, slotId, title, show, duration, description }) {
 }
 
 // PARALLAX IMAGE — full-bleed image band with parallax + caption
-function ParallaxImage({ src, slotId, caption, credit, overlayTitle, height = "70vh" }) {
+function ParallaxImage({ src, slotId, caption, credit, overlayTitle, height = "70vh", alt, decorative }) {
   const pdf = usePDF();
   const wrapRef = useRef(null);
   const imgRef = useRef(null);
@@ -978,7 +978,7 @@ function ParallaxImage({ src, slotId, caption, credit, overlayTitle, height = "7
       <div ref={wrapRef} className="aula-parallax__frame" style={{ height }}>
         <div ref={imgRef} className="aula-parallax__imgwrap">
           {src ? (
-            <img src={src} alt="" className="aula-parallax__img" />
+            <img src={src} alt={decorative ? "" : (alt || "")} className="aula-parallax__img" />
           ) : (
             <image-slot id={slotId || "parallax"} shape="rect" placeholder="Imagem de fundo (parallax)" style={{ width: "100%", height: "100%" }}></image-slot>
           )}
@@ -1891,7 +1891,7 @@ function ReferenciasABNT({ title = "Referências", items = [], defaultOpen = fal
 //   container (sangria configurável). O texto contorna a imagem e,
 //   quando é mais alto, segue por baixo ocupando a largura total.
 //   ordem="texto-imagem" | "imagem-texto" · largura ex. "46%" · sangria ex. "8%"
-function TextoImagem({ children, texto, src, slotId, legenda, fonte, ordem = "texto-imagem", largura = "46%", sangria = "8%" }) {
+function TextoImagem({ children, texto, src, slotId, legenda, fonte, alt, decorative, ordem = "texto-imagem", largura = "46%", sangria = "8%" }) {
   const imgLeft = ordem === "imagem-texto";
   const pdf = usePDF();
   const cls = [
@@ -1904,7 +1904,7 @@ function TextoImagem({ children, texto, src, slotId, legenda, fonte, ordem = "te
   const figura = (
     <figure className="aula-ti-fig">
       {src
-        ? <img className="aula-ti-img" src={src} alt={richPlain(legenda)} />
+        ? <img className="aula-ti-img" src={src} alt={decorative ? "" : (alt || richPlain(legenda))} />
         : <div className="aula-ti-slot"><image-slot id={slotId || "ti-img"} shape="rect" placeholder={richPlain(legenda) || "Imagem"} style={{ width: "100%", height: "100%" }}></image-slot></div>}
       {(legenda || fonte) && (
         <figcaption className="aula-ti-cap">

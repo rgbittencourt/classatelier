@@ -41,6 +41,22 @@ Em `acervo/` (endereço `…/aula-studio/acervo/`) há uma ferramenta gráfica s
 
 O token vai direto do navegador ao GitHub; fica só na aba, ou neste navegador se você marcar "lembrar".
 
+## Acessibilidade
+
+O botão **Acessibilidade** (barra superior, com o número de itens a revisar) abre um painel à esquerda que confere a aula contra o WCAG 2.1 AA. Cada item tem a gravidade (Erro, Aviso ou Sugestão), a explicação, a referência do WCAG e **Ir ao bloco**, que seleciona o bloco para você corrigir no painel da direita.
+
+O que é verificado automaticamente:
+
+- **Imagens:** sem texto alternativo nem legenda (erro); só com legenda (sugestão); texto alternativo que parece nome de arquivo, longo ou começando com “imagem de…”. Os blocos Imagem, Parallax e Texto + imagem ganharam o campo **Texto alternativo** e a opção **Imagem decorativa**.
+- **Vídeo e áudio:** vídeo-modelo ainda no lugar, título genérico, lembrete de legendas; áudio sem transcrição.
+- **Títulos:** título vazio, salto de nível (h1 → h3), aula sem título ou sem abertura.
+- **Tabelas:** sem cabeçalhos, sem legenda, muitas colunas.
+- **Links:** vazios, “#”, “https://” sozinho, e textos como “clique aqui”.
+- **Conteúdo externo (iframe):** sem título.
+- **Contraste de cores:** mede o texto da aula **renderizada com o tema atual** (4,5:1; 3:1 para texto grande). Fundos com imagem ou gradiente não são medidos.
+
+Não substitui o teste humano: o painel traz a lista do que só uma pessoa confere (teclado, zoom, leitor de tela, legendas).
+
 ## Identidade visual
 
 - `assets/classatelier-mark.svg`: símbolo do ClassAtelier (janela em arco);

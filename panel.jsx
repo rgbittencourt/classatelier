@@ -190,6 +190,18 @@ function DropcapTones({ value, onChange }) {
     </div>
   );
 }
+// Texto alternativo (acessibilidade): descreve a imagem para quem não a enxerga.
+function AltFields({ p, setP }) {
+  if (!p.src) return null;
+  return (<>
+    <Field label="Texto alternativo (acessibilidade)">
+      <TextArea value={p.alt} onChange={(v) => setP({ alt: v })} placeholder={p.decorative ? "Imagem decorativa: sem descrição" : "Descreva o que a imagem mostra, em uma frase."} />
+      <p style={{ fontSize: 11, color: "var(--tool-ink-3)", margin: "5px 0 0", lineHeight: 1.4 }}>Quem usa leitor de tela ouve este texto no lugar da imagem. Descreva a informação, não “imagem de…”.</p>
+    </Field>
+    <Toggle value={!!p.decorative} onChange={(v) => setP({ decorative: v })} label="Imagem decorativa (só enfeita)" />
+    <div style={{ height: 10 }} />
+  </>);
+}
 function ImageField({ src, onChange, label }) {
   const ref = useRefP(null);
   const pick = (e) => {
@@ -613,6 +625,7 @@ function renderTypeContent(block, p, setP, mergePrev) {
     case "imagem":
       return (<>
         <ImageField label="Imagem" src={p.src} onChange={(v) => setP({ src: v })} />
+        <AltFields p={p} setP={setP} />
         <Field label="Proporção"><Segmented value={p.ratio} onChange={(v) => setP({ ratio: v })} options={[{ id: "16/9", label: "16:9" }, { id: "4/3", label: "4:3" }, { id: "1/1", label: "1:1" }]} /></Field>
         <Field label="Crédito / fonte"><TextInput value={p.credit} onChange={(v) => setP({ credit: v })} /></Field>
         <p style={hint}>A legenda é editada direto na página.</p>
@@ -620,6 +633,7 @@ function renderTypeContent(block, p, setP, mergePrev) {
     case "parallax":
       return (<>
         <ImageField label="Imagem de fundo" src={p.src} onChange={(v) => setP({ src: v })} />
+        <AltFields p={p} setP={setP} />
         <Field label="Altura do bloco"><Segmented value={p.height || "70vh"} onChange={(v) => setP({ height: v })} options={[{ id: "50vh", label: "Baixa" }, { id: "70vh", label: "Média" }, { id: "85vh", label: "Alta" }]} /></Field>
         <Field label="Crédito / fonte"><TextInput value={p.credit} onChange={(v) => setP({ credit: v })} /></Field>
         <p style={hint}>O título sobreposto e a legenda são editados direto na página. Use imagens horizontais e com boa resolução.</p>
@@ -627,6 +641,7 @@ function renderTypeContent(block, p, setP, mergePrev) {
     case "textoimagem":
       return (<>
         <ImageField label="Imagem" src={p.src} onChange={(v) => setP({ src: v })} />
+        <AltFields p={p} setP={setP} />
         <Field label="Ordem"><Segmented value={p.ordem || "texto-imagem"} onChange={(v) => setP({ ordem: v })} options={[{ id: "texto-imagem", label: "Texto → Img" }, { id: "imagem-texto", label: "Img → Texto" }]} /></Field>
         <Field label="Largura da imagem"><Segmented value={p.largura || "46%"} onChange={(v) => setP({ largura: v })} options={[{ id: "40%", label: "Pequena" }, { id: "46%", label: "Média" }, { id: "54%", label: "Grande" }]} /></Field>
         <Field label="Sangria (vaza para fora)"><Segmented value={p.sangria || "8%"} onChange={(v) => setP({ sangria: v })} options={[{ id: "0%", label: "Nenhuma" }, { id: "8%", label: "Suave" }, { id: "14%", label: "Forte" }]} /></Field>

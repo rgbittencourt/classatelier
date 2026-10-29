@@ -12,7 +12,7 @@
 // ════════════════════════════════════════════════════════════
 (function () {
   var BASE = window.AULA_BASE || "";
-  var BUILD_REV = "20261028-acervo";
+  var BUILD_REV = "20261028-a11y";
   var theme = window.resolveAulaTheme();
   window.AULA_ACTIVE_THEME = theme;
 
@@ -70,7 +70,7 @@
   });
 
   // 7) Módulos do builder (agnósticos de tema — vivem ao lado do index.html)
-  ["editable.jsx", "registry.jsx", "blocks.jsx", "panel.jsx", "export.jsx", "app.jsx", "mount.jsx"].forEach(function (m) {
+  ["editable.jsx", "registry.jsx", "blocks.jsx", "panel.jsx", "export.jsx", "a11y.jsx", "app.jsx", "mount.jsx"].forEach(function (m) {
     w('<script type="text/babel" src="' + attr(rev(m)) + '"><\/script>');
   });
 
