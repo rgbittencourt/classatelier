@@ -83,40 +83,60 @@ async function detectCourses() {
     if (!S.files.has(dir + "/index.html")) continue;
     const lessonFiles = [...S.files.keys()].filter((p) => dirname(p) === dir && /^aula-\d+\.html$/i.test(basename(p))).sort();
     if (!lessonFiles.length) continue;
-    const titles = lessonTitlesFromProjects(dir);
-    const lessons = lessonFiles.map((p) => { const n = Number(/(\d+)/.exec(basename(p))[1]); return { n, file: p, title: titles.get(n) || "" }; });
+        const lessons = lessonFiles.map((p) => { const n = Number(/(\d+)/.exec(basename(p))[1]); return { n, file: p, title: "", week: 0 }; });
     let size = 0, count = 0;
     for (const [p, f] of S.files) if (p.startsWith(dir + "/")) { size += f.size; count += 1; }
     found.push({ path: dir, title: "", lessons, size, files: count });
   }
   found.sort((a, b) => a.path.localeCompare(b.path, "pt-BR"));
   S.courses = found;
-  await Promise.all(found.map(async (c) => { c.title = await courseTitle(c.path); }));
+  await Promise.all(found.map(async (c) => {
+    const info = await courseInfo(c.path);
+    c.title = info.title;
+    const weeks = weeksFromProjects(c.path); // [{week, slug}]
+    for (const l of c.lessons) {
+      l.title = info.labels.get(l.n) || "";
+      const sl = slugify(l.title);
+      const w = sl && weeks.find((x) => x.slug && (sl.startsWith(x.slug) || x.slug.startsWith(sl)));
+      l.week = w ? w.week : 0;
+    }
+  }));
 }
-function lessonTitlesFromProjects(dir) {
-  const map = new Map();
+const slugify = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+// Os arquivos em projetos/ se chamam SemanaNN-título-ClassAtelier.json: dali sai o número da semana de cada aula.
+// (A semana NÃO é o número do aula-NN.html: aula-01 pode ser a Semana 3 se o curso começa nela.)
+function weeksFromProjects(dir) {
+  const out = [];
   for (const p of S.files.keys()) {
     if (dirname(p) !== dir + "/projetos") continue;
-    const m = /^Semana(\d+)-(.+)-ClassAtelier\.json$/i.exec(basename(p)) || /^aula-(\d+)-(.+)\.aula\.json$/i.exec(basename(p));
-    if (m) { const t = m[2].replace(/-/g, " "); map.set(Number(m[1]), t.charAt(0).toUpperCase() + t.slice(1)); }
+    const m = /^Semana(\d+)-(.+)-ClassAtelier\.json$/i.exec(basename(p));
+    if (m) out.push({ week: Number(m[1]), slug: slugify(m[2]) });
   }
-  return map;
+  return out;
 }
-async function courseTitle(dir) {
+const isGenericLabel = (t) => !t || /^aula\s*0*\d*$/i.test(t.trim());
+const htmlText = (raw) => String(raw || "").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
+// O index.html do curso é a fonte do que o site mostra: título do curso e o título de cada aula.
+async function courseInfo(dir) {
   const f = S.files.get(dir + "/index.html");
-  if (!f) return basename(dir);
+  const info = { title: basename(dir), labels: new Map() };
+  if (!f) return info;
   if (S.titles.has(f.sha)) return S.titles.get(f.sha);
-  let title = basename(dir);
   try {
     const blob = await api(`${repoPath()}/git/blobs/${f.sha}`);
     const html = b64text(blob.content);
     const h1 = /<h1[^>]*>([\s\S]*?)<\/h1>/i.exec(html); const tt = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html);
-    const raw = (h1 && h1[1]) || (tt && tt[1]) || "";
-    const clean = raw.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
-    if (clean) title = clean;
+    const clean = htmlText((h1 && h1[1]) || (tt && tt[1]));
+    if (clean) info.title = clean;
+    const re = /<a[^>]*href="(?:\.\/)?aula-(\d+)\.html"[^>]*>([\s\S]*?)<\/a>/gi; let m;
+    while ((m = re.exec(html))) {
+      const st = /<strong[^>]*>([\s\S]*?)<\/strong>/i.exec(m[2]);
+      const label = htmlText(st ? st[1] : m[2].replace(/<span[^>]*>[\s\S]*?<\/span>/gi, ""));
+      if (!isGenericLabel(label)) info.labels.set(Number(m[1]), label);
+    }
   } catch (e) { /* mantém o nome da pasta */ }
-  S.titles.set(f.sha, title);
-  return title;
+  S.titles.set(f.sha, info);
+  return info;
 }
 
 /* ───────────── links do site ───────────── */
@@ -259,7 +279,7 @@ function courseCard(c) {
   const parent = dirname(c.path);
   const crumbs = (parent ? parent.split("/").map(esc).join(" / ") + " / " : "") + `<b>${esc(basename(c.path))}</b>`;
   const open = S.openLessons.has(c.path);
-  const lessons = open ? `<div class="lessons"><ol>${c.lessons.map((l) => `<li><span class="n">${pad2(l.n)}</span><span class="t" title="${esc(l.title)}">${esc(l.title || "Aula " + l.n)}</span><button class="btn small" data-act="copy-link" data-path="${esc(l.file)}">Copiar link</button><a class="btn small ghost" href="${esc(siteUrl(l.file))}" target="_blank" rel="noopener" aria-label="Abrir aula ${l.n}">↗</a></li>`).join("")}</ol>
+  const lessons = open ? `<div class="lessons"><ol>${c.lessons.map((l) => `<li><span class="t"><span class="n">${l.week ? "Semana " + l.week : "Aula " + pad2(l.n)}</span>${esc(l.title || "(sem título)")}</span><button class="btn small" data-act="copy-link" data-path="${esc(l.file)}">Copiar link</button><a class="btn small ghost" href="${esc(siteUrl(l.file))}" target="_blank" rel="noopener" aria-label="Abrir ${esc(lessonLabel(l))}">↗</a></li>`).join("")}</ol>
     <p style="margin:10px 0 0"><button class="btn small" data-act="copy-all-links" data-path="${esc(c.path)}">Copiar todos os links (lista para o Moodle)</button></p></div>` : "";
   return `<article class="course"><div class="crumbs">${crumbs}</div><h3>${esc(c.title)}</h3>
     <div class="meta"><span class="chip">${c.lessons.length} aula${c.lessons.length === 1 ? "" : "s"}</span><span class="chip">${sizeOf(c.size)}</span><span class="chip">${c.files} arquivos</span></div>
@@ -468,9 +488,10 @@ async function actEnablePages() {
     render(); dlgDone("Pages ligado", `<p>O site fica em <a href="${esc(pagesBase())}" target="_blank" rel="noopener">${esc(pagesBase())}</a> em um ou dois minutos.</p>`);
   } catch (e) { dlgError(e); }
 }
+const lessonLabel = (l) => (l.week ? `Semana ${l.week}` : `Aula ${pad2(l.n)}`) + (l.title ? ` — ${l.title}` : "");
 function allLinksText(coursePath) {
   const c = S.courses.find((x) => x.path === coursePath);
-  return c.lessons.map((l) => `${l.title ? `Aula ${l.n} — ${l.title}` : `Aula ${l.n}`}: ${siteUrl(l.file)}`).join("\n");
+  return c.lessons.map((l) => `${lessonLabel(l)}: ${siteUrl(l.file)}`).join("\n");
 }
 
 /* ───────────── conexão ───────────── */
