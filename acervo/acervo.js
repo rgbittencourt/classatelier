@@ -81,25 +81,50 @@ async function detectCourses() {
   const found = [];
   for (const dir of S.dirs) {
     if (!S.files.has(dir + "/index.html")) continue;
-    const lessonFiles = [...S.files.keys()].filter((p) => dirname(p) === dir && /^aula-\d+\.html$/i.test(basename(p))).sort();
-    if (!lessonFiles.length) continue;
-        const lessons = lessonFiles.map((p) => { const n = Number(/(\d+)/.exec(basename(p))[1]); return { n, file: p, title: "", week: 0 }; });
+    // Aulas = os outros .html da pasta (o nome pode ser qualquer um: aula-01.html, semana-03-….html…)
+    const htmls = [...S.files.keys()].filter((p) => dirname(p) === dir && /\.html?$/i.test(p) && basename(p).toLowerCase() !== "index.html");
+    if (!htmls.length) continue;
     let size = 0, count = 0;
     for (const [p, f] of S.files) if (p.startsWith(dir + "/")) { size += f.size; count += 1; }
-    found.push({ path: dir, title: "", lessons, size, files: count });
+    found.push({ path: dir, title: "", lessons: [], files: count, size, htmls, broken: [], unlisted: [] });
   }
   found.sort((a, b) => a.path.localeCompare(b.path, "pt-BR"));
   S.courses = found;
   await Promise.all(found.map(async (c) => {
     const info = await courseInfo(c.path);
     c.title = info.title;
+    c.indexSha = info.sha;
     const weeks = weeksFromProjects(c.path); // [{week, slug}]
-    for (const l of c.lessons) {
-      l.title = info.labels.get(l.n) || "";
+    const used = new Set(); const lessons = []; c.broken = [];
+    const nameSlug = (f) => slugify(basename(f).replace(/\.html?$/i, "").replace(/^(aula|semana)[-_ ]?0*\d+[-_ ]?/i, ""));
+    // 1) na ordem do índice: o arquivo existe? se não, procura o que tem o mesmo título no nome
+    for (const e of info.entries) {
+      let file = c.path + "/" + e.href;
+      let fixable = false;
+      if (!S.files.has(file) || used.has(file)) {
+        file = "";
+        const sl = slugify(e.label);
+        if (sl) file = c.htmls.find((f) => !used.has(f) && !info.entries.some((x) => c.path + "/" + x.href === f) && (nameSlug(f).includes(sl) || (nameSlug(f) && sl.includes(nameSlug(f))))) || "";
+        c.broken.push({ href: e.href, label: e.label, target: file ? basename(file) : "" });
+        fixable = !!file;
+      }
+      if (file) { used.add(file); lessons.push({ file, title: e.label, fromIndex: !fixable }); }
+    }
+    // 2) arquivos que o índice não cita
+    for (const f of c.htmls.slice().sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true }))) {
+      if (used.has(f)) continue;
+      used.add(f); c.unlisted.push(basename(f));
+      const pretty = basename(f).replace(/\.html?$/i, "").replace(/^(aula|semana)[-_ ]?0*\d+[-_ ]?/i, "").replace(/[-_]+/g, " ").trim();
+      lessons.push({ file: f, title: pretty ? pretty.charAt(0).toUpperCase() + pretty.slice(1) : "", unlisted: true });
+    }
+    lessons.forEach((l, k) => {
+      l.n = k + 1;
+      const fm = /semana[-_ ]?0*(\d+)/i.exec(basename(l.file));
       const sl = slugify(l.title);
       const w = sl && weeks.find((x) => x.slug && (sl.startsWith(x.slug) || x.slug.startsWith(sl)));
-      l.week = w ? w.week : 0;
-    }
+      l.week = fm ? Number(fm[1]) : (w ? w.week : 0);
+    });
+    c.lessons = lessons;
   }));
 }
 const slugify = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -119,20 +144,24 @@ const htmlText = (raw) => String(raw || "").replace(/<[^>]+>/g, "").replace(/&am
 // O index.html do curso é a fonte do que o site mostra: título do curso e o título de cada aula.
 async function courseInfo(dir) {
   const f = S.files.get(dir + "/index.html");
-  const info = { title: basename(dir), labels: new Map() };
+  const info = { title: basename(dir), entries: [], html: "", sha: f ? f.sha : "" };
   if (!f) return info;
   if (S.titles.has(f.sha)) return S.titles.get(f.sha);
   try {
     const blob = await api(`${repoPath()}/git/blobs/${f.sha}`);
-    const html = b64text(blob.content);
+    const html = b64text(blob.content); info.html = html;
     const h1 = /<h1[^>]*>([\s\S]*?)<\/h1>/i.exec(html); const tt = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(html);
     const clean = htmlText((h1 && h1[1]) || (tt && tt[1]));
     if (clean) info.title = clean;
-    const re = /<a[^>]*href="(?:\.\/)?aula-(\d+)\.html"[^>]*>([\s\S]*?)<\/a>/gi; let m;
+    const re = /<a[^>]*href="([^"#?]+\.html?)"[^>]*>([\s\S]*?)<\/a>/gi; let m;
     while ((m = re.exec(html))) {
+      let href = m[1]; if (/^[a-z]+:|^\//i.test(href) || href.startsWith("../")) continue;
+      href = href.replace(/^\.\//, ""); if (href.includes("/")) continue;
+      try { href = decodeURIComponent(href); } catch (e) { /* mantém */ }
       const st = /<strong[^>]*>([\s\S]*?)<\/strong>/i.exec(m[2]);
-      const label = htmlText(st ? st[1] : m[2].replace(/<span[^>]*>[\s\S]*?<\/span>/gi, ""));
-      if (!isGenericLabel(label)) info.labels.set(Number(m[1]), label);
+      let label = htmlText(st ? st[1] : m[2].replace(/<span[^>]*>[\s\S]*?<\/span>/gi, ""));
+      if (isGenericLabel(label)) label = "";
+      if (href.toLowerCase() !== "index.html") info.entries.push({ href, label });
     }
   } catch (e) { /* mantém o nome da pasta */ }
   S.titles.set(f.sha, info);
@@ -282,7 +311,8 @@ function courseCard(c) {
   const lessons = open ? `<div class="lessons"><ol>${c.lessons.map((l) => `<li><span class="t"><span class="n">${l.week ? "Semana " + l.week : "Aula " + pad2(l.n)}</span>${esc(l.title || "(sem título)")}</span><button class="btn small" data-act="copy-link" data-path="${esc(l.file)}">Copiar link</button><a class="btn small ghost" href="${esc(siteUrl(l.file))}" target="_blank" rel="noopener" aria-label="Abrir ${esc(lessonLabel(l))}">↗</a></li>`).join("")}</ol>
     <p style="margin:10px 0 0"><button class="btn small" data-act="copy-all-links" data-path="${esc(c.path)}">Copiar todos os links (lista para o Moodle)</button></p></div>` : "";
   return `<article class="course"><div class="crumbs">${crumbs}</div><h3>${esc(c.title)}</h3>
-    <div class="meta"><span class="chip">${c.lessons.length} aula${c.lessons.length === 1 ? "" : "s"}</span><span class="chip">${sizeOf(c.size)}</span><span class="chip">${c.files} arquivos</span></div>
+    <div class="meta"><span class="chip">${c.lessons.length} aula${c.lessons.length === 1 ? "" : "s"}</span><span class="chip">${sizeOf(c.size)}</span><span class="chip">${c.files} arquivos</span>${c.broken.length ? `<span class="chip bad" title="O índice do curso aponta para arquivos que não existem mais">${c.broken.length} link${c.broken.length === 1 ? "" : "s"} quebrado${c.broken.length === 1 ? "" : "s"} no índice</span>` : ""}</div>
+    ${c.broken.length ? `<p class="note">O <code>index.html</code> do curso ainda aponta para nomes antigos de aula.${c.broken.some((b) => b.target) ? ` <button class="btn small" data-act="fix-index" data-path="${esc(c.path)}">Consertar links do índice</button>` : " Não achei os arquivos novos correspondentes; confira em «Arquivos»."}</p>` : ""}
     <div class="course-actions">
       <a class="btn small primary" href="${esc(siteUrl(c.path, true))}" target="_blank" rel="noopener">Abrir site ↗</a>
       <button class="btn small" data-act="copy-link" data-path="${esc(c.path)}" data-dir="1">Copiar link</button>
@@ -400,22 +430,58 @@ async function afterChange(message, commit) {
 function actMove(path, duplicate) {
   const isDir = isDirPath(path);
   const verb = duplicate ? "Duplicar" : "Renomear ou mover";
+  const lessonIdx = !duplicate && !isDir && /\.html?$/i.test(path) && basename(path).toLowerCase() !== "index.html" && S.files.has(dirname(path) + "/index.html") && S.courses.some((c) => c.path === dirname(path)) ? dirname(path) + "/index.html" : "";
   dialog({
     title: `${verb} «${basename(path)}»`,
     body: `<p>${duplicate ? "Cria uma cópia completa, por exemplo para o próximo semestre." : "Os arquivos mudam de caminho em um único commit, sem perder nada."} Informe o <b>caminho novo</b> dentro do repositório.</p>
       <label class="field"><span>Novo caminho</span><input type="text" id="dest" value="${esc(path)}" spellcheck="false"></label>
       ${duplicate ? "" : `<p class="note">Os links do site mudam junto. Links já colados no Moodle para <code>${esc(path)}</code> deixam de funcionar até você trocá-los.</p>`}
+      ${lessonIdx ? `<label class="check"><input type="checkbox" id="fix-idx" checked><span>Atualizar também o link desta aula no <code>index.html</code> do curso (recomendado).</span></label>` : ""}
       <div id="dest-err"></div>`,
     actions: [{ label: "Cancelar", onClick: closeDialog }, { label: verb, kind: "primary", onClick: async () => {
       if (!canWrite()) return;
       const v = validateDest($("#dest").value, path);
       if (v.error) { $("#dest-err").innerHTML = `<p class="err">${esc(v.error)}</p>`; return; }
       const entries = planMove(path, v.dest, duplicate);
+      if (lessonIdx && $("#fix-idx") && $("#fix-idx").checked && dirname(v.dest) === dirname(path)) {
+        try {
+          const html = await indexHtmlOf(lessonIdx);
+          const out = rewriteHref(html, basename(path), basename(v.dest));
+          if (out !== html) entries.push({ path: lessonIdx, mode: S.files.get(lessonIdx).mode, type: "blob", content: out });
+        } catch (e) { /* segue sem atualizar o índice; o aviso no cartão permite consertar depois */ }
+      }
       dlgBusy("Enviando " + (entries.length / (duplicate ? 1 : 2)) + " arquivo(s)…");
       try {
         const commit = await commitChanges(entries, `${duplicate ? "Duplica" : "Move"} ${path} → ${v.dest} (${APP_NAME})`);
         S.selected = v.dest; if (isDir) S.open.add(dirname(v.dest));
         await afterChange(`${duplicate ? "Cópia criada" : "Movido"} para ${v.dest}`, commit);
+      } catch (e) { dlgError(e); }
+    } }]
+  });
+}
+async function indexHtmlOf(path) {
+  const f = S.files.get(path); const blob = await api(`${repoPath()}/git/blobs/${f.sha}`); return b64text(blob.content);
+}
+// troca href="antigo.html" (com ou sem ./, com ou sem %-escapes) por href="novo.html"
+function rewriteHref(html, oldName, newName) {
+  const olds = new Set([oldName, encodeURIComponent(oldName), enc(oldName)]);
+  let out = html;
+  for (const o of olds) for (const pre of ["", "./"]) out = out.split(`href="${pre}${o}"`).join(`href="${encodeURIComponent(newName).replace(/%28/g, "(").replace(/%29/g, ")")}"`);
+  return out;
+}
+async function actFixIndex(coursePath) {
+  const c = S.courses.find((x) => x.path === coursePath); if (!c || !canWrite()) return;
+  const fixes = c.broken.filter((b) => b.target);
+  dialog({
+    title: "Consertar links do índice",
+    body: `<p>Em <code>${esc(c.path)}/index.html</code>, vou trocar:</p><ul style="margin:0 0 12px;padding-left:20px">${fixes.map((b) => `<li><code>${esc(b.href)}</code> → <code>${esc(b.target)}</code></li>`).join("")}</ul><p class="hint">Só o índice do curso muda (um commit). As aulas não são tocadas.</p>`,
+    actions: [{ label: "Cancelar", onClick: closeDialog }, { label: "Consertar", kind: "primary", onClick: async () => {
+      dlgBusy("Atualizando o índice…");
+      try {
+        const idx = c.path + "/index.html"; let html = await indexHtmlOf(idx);
+        for (const b of fixes) html = rewriteHref(html, b.href, b.target);
+        const commit = await commitChanges([{ path: idx, mode: S.files.get(idx).mode, type: "blob", content: html }], `Conserta links do índice de ${c.path} (${APP_NAME})`);
+        await afterChange("Índice consertado", commit);
       } catch (e) { dlgError(e); }
     } }]
   });
@@ -545,6 +611,7 @@ document.addEventListener("click", async (ev) => {
     renderMain(); return;
   }
   if (act === "goto-files") { S.view = "arquivos"; S.selected = path; let d = path; while (d) { S.open.add(d); d = dirname(d); } renderMain(); return; }
+  if (act === "fix-index") { actFixIndex(path); return; }
   if (act === "toggle-lessons") { if (S.openLessons.has(path)) S.openLessons.delete(path); else S.openLessons.add(path); renderMain(); return; }
   if (act === "copy-link") { copy(siteUrl(path, el.dataset.dir === "1" || isDirPath(path)), "Link copiado."); return; }
   if (act === "copy-all-links") { copy(allLinksText(path), "Links de todas as aulas copiados."); return; }
