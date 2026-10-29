@@ -17,7 +17,7 @@ O SCORM pode ser configurado como **1.2** — padrão de maior compatibilidade �
 
 ## Versão do aplicativo
 
-ClassAtelier **1.2.1** e ClassAcervo **1.0.0** (Versionamento Semântico, cada um com a sua). O histórico está em [`CHANGELOG.md`](CHANGELOG.md).
+ClassAtelier **1.2.2** (Versionamento Semântico). O histórico está em [`CHANGELOG.md`](CHANGELOG.md). O ClassAcervo tem repositório e versão próprios (ver a seção abaixo).
 
 ## Biblioteca e pacote do curso
 
@@ -35,17 +35,7 @@ O rodapé das aulas exportadas traz a atribuição: *"…baseada integralmente n
 
 ## ClassAcervo: administrar o que está publicado
 
-Em `acervo/` (endereço `…/classatelier/acervo/`) há uma ferramenta gráfica separada para cuidar dos cursos publicados no GitHub Pages. Conecte-se ao repositório (conta, repositório, branch e token) e use:
-
-- **Cursos**: cartões com os cursos encontrados (pasta com `index.html` e `aula-NN.html`), link do site, link de cada aula e botão para copiar todos os links para o Moodle;
-- **Todos os arquivos**: árvore de pastas e arquivos, com tamanho, link no site e pré-visualização;
-- **Renomear/mover, duplicar e excluir** pastas e arquivos, sempre em um único commit (o histórico do GitHub guarda o anterior);
-- **Gerar índice do site**: cria um `index.html` listando os cursos (na raiz ou em qualquer pasta), marcado como gerado pela ferramenta;
-- **Ligar o GitHub Pages**, quando estiver desligado.
-
-O token vai direto do navegador ao GitHub; fica só na aba, ou neste navegador se você marcar "lembrar".
-
-O rodapé do ClassAcervo traz os créditos de autoria, no mesmo desenho da capa do ClassAuthor: marca do IFSC (Câmpus Florianópolis–Continente), «Desenvolvido pelo Prof. Rogério G. Bittencourt», assinatura do INOVALAB e o link do GitHub. O índice gerado para o site também leva o crédito, em texto.
+O **ClassAcervo** é uma ferramenta gráfica separada para cuidar dos cursos publicados no GitHub Pages (ver, renomear, mover, duplicar e excluir, gerar o índice do site e copiar os links para o Moodle). Tem repositório próprio, [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo), e endereço próprio: **https://rgbittencourt.github.io/classacervo/**. O ClassAtelier só traz os atalhos que levam até lá; o endereço antigo (`…/classatelier/acervo/`) redireciona para o novo.
 
 ## Acessibilidade
 

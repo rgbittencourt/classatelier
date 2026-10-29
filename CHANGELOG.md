@@ -1,15 +1,21 @@
 # Histórico de versões
 
-Este repositório tem dois aplicativos, cada um com a própria versão, em [Versionamento Semântico](https://semver.org/lang/pt-BR/) (MAIOR.MENOR.CORREÇÃO): **MAIOR** quebra o que já existia, **MENOR** traz recurso novo sem quebrar nada, **CORREÇÃO** é conserto sem recurso novo.
+Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `acervo/`, tem repositório próprio desde 29/10/2026 ([rgbittencourt/classacervo](https://github.com/rgbittencourt/classacervo)); o histórico dele está lá. Cada aplicativo tem a própria versão, em [Versionamento Semântico](https://semver.org/lang/pt-BR/) (MAIOR.MENOR.CORREÇÃO): **MAIOR** quebra o que já existia, **MENOR** traz recurso novo sem quebrar nada, **CORREÇÃO** é conserto sem recurso novo.
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.2.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
-| ClassAcervo | **1.0.0** | subtítulo do cabeçalho, rodapé de créditos e rodapé dos índices que ele gera; constante `APP_VERSION` em `acervo/acervo.js` |
+| ClassAtelier | **1.2.2** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAcervo | **1.1.0** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
-Ao mudar a versão, altere os dois lugares de cada aplicativo e a data abaixo.
+Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.2.2 · 29/10/2026 · ClassAcervo com endereço próprio
+
+**Mudou**
+- Os atalhos **ClassAcervo ↗** (barra de ferramentas, menu e aviso de publicação) agora abrem **https://rgbittencourt.github.io/classacervo/**.
+- A pasta `acervo/` deste repositório virou só um aviso com redirecionamento para o endereço novo, para os links antigos continuarem funcionando. O app em si (código, estilos e capturas) saiu daqui e está no repositório do ClassAcervo.
 
 ### 1.2.1 · 29/10/2026 · crédito aos dois autores
 

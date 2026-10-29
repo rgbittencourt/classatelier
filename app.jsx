@@ -793,7 +793,7 @@ function Palette({ onDragType, onAdd }) {
           <img src={(window.AULA_BASE || "") + "assets/brand/classatelier-mark.png"} alt="" width="26" height="26" style={{ display: "block", borderRadius: 7 }} />
         <div style={{ display: "flex", flexDirection: "column", gap: 3 }}><span style={{ fontSize: 17, lineHeight: 1, whiteSpace: "nowrap" }}><b style={{ fontWeight: 800, letterSpacing: "-.045em" }}>Class</b><i style={{ fontFamily: "var(--font-serif, Newsreader, Georgia, serif)", fontStyle: "italic", fontWeight: 400, letterSpacing: "-.02em" }}>Atelier</i></span>
           <span data-act="version" title="Versão do ClassAtelier (Versionamento Semântico: MAIOR.MENOR.CORREÇÃO). Histórico no CHANGELOG do repositório." style={{ fontSize: 10, lineHeight: 1, fontWeight: 600, color: "var(--tool-ink-3)", whiteSpace: "nowrap" }}>v{window.CLASSATELIER_VERSION}</span></div>
-        <a data-act="acervo" href={(window.AULA_BASE || "") + "acervo/"} target="_blank" rel="noopener" title="ClassAcervo: organize, renomeie e copie os links dos cursos já publicados no GitHub Pages (abre em outra aba)" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11.5, fontWeight: 600, color: "var(--tool-ink-2)", textDecoration: "none", border: "1px solid var(--tool-line)", background: "var(--tool-surface)", borderRadius: 999, padding: "4px 9px", whiteSpace: "nowrap" }}>Acervo <span aria-hidden="true">↗</span></a>
+        <a data-act="acervo" href={window.CLASSACERVO_URL || "https://rgbittencourt.github.io/classacervo/"} target="_blank" rel="noopener" title="ClassAcervo: organize, renomeie e copie os links dos cursos já publicados no GitHub Pages (abre em outra aba)" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11.5, fontWeight: 600, color: "var(--tool-ink-2)", textDecoration: "none", border: "1px solid var(--tool-line)", background: "var(--tool-surface)", borderRadius: 999, padding: "4px 9px", whiteSpace: "nowrap" }}>Acervo <span aria-hidden="true">↗</span></a>
       </div>
       <div style={{ position: "sticky", top: -14, zIndex: 5, background: "var(--tool-panel)", margin: "0 -2px 12px", padding: "2px 2px 6px" }}>
         <div style={{ position: "relative" }}>
@@ -998,7 +998,7 @@ function CourseDialog({ entries, onClose, onConfirm, onCheck, onMoodle }) {
                   ))}
                   <div style={{ marginTop: 8 }}><button onClick={() => onMoodle && onMoodle(published.links)} data-act="moodle" style={{ ...ghostBtn, width: "auto", height: 30, padding: "0 12px", fontSize: 12.5, fontWeight: 700, background: "#fff", border: "1px solid #b9d9c7" }}>Colocar no Moodle: endereços e código iframe</button></div>
                   {published.commitUrl && <div style={{ marginTop: 6 }}><a href={published.commitUrl} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>Ver a publicação no GitHub</a></div>}
-                  <div style={{ marginTop: 6 }}><a href="./acervo/" target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>Administrar os cursos publicados no ClassAcervo ↗</a></div>
+                  <div style={{ marginTop: 6 }}><a href={window.CLASSACERVO_URL || "https://rgbittencourt.github.io/classacervo/"} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>Administrar os cursos publicados no ClassAcervo ↗</a></div>
                 </div>
               )}
             </div>
@@ -1103,7 +1103,7 @@ function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, o
                   <span style={{ fontWeight: 600 }}>Colocar no Moodle…</span>
                   <span style={menuSub}>Gera o link (Recurso URL) e o código iframe de uma aula publicada.</span>
                 </button>
-                <a data-act="acervo-menu" href={(window.AULA_BASE || "") + "acervo/"} target="_blank" rel="noopener" onClick={() => setMenu(false)} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)", textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column" }}>
+                <a data-act="acervo-menu" href={window.CLASSACERVO_URL || "https://rgbittencourt.github.io/classacervo/"} target="_blank" rel="noopener" onClick={() => setMenu(false)} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)", textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column" }}>
                   <span style={{ fontWeight: 600 }}>Abrir o ClassAcervo ↗</span>
                   <span style={menuSub}>Organiza os cursos já publicados no GitHub: renomear, mover, gerar o índice e copiar os links para o Moodle.</span>
                 </a>
