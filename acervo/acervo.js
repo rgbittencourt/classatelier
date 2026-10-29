@@ -250,7 +250,7 @@ footer{margin-top:44px;font-size:13px;color:var(--mute);border-top:1px solid var
 </style></head><body><main>
 <p class="eyebrow">Cursos</p><h1>${esc(title)}</h1>${subtitle ? `<p class="sub">${esc(subtitle)}</p>` : `<p class="sub"></p>`}
 ${body || "<p>Nenhum curso publicado ainda.</p>"}
-<footer>Índice gerado com ${APP_NAME} · ClassAtelier · INOVALAB - IFSC · atualizado em ${today}</footer>
+<footer>Índice gerado com ${APP_NAME} · desenvolvido pelo Prof. Rogério G. Bittencourt, INOVALAB - IFSC (Câmpus Florianópolis–Continente) · atualizado em ${today}</footer>
 </main></body></html>
 `;
 }

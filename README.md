@@ -41,6 +41,8 @@ Em `acervo/` (endereço `…/aula-studio/acervo/`) há uma ferramenta gráfica s
 
 O token vai direto do navegador ao GitHub; fica só na aba, ou neste navegador se você marcar "lembrar".
 
+O rodapé do ClassAcervo traz os créditos de autoria, no mesmo desenho da capa do ClassAuthor: marca do IFSC (Câmpus Florianópolis–Continente), «Desenvolvido pelo Prof. Rogério G. Bittencourt», assinatura do INOVALAB e o link do GitHub. O índice gerado para o site também leva o crédito, em texto.
+
 ## Acessibilidade
 
 O botão **Acessibilidade** (barra superior, com o número de itens a revisar) abre um painel à esquerda que confere a aula contra o WCAG 2.1 AA. Cada item tem a gravidade (Erro, Aviso ou Sugestão), a explicação, a referência do WCAG e **Ir ao bloco**, que seleciona o bloco para você corrigir no painel da direita.
@@ -127,6 +129,8 @@ O botão no canto esquerdo da barra troca o visual da aula inteira (cores, letra
 | **GOV.UK** | Arial do aparelho | foco máximo em leitura e acessibilidade: cantos retos, foco amarelo, contraste altíssimo |
 | **Lightning** (Salesforce) | letra do sistema | corporativo, azul de marca, cantos pequenos |
 | **Spectrum** (Adobe) | Source Sans 3 | botões em pílula, azul Adobe |
+
+**Miniaturas e personalidade.** O seletor mostra uma miniatura de cada tema (abertura, texto, destaque, botão e cores). Além de cor e letra, cada tema novo tem seu jeito próprio nos componentes: a abertura (cartão tonal no Material, faixa azul-marinho no Lightning, barra em degradê no Spectrum, filete no Primer), a etiqueta de seção (pílula, lozenge, tag ou texto simples) e o cabeçalho das tabelas. Isso fica numa seção «PERSONALIDADE DO TEMA» no fim do `colors_and_type.css` de cada tema, com variáveis `--p-*` que a miniatura também lê.
 
 O texto principal de todos os temas novos passa de 13:1 de contraste, o texto de apoio passa de 6:1 e os botões e fundos de acento passam de 4,5:1.
 

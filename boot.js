@@ -12,7 +12,7 @@
 // ════════════════════════════════════════════════════════════
 (function () {
   var BASE = window.AULA_BASE || "";
-  var BUILD_REV = "20261028-miniaturas";
+  var BUILD_REV = "20261028-creditos";
   var theme = window.resolveAulaTheme();
   window.AULA_ACTIVE_THEME = theme;
 

@@ -1200,24 +1200,38 @@ function ThemeThumb({ theme }) {
     loadThemeTokens(theme).then((tokens) => { if (live) setV(tokens); });
     return () => { live = false; };
   }, [theme.id]);
-  if (!v) return <div style={{ height: 112, borderRadius: 7, background: "var(--tool-surface)" }} aria-hidden="true" />;
-  const none = (s) => !s || s === "none";
+  if (!v) return <div style={{ height: 124, borderRadius: 7, background: "var(--tool-surface)" }} aria-hidden="true" />;
+  const none = (s) => !s || s === "none" || s === "0";
   const withColor = (s, color) => (none(s) ? "none" : (/^\s*\d+(\.\d+)?px\s+(solid|dashed)\s*$/.test(s) ? s + " " + color : s));
   const accents = ["marigold", "terracotta", "lavender", "sage", "ocean", "coral"];
   const cardR = v["--c-card-radius"] || "6px";
   const atenR = v["--c-aten-radius"] || cardR;
   const atenBorder = withColor(v["--c-aten-border-left"], v["--marigold-deep"] || "#999");
-  const w = v["--h1-weight"] || "600";
+  const w = Number(v["--p-hero-weight"] || v["--h1-weight"] || 600);
+  const heroFg = v["--p-hero-fg"] || v["--ink"];
+  const chip = !none(v["--p-eyebrow-bg"]) && v["--p-eyebrow-bg"] !== "transparent" || !none(v["--p-eyebrow-border"]);
+  const barOn = !none(v["--p-hero-bar"]) && v["--p-hero-bar"] !== "transparent";
+  const innerOn = !none(v["--p-hero-inner-bg"]) && v["--p-hero-inner-bg"] !== "transparent";
+  const small = (s) => (s ? String(s).replace(/(\d+(?:\.\d+)?)px/g, (_, n) => Math.max(0, Math.round(Number(n) * 0.45 * 10) / 10) + "px") : s);
+  const heroBg = v["--p-hero-bg"] && v["--p-hero-bg"] !== "transparent" ? v["--p-hero-bg"] : "transparent";
+  const sans = v["--font-sans"];
   return (
-    <div data-tp="thumb" aria-hidden="true" style={{ height: 112, boxSizing: "border-box", background: v["--paper"], color: v["--ink"], border: "1px solid " + (v["--rule"] || "rgba(0,0,0,.12)"), borderRadius: 7, padding: "8px 9px", display: "flex", flexDirection: "column", gap: 4, overflow: "hidden", pointerEvents: "none" }}>
-      <span style={{ fontFamily: v["--font-sans"], fontSize: 6.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: v["--c-hero-eyebrow-color"] || v["--c-accent"] }}>Semana 1</span>
-      <span style={{ fontFamily: v["--font-display"], fontSize: 15, lineHeight: 1.05, fontWeight: Number(w), letterSpacing: v["--ls-display"] || "normal", color: v["--ink"] }}>Aula de leitura</span>
-      <span style={{ fontFamily: v["--font-serif"], fontSize: 8.5, lineHeight: 1.25, color: v["--ink-soft"] }}>O texto corrido usa esta letra.</span>
-      <span style={{ background: v["--marigold-soft"], borderLeft: atenBorder, borderRadius: atenR, fontFamily: v["--font-sans"], fontSize: 7.5, fontWeight: 600, color: v["--marigold-deep"], padding: "3px 6px" }}>Atenção</span>
-      <span style={{ display: "flex", alignItems: "center", gap: 6, marginTop: "auto" }}>
-        <span style={{ background: v["--c-btn-primary-bg"], color: v["--c-btn-primary-fg"] || "#fff", borderRadius: v["--c-btn-radius"] || "4px", fontFamily: v["--font-sans"], fontSize: 7.5, fontWeight: 700, padding: "3px 9px" }}>Começar</span>
-        <span style={{ display: "flex", gap: 2.5, marginLeft: "auto" }}>{accents.map((a) => <i key={a} style={{ width: 6, height: 6, borderRadius: "50%", background: v["--" + a] }} />)}</span>
-      </span>
+    <div data-tp="thumb" aria-hidden="true" style={{ height: 124, boxSizing: "border-box", background: v["--paper"], color: v["--ink"], border: "1px solid " + (v["--rule"] || "rgba(0,0,0,.12)"), borderRadius: 7, display: "flex", flexDirection: "column", overflow: "hidden", pointerEvents: "none" }}>
+      <div style={{ background: heroBg, borderBottom: none(v["--p-hero-border"]) ? "0" : "1px solid " + (v["--rule"] || "#ddd"), padding: "7px 8px 6px" }}>
+        <div style={{ background: innerOn ? v["--p-hero-inner-bg"] : "transparent", borderRadius: innerOn ? small(v["--p-hero-inner-r"]) : 0, padding: innerOn ? "5px 6px" : 0, display: "flex", flexDirection: "column", gap: 3 }}>
+          <span style={{ alignSelf: "flex-start", fontFamily: sans, fontSize: 6.5, fontWeight: Number(v["--p-eyebrow-weight"] || 700), letterSpacing: v["--p-eyebrow-ls"] ? small(v["--p-eyebrow-ls"]).replace(/^(-?[\d.]+)em$/, "$1em") : "0.12em", textTransform: v["--p-eyebrow-case"] || "uppercase", color: v["--p-hero-eyebrow-fg"] || v["--p-eyebrow-fg"] || v["--c-hero-eyebrow-color"] || v["--ink-mute"], background: chip ? (v["--p-eyebrow-bg"] || "transparent") : "transparent", border: chip ? withColor(v["--p-eyebrow-border"], "currentColor").replace(/(\d+)px/, "0.5px") : "0", borderRadius: v["--p-eyebrow-r"] ? small(v["--p-eyebrow-r"]) : 0, padding: chip ? "1px 4px" : 0 }}>Semana 1</span>
+          {barOn && <i style={{ display: "block", width: 22, height: 2.5, borderRadius: 2, background: v["--p-hero-bar"] }} />}
+          <span style={{ fontFamily: v["--font-display"], fontSize: 14, lineHeight: 1.1, fontWeight: w, letterSpacing: v["--ls-display"] || "normal", color: heroFg, paddingBottom: none(v["--p-hero-title-rule"]) ? 0 : 2, borderBottom: none(v["--p-hero-title-rule"]) ? "0" : "1px solid " + (v["--rule"] || "#ddd") }}>Aula de leitura</span>
+        </div>
+      </div>
+      <div style={{ padding: "5px 8px 7px", display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+        <span style={{ fontFamily: v["--font-serif"], fontSize: 8.5, lineHeight: 1.25, color: v["--ink-soft"] }}>O texto corrido usa esta letra.</span>
+        <span style={{ background: v["--marigold-soft"], borderLeft: atenBorder, borderRadius: small(atenR), fontFamily: sans, fontSize: 7.5, fontWeight: 600, color: v["--marigold-deep"], padding: "2px 6px" }}>Atenção</span>
+        <span style={{ display: "flex", alignItems: "center", gap: 6, marginTop: "auto" }}>
+          <span style={{ background: v["--c-btn-primary-bg"], color: v["--c-btn-primary-fg"] || "#fff", borderRadius: v["--c-btn-radius"] === "999px" ? 99 : small(v["--c-btn-radius"] || "4px"), fontFamily: sans, fontSize: 7.5, fontWeight: 700, padding: "3px 9px" }}>Começar</span>
+          <span style={{ display: "flex", gap: 2.5, marginLeft: "auto" }}>{accents.map((a) => <i key={a} style={{ width: 6, height: 6, borderRadius: "50%", background: v["--" + a] }} />)}</span>
+        </span>
+      </div>
     </div>
   );
 }
