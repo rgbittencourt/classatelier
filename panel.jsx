@@ -344,7 +344,7 @@ function QuizEditor({ p, setP }) {
 }
 
 // ── the panel ──
-function PropertiesPanel({ block, update, mergePrev, onRenumberEquations, onInsertEquation }) {
+function PropertiesPanel({ block, update, mergePrev, onRenumberEquations, onInsertEquation, onInsertImage, onBreakProse, onBreakTopic }) {
   if (!block) {
     return <div style={{ padding: 24, color: "var(--tool-ink-3)", fontSize: 13, lineHeight: 1.5 }}>Selecione um bloco na página para editar suas propriedades, ou arraste um bloco da biblioteca à esquerda.</div>;
   }
@@ -388,7 +388,7 @@ function PropertiesPanel({ block, update, mergePrev, onRenumberEquations, onInse
       {/* Conteúdo estrutural por tipo */}
       <div style={ps.group}>
         <p style={ps.groupTitle}>Conteúdo</p>
-        {renderTypeContent(block, p, setP, mergePrev, onRenumberEquations, onInsertEquation)}
+        {renderTypeContent(block, p, setP, mergePrev, onRenumberEquations, onInsertEquation, { onInsertImage, onBreakProse, onBreakTopic })}
         <div style={{ height: 8 }} />
       </div>
     </div>
@@ -679,7 +679,8 @@ function EquationPanel({ p, setP, onRenumber }) {
   </>);
 }
 
-function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquation) {
+function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquation, cursorActions = {}) {
+  const { onInsertImage, onBreakProse, onBreakTopic } = cursorActions;
   const def = window.BLOCK_BY_TYPE[block.type];
   switch (block.type) {
     case "pagebreak":
@@ -694,6 +695,7 @@ function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquati
         <div style={{ marginTop: 12, padding: "10px 12px", background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 8, fontSize: 12, color: "var(--tool-ink-2)", lineHeight: 1.5 }}>
           {(p.children || []).length} bloco{(p.children || []).length === 1 ? "" : "s"} neste tópico.
         </div>
+        {block.type === "topic" && onBreakTopic && <><button type="button" data-act="break-topic" style={{ ...addBtn, marginTop: 12 }} onClick={onBreakTopic} title="Clique antes, no texto do tópico, no ponto onde ele deve se dividir."><window.Icon name="separator-horizontal" size={14} stroke={1.8} /> Quebrar tópico no cursor</button><p style={hint}>Clique no ponto do texto deste tópico e use o botão: o que vem depois do cursor passa para um novo Tópico de conteúdo, logo abaixo.</p></>}
         {mergePrev && <button style={{ ...addBtn, marginTop: 12 }} onClick={mergePrev} title="Move todos os blocos deste tópico para o final do tópico anterior e remove este tópico vazio; nada é apagado."><TIcon name="plus" size={14} /> Unir ao tópico anterior (sem perder conteúdo)</button>}
       </>);
     case "hero":
@@ -757,6 +759,29 @@ function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquati
             </button>
           </Field>
           <p style={hint}>Clique no ponto do parágrafo onde a fórmula deve entrar e use o botão: o texto se divide ali e a equação fica no meio, em linha própria.</p>
+        </>}
+        {onInsertImage && <>
+          <div style={{ height: 14 }} />
+          <Field label="Imagem no meio do texto">
+            <button type="button" data-act="insert-image" onClick={onInsertImage} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 12px", borderRadius: 10, border: "1px solid var(--tool-line, #d8d3c6)", background: "var(--tool-card, #fff)", cursor: "pointer", font: "600 13px var(--font-ui, inherit)", color: "var(--tool-ink)", textAlign: "left" }}>
+              <window.Icon name="image" size={16} stroke={1.8} /> Inserir imagem no cursor
+            </button>
+          </Field>
+          <p style={hint}>Escolha um arquivo ou peça à IA que crie a figura na hora. O parágrafo se divide no cursor e a imagem entra no meio.</p>
+        </>}
+        {(onBreakProse || onBreakTopic) && <>
+          <div style={{ height: 14 }} />
+          <Field label="Quebra no cursor">
+            <div style={{ display: "grid", gap: 8 }}>
+              {onBreakProse && <button type="button" data-act="break-prose" onClick={onBreakProse} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 12px", borderRadius: 10, border: "1px solid var(--tool-line, #d8d3c6)", background: "var(--tool-card, #fff)", cursor: "pointer", font: "600 13px var(--font-ui, inherit)", color: "var(--tool-ink)", textAlign: "left" }}>
+                <window.Icon name="separator-horizontal" size={16} stroke={1.8} /> Quebrar parágrafo aqui
+              </button>}
+              {onBreakTopic && <button type="button" data-act="break-topic" onClick={onBreakTopic} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 12px", borderRadius: 10, border: "1px solid var(--tool-line, #d8d3c6)", background: "var(--tool-card, #fff)", cursor: "pointer", font: "600 13px var(--font-ui, inherit)", color: "var(--tool-ink)", textAlign: "left" }}>
+                <window.Icon name="separator-horizontal" size={16} stroke={1.8} /> Quebrar tópico aqui
+              </button>}
+            </div>
+          </Field>
+          <p style={hint}>Clique no ponto do texto e use o botão. <strong>Parágrafo</strong>: vira dois parágrafos, para não ficar longo demais. <strong>Tópico</strong>: o Tópico de conteúdo se divide em dois, e o que vem depois do cursor passa para o segundo.</p>
         </>}
       </>);
     case "pitaco":

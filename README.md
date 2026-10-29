@@ -17,7 +17,7 @@ O SCORM pode ser configurado como **1.2** — padrão de maior compatibilidade �
 
 ## Versão do aplicativo
 
-ClassAtelier **1.2.2** (Versionamento Semântico). O histórico está em [`CHANGELOG.md`](CHANGELOG.md). O ClassAcervo tem repositório e versão próprios (ver a seção abaixo).
+ClassAtelier **1.3.0** (Versionamento Semântico). O histórico está em [`CHANGELOG.md`](CHANGELOG.md). O ClassAcervo tem repositório e versão próprios (ver a seção abaixo).
 
 ## Biblioteca e pacote do curso
 
@@ -101,6 +101,7 @@ Também está em **Exportar → Colocar no Moodle…**, onde basta colar o ender
 ## Equações e fórum
 
 - **Equação** (Texto): escreva em LaTeX (ex.: `E = mc^{2}`) ou use os botões de estruturas e símbolos do painel. A fórmula fica centralizada, numa caixa com borda; o número (`(1)`, `(1.1)`, `Eq. 1`…) fica à direita, fora da caixa, e se edita direto na página. A primeira equação da aula é (1) e cada nova recebe o próximo número; **Renumerar todas** refaz a sequência. O painel traz o **tamanho da letra** (com ajuste automático para caber, sem rolagem), a **moldura** opcional, grupos de **estruturas**, **símbolos**, **operações de conjuntos** e **operadores lógicos**. Para pôr uma fórmula no meio de um parágrafo, clique no ponto desejado e use **Inserir equação no cursor** no painel do Parágrafo. Desenhada com KaTeX 0.19.1 (MIT).
+- **Imagem, equação e quebras no cursor** (painel do **Parágrafo**): clique no ponto do texto e use **Inserir equação no cursor**, **Inserir imagem no cursor** (arquivo ou **Criar com IA**; a IA é a do ClassAuthor, com endereço e código de acesso, e faz diagramas e ilustrações em SVG, não fotos), **Quebrar parágrafo aqui** (vira dois parágrafos) e **Quebrar tópico aqui** (o Tópico de conteúdo vira dois). O botão de quebrar tópico também está no painel do próprio tópico.
 - **Fórum de discussão** (Interativos): pergunta, prazos, regras, critérios opcionais, botão para o fórum de verdade (Moodle, Padlet, Teams…) e rascunho da mensagem salvo no navegador do aluno.
 
 ## Buscar blocos

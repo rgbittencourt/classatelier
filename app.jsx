@@ -174,6 +174,7 @@ function ClassAtelierApp() {
   const [libPre, setLibPre] = useStateA(false); // abriu pelo Exportar: já marca a aula atual
   const [courseEntries, setCourseEntries] = useStateA(null);
   const [toast, setToast] = useStateA(null);
+  const [imageDlg, setImageDlg] = useStateA(null); // janela «Inserir imagem no cursor»
   const toastTimer = useRefA(null);
   // origem do ClassAuthor que abriu esta aba (aprendida na primeira mensagem dele); permite devolver a aula editada
   const [authorOrigin, setAuthorOrigin] = useStateA(() => { try { return window.opener ? (sessionStorage.getItem("classatelier.authorOrigin") || "") : ""; } catch (e) { return ""; } });
@@ -377,30 +378,106 @@ function ClassAtelierApp() {
     return insertInto(topicTargetKey(topicId), type, idx);
   };
 
-  // «Inserir equação no cursor» (painel do Parágrafo): divide o parágrafo no cursor e põe a equação no meio.
-  const insertEquationInProse = (blockId) => {
+  // ── Edição no cursor (painel do Parágrafo): equação, imagem e quebras ──
+  const emptyHtml = (h) => !String(h || "").replace(/<[^>]*>/g, "").replace(/&nbsp;|\s/g, "");
+  const plainText = (h) => String(h || "").replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+  // Divide o parágrafo `blockId` no cursor e põe `child` (equação, imagem…) no meio, em linha própria.
+  // `sp0` é o ponto do cursor já capturado (a janela da imagem o guarda antes de abrir); sem ele, usa o cursor atual.
+  const insertChildInProse = (blockId, child, sp0) => {
+    const next = JSON.parse(JSON.stringify(lesson));
+    const src = collectBlockLists(next.blocks, undefined, [], true).find((ref) => ref.list.some((b) => b.id === blockId));
+    if (!src) return false;
+    const i = src.list.findIndex((b) => b.id === blockId);
+    const prose = src.list[i];
+    const sp = sp0 !== undefined ? sp0 : (window.splitProseAtCaret ? window.splitProseAtCaret(blockId) : null);
+    if (prose.slide != null) child.slide = prose.slide;
+    const parts = [];
+    if (!sp) { parts.push(prose, child); }
+    else {
+      const keepBefore = !emptyHtml(sp.before), keepAfter = !emptyHtml(sp.after);
+      if (keepBefore || !keepAfter) parts.push({ ...prose, props: { ...prose.props, body: keepBefore ? sp.before : "<p></p>" } });
+      parts.push(child);
+      if (keepAfter) { const n = window.newChildBlock("prose"); n.props = { ...n.props, body: sp.after, dropcap: false }; if (prose.slide != null) n.slide = prose.slide; parts.push(n); }
+    }
+    src.list.splice(i, 1, ...parts);
+    commit(next);
+    setSelected(child.id);
+    setMode("edit");
+    return true;
+  };
+  const insertEquationInProse = (blockId) => { insertChildInProse(blockId, window.newChildBlock("equacao")); };
+
+  // «Inserir imagem no cursor»: guarda o ponto do cursor, abre a janela (arquivo ou IA) e, ao confirmar, insere.
+  const openImageDialog = (blockId) => {
+    const sp = window.splitProseAtCaret ? window.splitProseAtCaret(blockId) : null;
+    const prose = findBlockDeep(lesson.blocks, blockId);
+    const context = sp ? (plainText(sp.before).slice(-700) + " … " + plainText(sp.after).slice(0, 500)) : plainText(prose && prose.props && prose.props.body).slice(0, 1200);
+    setImageDlg({ blockId, sp, context });
+  };
+  const confirmImage = (img) => {
+    if (!imageDlg) return;
+    const child = window.newChildBlock("imagem");
+    child.props = { ...child.props, src: img.src, alt: img.alt, decorative: !!img.decorative, caption: img.caption || "", credit: img.credit || "" };
+    const ok = insertChildInProse(imageDlg.blockId, child, imageDlg.sp);
+    setImageDlg(null);
+    if (!ok) showToast("Não achei o parágrafo onde a imagem deveria entrar. Selecione-o de novo e repita.");
+  };
+
+  // «Quebrar parágrafo no cursor»: o parágrafo vira dois, no ponto do cursor (o segundo sem capitular).
+  const breakProseAtCaret = (blockId) => {
+    const sp = window.splitProseAtCaret ? window.splitProseAtCaret(blockId) : null;
+    if (!sp) { showToast("Clique no ponto do parágrafo onde ele deve se dividir e use o botão de novo."); return; }
+    if (emptyHtml(sp.before) || emptyHtml(sp.after)) { showToast("O cursor está no começo ou no fim do parágrafo: não há o que separar. Clique no meio do texto."); return; }
     const next = JSON.parse(JSON.stringify(lesson));
     const src = collectBlockLists(next.blocks, undefined, [], true).find((ref) => ref.list.some((b) => b.id === blockId));
     if (!src) return;
     const i = src.list.findIndex((b) => b.id === blockId);
     const prose = src.list[i];
-    const sp = window.splitProseAtCaret ? window.splitProseAtCaret(blockId) : null;
-    const emptyHtml = (h) => !String(h || "").replace(/<[^>]*>/g, "").replace(/&nbsp;|\s/g, "");
-    const eq = window.newChildBlock("equacao");
-    if (src.meta.kind === "topic" && src.meta.owner.type === "topic-slider") eq.slide = prose.slide;
-    if (prose.slide != null) eq.slide = prose.slide;
-    const parts = [];
-    if (!sp) { parts.push(prose, eq); }
-    else {
-      const keepBefore = !emptyHtml(sp.before), keepAfter = !emptyHtml(sp.after);
-      if (keepBefore || !keepAfter) parts.push({ ...prose, props: { ...prose.props, body: keepBefore ? sp.before : "<p></p>" } });
-      parts.push(eq);
-      if (keepAfter) { const n = window.newChildBlock("prose"); n.props = { ...n.props, body: sp.after, dropcap: false }; if (prose.slide != null) n.slide = prose.slide; parts.push(n); }
-    }
-    src.list.splice(i, 1, ...parts);
+    const n = window.newChildBlock("prose");
+    n.props = { ...n.props, body: sp.after, dropcap: false };
+    if (prose.slide != null) n.slide = prose.slide;
+    src.list.splice(i, 1, { ...prose, props: { ...prose.props, body: sp.before } }, n);
     commit(next);
-    setSelected(eq.id);
+    setSelected(n.id);
     setMode("edit");
+  };
+
+  // «Quebrar tópico no cursor»: o Tópico de conteúdo vira dois, no ponto do cursor. `ref` é o id do parágrafo
+  // ou do próprio tópico (o cursor guardado diz em qual parágrafo do tópico a quebra acontece).
+  const breakTopicAtCaret = (ref) => {
+    const caret = window.__lzCaret;
+    const caretBid = caret && caret.host && caret.host.isConnected && caret.host.closest("[data-bid]") ? caret.host.closest("[data-bid]").getAttribute("data-bid") : null;
+    let bi = lesson.blocks.findIndex((b) => b.id === ref);
+    let proseId = ref;
+    if (bi >= 0) proseId = caretBid;                                    // chamado pelo painel do tópico
+    else bi = lesson.blocks.findIndex((b) => findBlockDeep([b], ref)); // chamado pelo painel do parágrafo
+    if (bi < 0 || !proseId) { showToast("Clique no ponto do texto onde o tópico deve se dividir e use o botão de novo."); return; }
+    const topic = lesson.blocks[bi];
+    if (topic.type !== "topic") { showToast("Só o Tópico de conteúdo se divide assim. Tópico retrátil e slider têm as próprias divisões."); return; }
+    const kids = JSON.parse(JSON.stringify(topic.props.children || []));
+    const ci = kids.findIndex((c) => c.id === proseId || findBlockDeep([c], proseId));
+    if (ci < 0) { showToast("O cursor não está dentro deste tópico. Clique no texto dele e tente de novo."); return; }
+    const hit = kids[ci];
+    let before, after, note = "";
+    if (hit.id === proseId && hit.type === "prose") {
+      const sp = window.splitProseAtCaret ? window.splitProseAtCaret(proseId) : null;
+      if (!sp) { showToast("Clique no ponto do parágrafo onde o tópico deve se dividir e use o botão de novo."); return; }
+      const keepBefore = !emptyHtml(sp.before), keepAfter = !emptyHtml(sp.after);
+      before = kids.slice(0, ci); after = kids.slice(ci + 1);
+      if (keepBefore) before.push({ ...hit, props: { ...hit.props, body: sp.before } });
+      if (keepAfter) { const n = window.newChildBlock("prose"); n.props = { ...n.props, body: sp.after, dropcap: false }; after.unshift(n); }
+    } else {
+      before = kids.slice(0, ci + 1); after = kids.slice(ci + 1);   // cursor dentro de coluna/acordeão: quebra logo depois dele
+      note = " O cursor estava dentro de uma estrutura (coluna, acordeão…); a quebra foi feita logo depois dela.";
+    }
+    if (!before.length || !after.length) { showToast("Não há nada " + (!before.length ? "antes" : "depois") + " do cursor neste tópico. Clique no meio do conteúdo."); return; }
+    const second = { ...JSON.parse(JSON.stringify(topic)), id: "b" + Math.random().toString(36).slice(2, 9) };
+    const blocks = [...lesson.blocks];
+    blocks.splice(bi, 1, setChildren(topic, before), setChildren(second, after));
+    commit({ ...lesson, blocks });
+    setSelected(second.id);
+    setMode("edit");
+    showToast("Tópico dividido em dois." + note);
   };
 
   // Merge a patch into a block whether it lives at root or inside a topic.
@@ -680,7 +757,7 @@ function ClassAtelierApp() {
             <button onClick={() => setRightOpen(false)} title="Recolher painel de propriedades" aria-label="Recolher painel de propriedades" aria-expanded="true"
               style={{ position: "absolute", top: 11, right: 10, zIndex: 6, width: 28, height: 28, display: "grid", placeItems: "center", border: "1px solid var(--tool-line)", background: "#fff", borderRadius: 7, cursor: "pointer", color: "var(--tool-ink-2)", fontSize: 15, lineHeight: 1 }}>»</button>
             {selBlock
-              ? <window.PropertiesPanel block={selBlock} update={(patch) => updateBlock(selBlock.id, patch)} mergePrev={mergeInfo(selBlock) ? () => mergeTopicWithPrevious(selBlock) : null} onRenumberEquations={() => commit(window.autoNumberEquations(lesson, true))} onInsertEquation={() => insertEquationInProse(selBlock.id)} />
+              ? <window.PropertiesPanel block={selBlock} update={(patch) => updateBlock(selBlock.id, patch)} mergePrev={mergeInfo(selBlock) ? () => mergeTopicWithPrevious(selBlock) : null} onRenumberEquations={() => commit(window.autoNumberEquations(lesson, true))} onInsertEquation={() => insertEquationInProse(selBlock.id)} onInsertImage={() => openImageDialog(selBlock.id)} onBreakProse={() => breakProseAtCaret(selBlock.id)} onBreakTopic={() => breakTopicAtCaret(selBlock.id)} />
               : <LessonMeta lesson={lesson} setLesson={(L) => setLesson(L)} />}
           </>) : (
             <button onClick={() => setRightOpen(true)} title="Abrir painel de propriedades" aria-label="Abrir painel de propriedades" aria-expanded="false"
@@ -703,6 +780,7 @@ function ClassAtelierApp() {
       <input ref={fileInputRef} type="file" accept=".json,application/json" onChange={onProjectFile} style={{ display: "none" }} />
       {scormOpen && <ScormDialog lesson={lesson} onClose={() => setScormOpen(false)} onConfirm={exportSCORM} onCheck={(title, load) => setScormCheck({ title, load })} />}
       {moodle && <window.MoodleDialog links={moodle.links} onClose={() => setMoodle(null)} />}
+      {imageDlg && <window.InsertImageDialog title={lesson.meta && lesson.meta.title} context={imageDlg.context} onInsert={confirmImage} onClose={() => setImageDlg(null)} />}
       {republishOpen && <window.RepublishDialog lesson={lesson} onClose={() => setRepublishOpen(false)} />}
       {versionsOpen && <window.VersionsDialog lessonId={curRef.current.id} lesson={lesson} onClose={() => setVersionsOpen(false)} onRestore={restoreVersion} onApplyBlock={applyVersionBlock} />}
       {scormCheck && <ScormCheckDialog title={scormCheck.title} load={scormCheck.load} onClose={() => setScormCheck(null)} />}

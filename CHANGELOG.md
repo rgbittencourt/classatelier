@@ -4,18 +4,26 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.2.2** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
-| ClassAcervo | **1.1.0** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
+| ClassAtelier | **1.3.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAcervo | **1.2.0** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
 
-### 1.2.2 · 29/10/2026 · ClassAcervo com endereço próprio
+### 1.3.0 · 29/10/2026 · imagem e quebras no cursor; ClassAcervo com endereço próprio
+
+**Acrescentado ao painel do Parágrafo** (clique no ponto do texto e use o botão; o painel lembra onde estava o cursor)
+- **Inserir imagem no cursor**: janela com duas abas. **Escolher imagem** (JPG, PNG, WebP, GIF ou SVG; foto grande é reduzida a 1600 px no lado maior) ou **Criar com IA** (descreva a figura; a IA do ClassAuthor devolve um diagrama/ilustração em SVG, com legenda e crédito «Ilustração criada por IA»). O parágrafo se divide no cursor e a imagem entra no meio, em linha própria. O texto alternativo é obrigatório, a menos que a imagem seja marcada como decorativa.
+- **Quebrar parágrafo aqui**: o parágrafo vira dois, no cursor (o segundo sem capitular). Avisa quando o cursor está no começo ou no fim.
+- **Quebrar tópico aqui**: o Tópico de conteúdo vira dois, no cursor; o que vem depois passa para um novo tópico logo abaixo, com o mesmo fundo e espaçamento. O botão também está no painel do próprio tópico. Tópico retrátil e slider não se dividem assim (o aviso explica).
+- Ícone novo `separator-horizontal`.
+
+**Criar com IA exige o ClassAuthor 1.2.0 ou mais novo** (rota `/api/figure`), o endereço dele e o código de acesso, que o editor guarda só na sessão (ou neste navegador, se você marcar «lembrar»). O ClassAtelier continua sem chave de IA própria.
 
 **Mudou**
-- Os atalhos **ClassAcervo ↗** (barra de ferramentas, menu e aviso de publicação) agora abrem **https://rgbittencourt.github.io/classacervo/**.
-- A pasta `acervo/` deste repositório virou só um aviso com redirecionamento para o endereço novo, para os links antigos continuarem funcionando. O app em si (código, estilos e capturas) saiu daqui e está no repositório do ClassAcervo.
+- Os atalhos **ClassAcervo ↗** (barra de ferramentas, menu e aviso de publicação) abrem **https://rgbittencourt.github.io/classacervo/**, o novo endereço do ClassAcervo.
+- A pasta `acervo/` deste repositório virou só um aviso com redirecionamento. O app (código, estilos e capturas) está agora no repositório [rgbittencourt/classacervo](https://github.com/rgbittencourt/classacervo).
 
 ### 1.2.1 · 29/10/2026 · crédito aos dois autores
 
