@@ -487,6 +487,7 @@ function AulaStudioApp() {
   const [scormOpen, setScormOpen] = useStateA(false);
   const [scormCheck, setScormCheck] = useStateA(null);
   const [versionsOpen, setVersionsOpen] = useStateA(false);
+  const [republishOpen, setRepublishOpen] = useStateA(false);
   const [clearOpen, setClearOpen] = useStateA(false);
   const [busyMsg, setBusyMsg] = useStateA(null);
   const [richOpen, setRichOpen] = useStateA(false);
@@ -587,7 +588,7 @@ function AulaStudioApp() {
           onExportHTML={exportHTML} onExportStandaloneHTML={exportStandaloneHTML} onExportSCORM={() => setScormOpen(true)} onPrintPDF={printPDF}
           onOpenProject={openProjectClick} onDownloadProject={downloadProject}
           onRichNotes={() => setRichOpen(true)} onA11y={() => setA11yOpen((v) => !v)} a11yOpen={a11yOpen} a11yCount={a11yCount} onLibrary={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(false); setLibOpen(true); }} onCourse={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(true); setLibOpen(true); }}
-          onClear={() => setClearOpen(true)} canClear={hasLessonContent} onVersions={() => setVersionsOpen(true)}
+          onClear={() => setClearOpen(true)} canClear={hasLessonContent} onVersions={() => setVersionsOpen(true)} onRepublish={() => setRepublishOpen(true)}
         />
         <Canvas
           lesson={lesson} mode={mode} selected={selected} setSelected={setSelected}
@@ -628,6 +629,7 @@ function AulaStudioApp() {
       <window.MarkToolbar />
       <input ref={fileInputRef} type="file" accept=".json,application/json" onChange={onProjectFile} style={{ display: "none" }} />
       {scormOpen && <ScormDialog lesson={lesson} onClose={() => setScormOpen(false)} onConfirm={exportSCORM} onCheck={(title, load) => setScormCheck({ title, load })} />}
+      {republishOpen && <window.RepublishDialog lesson={lesson} onClose={() => setRepublishOpen(false)} />}
       {versionsOpen && <window.VersionsDialog lessonId={curRef.current.id} lesson={lesson} onClose={() => setVersionsOpen(false)} onRestore={restoreVersion} onApplyBlock={applyVersionBlock} />}
       {scormCheck && <ScormCheckDialog title={scormCheck.title} load={scormCheck.load} onClose={() => setScormCheck(null)} />}
       {clearOpen && <ClearDialog count={(lesson.blocks || []).length} onClose={() => setClearOpen(false)} onConfirm={clearLesson} />}
@@ -866,7 +868,7 @@ function RichNotesDialog({ lesson, onClose, onUpdate }) {
 const emptyNote={padding:18,border:"1px dashed var(--tool-line-2)",borderRadius:9,color:"var(--tool-ink-3)",fontSize:12};
 
 // ── Top bar ──
-function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear, onVersions }) {
+function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear, onVersions, onRepublish }) {
   const [busy, setBusy] = useStateA(false);
   const [menu, setMenu] = useStateA(false);
   const [more, setMore] = useStateA(false);
@@ -933,6 +935,10 @@ function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, o
                 <button onClick={() => { setMenu(false); onCourse && onCourse(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
                   <span style={{ fontWeight: 600 }}>Curso e GitHub…</span>
                   <span style={menuSub}>Junta várias aulas da Biblioteca em um site, pacote SCORM ou publicação direta no GitHub (links para o Moodle).</span>
+                </button>
+                <button onClick={() => { setMenu(false); onRepublish && onRepublish(); }} data-act="republish" style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
+                  <span style={{ fontWeight: 600 }}>Atualizar uma aula já publicada…</span>
+                  <span style={menuSub}>Troca só esta aula no GitHub, sem mexer nas outras nem nos links do Moodle.</span>
                 </button>
               </div>
             </>

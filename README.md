@@ -82,6 +82,17 @@ O botão **Histórico** (ou ⋯ → Histórico de versões) guarda e recupera ve
 
 Limite: o histórico vive no navegador (IndexedDB). Limpar os dados do site apaga tudo; para ter cópia fora dele, use **Salvar**.
 
+## Atualizar uma aula já publicada
+
+Em **Exportar → Atualizar uma aula já publicada…**, o ClassAtelier troca no GitHub só a aula que está aberta, sem republicar o curso inteiro:
+
+1. Informe conta, repositório, branch, pasta do curso e token (os mesmos de «Curso e GitHub…»; ficam guardados neste navegador).
+2. *Procurar aulas publicadas* lista as páginas .html da pasta, com o nome que aparece na página do curso. A que parece ser a aula atual vem marcada (pelo título ou pelo número da semana).
+3. *Ver o que será enviado* mostra, antes de enviar, os arquivos novos, alterados e apagados.
+4. *Publicar só esta aula* faz um único commit.
+
+Só mexe nos arquivos daquela aula: a página, as imagens dela, o projeto `projetos/SemanaNN-…json` e, se você deixar marcado, o nome dela na página do curso (`index.html`). Imagens e projeto antigos que deixaram de ser usados são apagados. As outras aulas e **os endereços usados no Moodle não mudam**, mesmo que você tenha renomeado os arquivos à mão. Se o repositório mudar enquanto você prepara a atualização, nada é enviado e o ClassAtelier avisa.
+
 ## Identidade visual
 
 - `assets/classatelier-mark.svg`: símbolo do ClassAtelier (janela em arco);
