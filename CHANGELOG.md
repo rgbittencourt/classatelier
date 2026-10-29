@@ -4,12 +4,17 @@ Este repositório tem dois aplicativos, cada um com a própria versão, em [Vers
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.2.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.2.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.0.0** | subtítulo do cabeçalho, rodapé de créditos e rodapé dos índices que ele gera; constante `APP_VERSION` em `acervo/acervo.js` |
 
 Ao mudar a versão, altere os dois lugares de cada aplicativo e a data abaixo.
 
 ## ClassAtelier
+
+### 1.2.1 · 29/10/2026 · crédito aos dois autores
+
+**Corrigido**
+- A barra de créditos passou a dizer **«Desenvolvido pelos Profs. Rogério G. Bittencourt & Luís Lindner»**, em vez de citar só o Prof. Rogério.
 
 ### 1.2.0 · 29/10/2026 · equações: tamanho, moldura, conjuntos e lógica
 
