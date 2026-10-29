@@ -110,6 +110,22 @@ No alto da coluna de blocos há uma caixa de busca (atalho: tecle **/**). Ela ac
 
 No modo **Visualizar**, a barra «Ver como» troca o aparelho: Computador, Tablet (820 × 1180), Celular (390 × 844) e Celular pequeno (360 × 640). **Deitar** gira o aparelho; **Recarregar** volta ao começo da aula. A aula roda num quadro com a largura real do aparelho, então o layout responsivo (menu, colunas, tamanhos) aparece como no celular do aluno. É a mesma página que a exportação gera, montada com a aula como está agora (para ver uma edição nova, volte a Editar e entre em Visualizar de novo). A escolha do aparelho fica guardada neste navegador.
 
+## Temas (design systems)
+
+O botão no canto esquerdo da barra troca o visual da aula inteira (cores, letras e formato dos componentes). O tema escolhido vai junto no pacote exportado, com as fontes dentro, e a aula abre igual sem internet.
+
+| Tema | Letra | Observação |
+|---|---|---|
+| Aula (padrão) | Fraunces e Instrument Sans | visual editorial do LumeAuthor |
+| Cedar, Carbon, Intergalactic, Persona | as dos próprios sistemas | já existiam |
+| **Material 3** (Google) | Roboto | cantos arredondados, botões em pílula; paleta do esquema claro do Material 3 |
+| **GOV.UK** (inspirado) | Arial do aparelho | cantos retos, foco amarelo, avisos com barra grossa; alto contraste |
+| **Atlassian** (inspirado) | Inter | cantos de 3 a 8 px, azul de ação, sombras sutis |
+
+Todas as cores de texto e de fundo dos três temas novos têm contraste de pelo menos 4,5:1 (o texto principal passa de 14:1).
+
+**Marcas e licenças.** O GOV.UK e o Atlassian são *inspirados* nos sistemas deles: usam o mesmo estilo de cores e componentes, mas não trazem logotipo nem a fonte oficial (a GDS Transport e a Atlassian Sans têm uso restrito). Por isso o nome na lista termina em «inspirado». O Material 3 usa a paleta e as medidas públicas do Google. As fontes Roboto e Inter têm licença livre (OFL) e ficam em `material/fonts/` e `atlassian/fonts/`. Para criar mais um tema, copie uma das pastas e registre em `themes.js`.
+
 ## Identidade visual
 
 - `assets/classatelier-mark.svg`: símbolo do ClassAtelier (janela em arco);

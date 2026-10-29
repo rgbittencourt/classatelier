@@ -382,6 +382,150 @@ window.AULA_THEMES = {
       },
     },
 
+    {
+      id: "material",
+      label: "Material 3 — Google",
+      swatches: ["#6750a4", "#fef7ff", "#ece6f0"],
+
+      css: "material/colors_and_type.css",
+      componentsCss: "material/components.css",
+      fontsDir: "material/fonts/",
+      fontPreload: [
+        ["material/fonts/roboto-400-normal.woff2", "font/woff2"],
+        ["material/fonts/roboto-500-normal.woff2", "font/woff2"],
+      ],
+      usesFontAwesome: true,
+      
+      topicSurfaces: makeTopicSurfaces({
+        neutrals: {
+          default: { label: "Surface", cssVar: "--paper", swatch: "#fef7ff" },
+          subtle: { label: "Surface container", cssVar: "--sand", swatch: "#ece6f0" },
+          inverse: { label: "Inverse surface", cssVar: "--ink", swatch: "#1d1b20" },
+        },
+        accents: [
+          { soft: { label: "Amarelo claro", cssVar: "--marigold-soft", swatch: "#fff0b8", contentTone: "dark" }, vivid: { label: "Amarelo", cssVar: "--marigold", swatch: "#fbc02d", contentTone: "dark" }, deep: { label: "Amarelo escuro", cssVar: "--marigold-deep", swatch: "#5f4300", contentTone: "light" } },
+          { soft: { label: "Vermelho claro", cssVar: "--terracotta-soft", swatch: "#f9dedc", contentTone: "dark" }, vivid: { label: "Vermelho", cssVar: "--terracotta", swatch: "#b3261e", contentTone: "light" }, deep: { label: "Vermelho escuro", cssVar: "--terracotta-deep", swatch: "#601410", contentTone: "light" } },
+          { soft: { label: "Roxo claro", cssVar: "--lavender-soft", swatch: "#eaddff", contentTone: "dark" }, vivid: { label: "Roxo", cssVar: "--lavender", swatch: "#6750a4", contentTone: "light" }, deep: { label: "Roxo escuro", cssVar: "--lavender-deep", swatch: "#21005d", contentTone: "light" } },
+          { soft: { label: "Verde claro", cssVar: "--sage-soft", swatch: "#c3efad", contentTone: "dark" }, vivid: { label: "Verde", cssVar: "--sage", swatch: "#386a20", contentTone: "light" }, deep: { label: "Verde escuro", cssVar: "--sage-deep", swatch: "#072100", contentTone: "light" } },
+          { soft: { label: "Azul claro", cssVar: "--ocean-soft", swatch: "#d1e4ff", contentTone: "dark" }, vivid: { label: "Azul", cssVar: "--ocean", swatch: "#0061a4", contentTone: "light" }, deep: { label: "Azul escuro", cssVar: "--ocean-deep", swatch: "#001d36", contentTone: "light" } },
+          { soft: { label: "Rosa claro", cssVar: "--coral-soft", swatch: "#ffd9e2", contentTone: "dark" }, vivid: { label: "Rosa", cssVar: "--coral", swatch: "#984061", contentTone: "light" }, deep: { label: "Rosa escuro", cssVar: "--coral-deep", swatch: "#3e001d", contentTone: "light" } },
+        ],
+      }),
+      topicSurfaceAliases: Object.assign({}, TOPIC_SURFACE_ALIASES),
+
+      tones: {
+        marigold:   "#fbc02d",
+        terracotta: "#b3261e",
+        lavender:   "#6750a4",
+        sage:       "#386a20",
+        ocean:      "#0061a4",
+        coral:      "#984061",
+      },
+
+      tool: {
+        accent:     "#6750a4",
+        accentSoft: "#eaddff",
+        sel:        "#21005d",
+        selSoft:    "#f3edff",
+        sans:       '"Roboto", -apple-system, "Segoe UI", system-ui, sans-serif',
+      },
+    },
+
+    {
+      id: "govuk",
+      label: "GOV.UK — inspirado",
+      swatches: ["#1d70b8", "#0b0c0c", "#ffdd00"],
+
+      css: "govuk/colors_and_type.css",
+      componentsCss: "govuk/components.css",
+      fontsDir: "govuk/fonts/",
+      fontPreload: [
+      ],
+      usesFontAwesome: true,
+      // Inspirado no GOV.UK Design System (MIT). Sem a fonte GDS Transport nem o logotipo (uso restrito).
+      topicSurfaces: makeTopicSurfaces({
+        neutrals: {
+          default: { label: "Branco", cssVar: "--paper", swatch: "#ffffff" },
+          subtle: { label: "Cinza claro (light-grey)", cssVar: "--sand", swatch: "#f3f2f1" },
+          inverse: { label: "Preto (black)", cssVar: "--ink", swatch: "#0b0c0c" },
+        },
+        accents: [
+          { soft: { label: "Yellow tint", cssVar: "--marigold-soft", swatch: "#fff7bf", contentTone: "dark" }, vivid: { label: "Yellow", cssVar: "--marigold", swatch: "#ffdd00", contentTone: "dark" }, deep: { label: "Yellow shade", cssVar: "--marigold-deep", swatch: "#594d00", contentTone: "light" } },
+          { soft: { label: "Red tint", cssVar: "--terracotta-soft", swatch: "#f6d7d2", contentTone: "dark" }, vivid: { label: "Red", cssVar: "--terracotta", swatch: "#d4351c", contentTone: "light" }, deep: { label: "Red shade", cssVar: "--terracotta-deep", swatch: "#942514", contentTone: "light" } },
+          { soft: { label: "Purple tint", cssVar: "--lavender-soft", swatch: "#dbd5e9", contentTone: "dark" }, vivid: { label: "Purple", cssVar: "--lavender", swatch: "#4c2c92", contentTone: "light" }, deep: { label: "Purple shade", cssVar: "--lavender-deep", swatch: "#3d2375", contentTone: "light" } },
+          { soft: { label: "Green tint", cssVar: "--sage-soft", swatch: "#cce2d8", contentTone: "dark" }, vivid: { label: "Green", cssVar: "--sage", swatch: "#00703c", contentTone: "light" }, deep: { label: "Green shade", cssVar: "--sage-deep", swatch: "#005a30", contentTone: "light" } },
+          { soft: { label: "Blue tint", cssVar: "--ocean-soft", swatch: "#d2e2f1", contentTone: "dark" }, vivid: { label: "Blue", cssVar: "--ocean", swatch: "#1d70b8", contentTone: "light" }, deep: { label: "Dark blue", cssVar: "--ocean-deep", swatch: "#003078", contentTone: "light" } },
+          { soft: { label: "Turquoise tint", cssVar: "--coral-soft", swatch: "#bfe3e0", contentTone: "dark" }, vivid: { label: "Turquoise", cssVar: "--coral", swatch: "#28a197", contentTone: "dark" }, deep: { label: "Turquoise shade", cssVar: "--coral-deep", swatch: "#10403c", contentTone: "light" } },
+        ],
+      }),
+      topicSurfaceAliases: Object.assign({}, TOPIC_SURFACE_ALIASES),
+
+      tones: {
+        marigold:   "#ffdd00",
+        terracotta: "#d4351c",
+        lavender:   "#4c2c92",
+        sage:       "#00703c",
+        ocean:      "#1d70b8",
+        coral:      "#28a197",
+      },
+
+      tool: {
+        accent:     "#1d70b8",
+        accentSoft: "#d2e2f1",
+        sel:        "#003078",
+        selSoft:    "#e8f1f8",
+        sans:       'Arial, "Helvetica Neue", Helvetica, "Liberation Sans", sans-serif',
+      },
+    },
+
+    {
+      id: "atlassian",
+      label: "Atlassian — inspirado",
+      swatches: ["#0c66e4", "#172b4d", "#f7f8f9"],
+
+      css: "atlassian/colors_and_type.css",
+      componentsCss: "atlassian/components.css",
+      fontsDir: "atlassian/fonts/",
+      fontPreload: [
+        ["atlassian/fonts/inter-wght-normal.woff2", "font/woff2"],
+      ],
+      usesFontAwesome: true,
+      // Inspirado no Atlassian Design System. A fonte oficial é proprietária: aqui Inter (OFL).
+      topicSurfaces: makeTopicSurfaces({
+        neutrals: {
+          default: { label: "Neutral 0", cssVar: "--paper", swatch: "#ffffff" },
+          subtle: { label: "Neutral 100", cssVar: "--sand", swatch: "#f1f2f4" },
+          inverse: { label: "Neutral 1000", cssVar: "--ink", swatch: "#172b4d" },
+        },
+        accents: [
+          { soft: { label: "Yellow subtle", cssVar: "--marigold-soft", swatch: "#fff7d6", contentTone: "dark" }, vivid: { label: "Yellow", cssVar: "--marigold", swatch: "#f5cd47", contentTone: "dark" }, deep: { label: "Yellow bolder", cssVar: "--marigold-deep", swatch: "#7f5f01", contentTone: "light" } },
+          { soft: { label: "Red subtle", cssVar: "--terracotta-soft", swatch: "#ffd5d2", contentTone: "dark" }, vivid: { label: "Red", cssVar: "--terracotta", swatch: "#c9372c", contentTone: "light" }, deep: { label: "Red bolder", cssVar: "--terracotta-deep", swatch: "#5d1f1a", contentTone: "light" } },
+          { soft: { label: "Purple subtle", cssVar: "--lavender-soft", swatch: "#f3f0ff", contentTone: "dark" }, vivid: { label: "Purple", cssVar: "--lavender", swatch: "#6e5dc6", contentTone: "light" }, deep: { label: "Purple bolder", cssVar: "--lavender-deep", swatch: "#352c63", contentTone: "light" } },
+          { soft: { label: "Green subtle", cssVar: "--sage-soft", swatch: "#dcfff1", contentTone: "dark" }, vivid: { label: "Green", cssVar: "--sage", swatch: "#1f845a", contentTone: "light" }, deep: { label: "Green bolder", cssVar: "--sage-deep", swatch: "#164b35", contentTone: "light" } },
+          { soft: { label: "Blue subtle", cssVar: "--ocean-soft", swatch: "#e9f2ff", contentTone: "dark" }, vivid: { label: "Blue", cssVar: "--ocean", swatch: "#0c66e4", contentTone: "light" }, deep: { label: "Blue bolder", cssVar: "--ocean-deep", swatch: "#09326c", contentTone: "light" } },
+          { soft: { label: "Teal subtle", cssVar: "--coral-soft", swatch: "#e7f9ff", contentTone: "dark" }, vivid: { label: "Teal", cssVar: "--coral", swatch: "#1d7f8c", contentTone: "light" }, deep: { label: "Teal bolder", cssVar: "--coral-deep", swatch: "#1d474c", contentTone: "light" } },
+        ],
+      }),
+      topicSurfaceAliases: Object.assign({}, TOPIC_SURFACE_ALIASES),
+
+      tones: {
+        marigold:   "#f5cd47",
+        terracotta: "#c9372c",
+        lavender:   "#6e5dc6",
+        sage:       "#1f845a",
+        ocean:      "#0c66e4",
+        coral:      "#1d7f8c",
+      },
+
+      tool: {
+        accent:     "#0c66e4",
+        accentSoft: "#cfe1fd",
+        sel:        "#0055cc",
+        selSoft:    "#e9f2ff",
+        sans:       '"Inter", -apple-system, "Segoe UI", system-ui, sans-serif',
+      },
+    },
+
     // ▼ EXEMPLO de tema novo — descomente, crie o kit e ajuste:
     // {
     //   id: "minha-marca",
