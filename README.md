@@ -70,6 +70,18 @@ Os pacotes .zip (HTML, SCORM, curso, GitHub) já levam React, Babel e Font Aweso
 
 Limite: isto confere o pacote e o comportamento da aula, não substitui o aceite da sua plataforma. O teste final é subir num curso de rascunho do Moodle.
 
+## Histórico de versões
+
+O botão **Histórico** (ou ⋯ → Histórico de versões) guarda e recupera versões da aula, neste navegador.
+
+- **Automáticas:** o ClassAtelier grava uma versão quando você para de editar por cerca de 45 segundos, ao esconder a aba e ao abrir a aula. No máximo uma a cada 5 minutos (as de um mesmo intervalo se fundem). Ficam as 30 mais recentes.
+- **Nomeadas:** *Guardar a aula como está agora* cria uma versão com o nome que você quiser (ex.: «antes da revisão»). Nunca são apagadas sozinhas.
+- **De segurança:** antes de restaurar, recuperar um bloco, limpar a página ou substituir pela versão vinda do ClassAuthor, a aula atual é guardada.
+- **Comparação:** ao escolher uma versão, o ClassAtelier mostra bloco a bloco o que mudou depois (alterado, removido, novo). Dá para **recuperar um bloco apagado**, **usar a versão antiga de um bloco** ou **restaurar a versão inteira**. Tudo isso também pode ser desfeito com ⌘Z.
+- **Baixar .json** leva a versão para outro computador. Excluir a aula da Biblioteca apaga também o histórico dela.
+
+Limite: o histórico vive no navegador (IndexedDB). Limpar os dados do site apaga tudo; para ter cópia fora dele, use **Salvar**.
+
 ## Identidade visual
 
 - `assets/classatelier-mark.svg`: símbolo do ClassAtelier (janela em arco);

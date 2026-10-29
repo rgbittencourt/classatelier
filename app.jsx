@@ -134,13 +134,7 @@ function reviseRichNotes(blocks, kind, original, next) {
 
 // ── Biblioteca de aulas: cada aula editada fica guardada (IndexedDB) com nome e data ──
 const LIB_DB = "classatelier", LIB_STORE = "lessons", CUR_KEY = "aulastudio.current.v1";
-const libDB = () => new Promise((res, rej) => {
-  if (typeof indexedDB === "undefined") { rej(new Error("IndexedDB indisponível")); return; }
-  const r = indexedDB.open(LIB_DB, 1);
-  r.onupgradeneeded = () => r.result.createObjectStore(LIB_STORE, { keyPath: "id" });
-  r.onsuccess = () => res(r.result);
-  r.onerror = () => rej(r.error);
-});
+const libDB = () => window.Versions.open(); // banco único (lojas lessons + versions), definido em versions.jsx
 const libTx = (mode, fn) => libDB().then((db) => new Promise((res, rej) => {
   const tx = db.transaction(LIB_STORE, mode); const out = fn(tx.objectStore(LIB_STORE));
   tx.oncomplete = () => res(out && out.result); tx.onerror = () => rej(tx.error); tx.onabort = () => rej(tx.error);
@@ -189,11 +183,30 @@ function AulaStudioApp() {
     }, 250);
     return () => clearTimeout(t);
   }, [lesson]);
+  // Histórico de versões: grava sozinho depois de ~45 s sem editar, ao esconder a aba e ao abrir a aula.
+  const snap = (kind, label, id, l) => {
+    const cur = l || lessonRef.current;
+    if (isStarterLesson(cur) || isBlankLesson(cur)) return Promise.resolve(null);
+    return window.Versions.snapshot(id || curRef.current.id, cur, { kind, label }).catch(() => null);
+  };
+  useEffectA(() => {
+    if (isStarterLesson(lesson) || isBlankLesson(lesson)) return;
+    const id = curRef.current.id;
+    const t = setTimeout(() => { snap("auto", "", id, lesson); }, 45000);
+    return () => clearTimeout(t);
+  }, [lesson]);
+  useEffectA(() => {
+    const first = setTimeout(() => snap("auto", ""), 4000); // guarda o estado em que a aula foi aberta
+    const onHide = () => { if (document.visibilityState === "hidden") snap("auto", ""); };
+    document.addEventListener("visibilitychange", onHide);
+    return () => { clearTimeout(first); document.removeEventListener("visibilitychange", onHide); };
+  }, []);
   // Guarda a aula atual na biblioteca e passa a editar outra (nunca perde a anterior).
   const flushCurrent = async () => {
     const cur = lessonRef.current;
     if (isStarterLesson(cur) || isBlankLesson(cur)) return;
     await libPut(makeLibEntry(curRef.current.id, cur, curRef.current.source));
+    await snap("auto", "");
   };
   const switchTo = async (project, id, source) => {
     try { await flushCurrent(); } catch (e) {}
@@ -202,6 +215,7 @@ function AulaStudioApp() {
     try { localStorage.setItem(CUR_KEY, JSON.stringify(curRef.current)); } catch (e) {}
     setLesson(project);
     setSelected(null);
+    setTimeout(() => snap("auto", "", id, project), 1500); // estado em que a aula foi aberta
   };
 
   // ClassAuthor abre este editor em outra aba e envia a semana escolhida por postMessage.
@@ -229,6 +243,7 @@ function AulaStudioApp() {
           reply(ev.origin, { type: "aulastudio:declined" });
           return;
         }
+        if (existing) await snap("safety", "Antes de substituir pela versão do ClassAuthor", existing.id, existing.lesson);
         await switchTo(project, existing ? existing.id : newLessonId(), { app: "classauthor", key });
         const kept = libOk && hasWork;
         showToast("«" + label + "» aberta, vinda do ClassAuthor." + (kept ? " A aula que estava aberta ficou na Biblioteca." : ""));
@@ -242,6 +257,14 @@ function AulaStudioApp() {
     return () => window.removeEventListener("message", onMessage);
   }, []);
 
+  const restoreVersion = async (v) => {
+    await snap("safety", "Antes de restaurar «" + (v.label || new Date(v.at).toLocaleString("pt-BR")) + "»");
+    pushHistory(); setLesson(JSON.parse(JSON.stringify(v.lesson))); setSelected(null);
+  };
+  const applyVersionBlock = async (v, blockId, why) => {
+    await snap("safety", why);
+    pushHistory(); setLesson(window.Versions.applyBlock(lessonRef.current, v.lesson, blockId));
+  };
   const pushHistory = useCb(() => {
     patchBurst.current = { id: null, at: 0 };
     history.current.push(JSON.stringify(lesson));
@@ -463,6 +486,7 @@ function AulaStudioApp() {
   const fileInputRef = useRefA(null);
   const [scormOpen, setScormOpen] = useStateA(false);
   const [scormCheck, setScormCheck] = useStateA(null);
+  const [versionsOpen, setVersionsOpen] = useStateA(false);
   const [clearOpen, setClearOpen] = useStateA(false);
   const [busyMsg, setBusyMsg] = useStateA(null);
   const [richOpen, setRichOpen] = useStateA(false);
@@ -520,6 +544,7 @@ function AulaStudioApp() {
   // Reset the complete authoring state. The previous lesson remains undoable.
   const clearLesson = (saveCopy) => {
     if (saveCopy) downloadProject();
+    snap("safety", "Antes de limpar a página");
     pushHistory();
     const cleared = emptyLesson();
     setLesson(cleared);
@@ -562,7 +587,7 @@ function AulaStudioApp() {
           onExportHTML={exportHTML} onExportStandaloneHTML={exportStandaloneHTML} onExportSCORM={() => setScormOpen(true)} onPrintPDF={printPDF}
           onOpenProject={openProjectClick} onDownloadProject={downloadProject}
           onRichNotes={() => setRichOpen(true)} onA11y={() => setA11yOpen((v) => !v)} a11yOpen={a11yOpen} a11yCount={a11yCount} onLibrary={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(false); setLibOpen(true); }} onCourse={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(true); setLibOpen(true); }}
-          onClear={() => setClearOpen(true)} canClear={hasLessonContent}
+          onClear={() => setClearOpen(true)} canClear={hasLessonContent} onVersions={() => setVersionsOpen(true)}
         />
         <Canvas
           lesson={lesson} mode={mode} selected={selected} setSelected={setSelected}
@@ -603,6 +628,7 @@ function AulaStudioApp() {
       <window.MarkToolbar />
       <input ref={fileInputRef} type="file" accept=".json,application/json" onChange={onProjectFile} style={{ display: "none" }} />
       {scormOpen && <ScormDialog lesson={lesson} onClose={() => setScormOpen(false)} onConfirm={exportSCORM} onCheck={(title, load) => setScormCheck({ title, load })} />}
+      {versionsOpen && <window.VersionsDialog lessonId={curRef.current.id} lesson={lesson} onClose={() => setVersionsOpen(false)} onRestore={restoreVersion} onApplyBlock={applyVersionBlock} />}
       {scormCheck && <ScormCheckDialog title={scormCheck.title} load={scormCheck.load} onClose={() => setScormCheck(null)} />}
       {clearOpen && <ClearDialog count={(lesson.blocks || []).length} onClose={() => setClearOpen(false)} onConfirm={clearLesson} />}
       {a11yOpen && <window.A11yPanel lesson={lesson} onClose={() => setA11yOpen(false)} onGoto={gotoBlock} ignored={(lesson.meta && lesson.meta.a11yIgnored) || []} onIgnored={(list) => setLesson((L) => ({ ...L, meta: { ...(L.meta || {}), a11yIgnored: list } }))} />}
@@ -649,7 +675,7 @@ function LibraryDialog({ currentId, preselectCurrent, onClose, onOpen, onNew, on
   useEffectA(() => { load(); }, []);
   const remove = async (e) => {
     if (!window.confirm("Excluir «" + e.title + "» da biblioteca?\n\nIsso não pode ser desfeito. Para guardar uma cópia, abra a aula e use Salvar.")) return;
-    try { await libDel(e.id); } catch (err) {}
+    try { await libDel(e.id); await window.Versions.removeAll(e.id); } catch (err) {}
     load();
   };
   const fmt = (ts) => new Date(ts).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
@@ -840,7 +866,7 @@ function RichNotesDialog({ lesson, onClose, onUpdate }) {
 const emptyNote={padding:18,border:"1px dashed var(--tool-line-2)",borderRadius:9,color:"var(--tool-ink-3)",fontSize:12};
 
 // ── Top bar ──
-function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear }) {
+function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear, onVersions }) {
   const [busy, setBusy] = useStateA(false);
   const [menu, setMenu] = useStateA(false);
   const [more, setMore] = useStateA(false);
@@ -859,6 +885,7 @@ function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, o
         <button onClick={onLibrary} title="Biblioteca: todas as aulas guardadas neste navegador (as semanas do ClassAuthor entram aqui)" style={textBtn}><window.TIcon name="library" size={15} /><span className="tb-label">Biblioteca</span></button>
         <button className="tb-sec" onClick={onOpenProject} title="Abrir projeto (…-ClassAtelier.json)" style={textBtn}><window.TIcon name="folder" size={15} /><span className="tb-label">Abrir</span></button>
         <button onClick={onDownloadProject} title="Salvar projeto: baixa o arquivo para continuar depois ou em outro computador" style={textBtn}><window.TIcon name="save" size={15} /><span className="tb-label">Salvar</span></button>
+        <button className="tb-sec" onClick={onVersions} title="Histórico de versões: volte a uma versão anterior da aula ou recupere um bloco apagado" style={textBtn}><window.TIcon name="history" size={15} /><span className="tb-label">Histórico</span></button>
         <button className="tb-sec" onClick={onRichNotes} title="Termos e links: revisar glossário e links de toda a aula" style={textBtn}><window.TIcon name="link" size={15} /><span className="tb-label">Termos e links</span></button>
         <button onClick={onA11y} aria-pressed={!!a11yOpen} title="Acessibilidade: verifica imagens sem descrição, contraste, títulos, links, vídeos e tabelas" style={{ ...textBtn, position: "relative", background: a11yOpen ? "var(--tool-surface)" : undefined }}><window.TIcon name="a11y" size={15} /><span className="tb-label">Acessibilidade</span>{a11yCount > 0 && <span aria-label={a11yCount + " itens para revisar"} style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 999, background: "#b3372a", color: "#fff", fontSize: 10.5, fontWeight: 800, display: "inline-grid", placeItems: "center", marginLeft: 2 }}>{a11yCount > 99 ? "99+" : a11yCount}</span>}</button>
         <div style={{ display: "flex", background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 9, padding: 3 }}>
@@ -872,6 +899,7 @@ function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, o
             <div onClick={() => setMore(false)} style={{ position: "fixed", inset: 0, zIndex: 41 }} />
             <div role="menu" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 42, background: "#fff", border: "1px solid var(--tool-line)", borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.16)", width: 236, overflow: "hidden" }}>
               <button role="menuitem" onClick={() => { setMore(false); onOpenProject(); }} style={menuItem}><span style={{ fontWeight: 600 }}>Abrir projeto…</span><span style={menuSub}>Reabre um arquivo …-ClassAtelier.json.</span></button>
+              <button role="menuitem" onClick={() => { setMore(false); onVersions(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Histórico de versões</span><span style={menuSub}>Voltar a uma versão anterior ou recuperar um bloco.</span></button>
               <button role="menuitem" onClick={() => { setMore(false); onRichNotes(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Termos e links</span><span style={menuSub}>Revisar glossário e links de toda a aula.</span></button>
               <button role="menuitem" onClick={() => { setMore(false); onPrintPDF(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Imprimir PDF</span><span style={menuSub}>Abre a versão expandida para imprimir.</span></button>
               <button role="menuitem" disabled={!canClear} onClick={() => { setMore(false); onClear(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)", opacity: canClear ? 1 : 0.45, color: "var(--coral-deep)" }}><span style={{ fontWeight: 600 }}>Limpar página</span><span style={menuSub}>Remove todos os blocos (dá para desfazer).</span></button>
