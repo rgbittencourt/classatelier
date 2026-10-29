@@ -1,5 +1,5 @@
 /* eslint-disable */
-// AulaStudio — block renderer. ONE renderer drives the edit canvas, the
+// ClassAtelier — block renderer. ONE renderer drives the edit canvas, the
 // preview, and the exported HTML (mode: "edit" | "preview"). Text blocks
 // inject <Editable> into the REAL Aula component; structural blocks render
 // the real component read-only (edited via the side panel).
@@ -14,7 +14,7 @@ const {
   LessonHero, Prose, FullBleedSection, Destaque, Atencao, Reflexao, Citacao,
   Sintese, ImagemLegenda, ChapterDivider, FlashCardDeck, Slider, Accordion,
   Columns, CollapsibleSection, SectionSlider,
-  Sumario, ProgressBar, LessonComplete, CreditsFooter, AulaStudioMark, PDFContext, PDFGlossary, usePDF,
+  Sumario, ProgressBar, LessonComplete, CreditsFooter, ClassAtelierMark, PDFContext, PDFGlossary, usePDF,
 } = window;
 const {
   Quiz, VideoYouTube, AudioPodcast, ExternalEmbed, CaseCards, FeatureGrid, MateriaisExtras, ReferenciasABNT, PitacoDo, ParallaxImage,
@@ -313,7 +313,7 @@ function LessonRenderer({ lesson, mode = "preview", chrome = true }) {
         />
       ) : (
         <footer style={{ background: "var(--ink)", color: "var(--paper)", padding: "clamp(40px,6vw,64px) var(--page-pad)" }}>
-          <AulaStudioMark withRule={false} />
+          <ClassAtelierMark withRule={false} />
         </footer>
       )}
     </main>

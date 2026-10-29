@@ -162,7 +162,7 @@
 
 // ── Diálogo ──
 function RepublishDialog({ lesson, onClose }) {
-  const PUB_KEY = "aulastudio.publish.v1";
+  const PUB_KEY = "classatelier.publish.v1";
   const [gh, setGh] = React.useState(() => {
     let s = {}; try { s = JSON.parse(localStorage.getItem(PUB_KEY) || "{}") || {}; } catch (e) {}
     return { owner: s.owner || "", repo: s.repo || "", branch: s.branch || "main", folder: s.folder || "", token: s.token || "", remember: !!s.token };

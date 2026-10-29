@@ -1,6 +1,6 @@
 /* eslint-disable */
 // ════════════════════════════════════════════════════════════
-// AulaStudio — BOOT LOADER
+// ClassAtelier — BOOT LOADER
 // ────────────────────────────────────────────────────────────
 // Monta a página a partir do TEMA ATIVO (themes.js) em vez de tags
 // fixas no index.html. Roda DURANTE o parse (script clássico no body),
@@ -12,7 +12,7 @@
 // ════════════════════════════════════════════════════════════
 (function () {
   var BASE = window.AULA_BASE || "";
-  var BUILD_REV = "20261028-creditos";
+  var BUILD_REV = "20261029-rename";
   var theme = window.resolveAulaTheme();
   window.AULA_ACTIVE_THEME = theme;
 

@@ -284,7 +284,7 @@ function renderTop() {
     right = `<div class="conn-info"><code>${esc(S.conn.owner)}/${esc(S.conn.repo)}@${esc(S.conn.branch)}</code>${pages}${S.loadedAt ? `<span title="Hora da última leitura do repositório">lido às ${S.loadedAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</span>` : ""}</div>
       <button class="btn small" data-act="reload">Recarregar</button><button class="btn small ghost" data-act="logout">Sair</button>`;
   }
-  $("#top").innerHTML = `<a class="brand" href="./" aria-label="${APP_NAME}">${mark}<span><span class="wordmark"><b>Class</b><i>Acervo</i></span><span class="tagline">cursos publicados no GitHub Pages</span></span></a><span class="top-spacer"></span>${right}`;
+  $("#top").innerHTML = `<a class="brand" href="./" aria-label="${APP_NAME}">${mark}<span><span class="wordmark"><b>Class</b><i>Acervo</i></span><span class="tagline">cursos publicados no GitHub Pages</span></span></a><span class="top-spacer"></span><a class="btn" href="../" target="_blank" rel="noopener" title="Abrir o ClassAtelier (editor das aulas) em outra aba">ClassAtelier ↗</a>${right}`;
 }
 
 function renderConnect() {

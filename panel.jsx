@@ -1,5 +1,5 @@
 /* eslint-disable */
-// AulaStudio — properties panel for the selected block. Enforces the design
+// ClassAtelier — properties panel for the selected block. Enforces the design
 // system: background limited to the Aula tone palette, spacing to presets,
 // typography untouched. Structural blocks (lists/quiz) get add/remove/reorder.
 

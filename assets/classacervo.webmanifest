@@ -3,13 +3,29 @@
   "short_name": "ClassAcervo",
   "description": "Administre os cursos publicados no GitHub Pages: organize, mova, duplique e exclua.",
   "lang": "pt-BR",
+  "id": "../acervo/",
   "start_url": "../acervo/",
+  "scope": "../acervo/",
   "display": "standalone",
   "background_color": "#FBF6EE",
   "theme_color": "#14213D",
   "icons": [
-    { "src": "./classacervo-favicon-32.png", "sizes": "32x32", "type": "image/png" },
-    { "src": "./classacervo-apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any maskable" },
-    { "src": "./brand/classacervo-mark.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "./classacervo-favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "./classacervo-apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./brand/classacervo-mark.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ]
 }

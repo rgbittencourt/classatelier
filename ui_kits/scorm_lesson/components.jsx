@@ -1926,7 +1926,7 @@ function TextoImagem({ children, texto, src, slotId, legenda, fonte, alt, decora
 }
 
 // ════════════════════════════════════════════════════════════
-// FECHAMENTO — conclusão SCORM, créditos, marca AulaStudio
+// FECHAMENTO — conclusão SCORM, créditos, marca ClassAtelier
 // ════════════════════════════════════════════════════════════
 
 // LESSON COMPLETE — single SCORM-completion CTA.
@@ -2016,14 +2016,14 @@ function CreditsFooter({ author, role, institution, year, aiTool, aiUse, license
         </div>
       )}
 
-      <AulaStudioMark withRule={hasCredits} />
+      <ClassAtelierMark withRule={hasCredits} />
     </footer>
   );
 }
 
 // AULA AUTHOR MARK — mandatory attribution. Always rendered at the
 // very bottom of every Aula unit; cannot be removed by the author.
-function AulaStudioMark({ withRule = true }) {
+function ClassAtelierMark({ withRule = true }) {
   return (
     <p className={"aula-credits__mark" + (withRule ? " aula-credits__mark--rule" : "")}>
       Aula editada com <strong className="aula-credits__mark-name">Class<i style={{ fontFamily: "Newsreader, Georgia, serif", fontWeight: 400 }}>Atelier</i></strong>, uma ferramenta de autoria de aulas interativas e pacotes SCORM, baseada integralmente no <a href="https://luislindner.github.io/lumeauthor/" target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 2 }}>LumeAuthor</a>, ferramenta de autoria SCORM criada por Luís Lindner, e evoluída em coautoria com Rogério Bittencourt (INOVALAB - IFSC).
@@ -2061,5 +2061,5 @@ Object.assign(window, {
   Tabela, CaseCards, FeatureGrid, MateriaisExtras,
   ReferenciasABNT, TextoImagem,
   // fechamento
-  LessonComplete, CreditsFooter, AulaStudioMark,
+  LessonComplete, CreditsFooter, ClassAtelierMark,
 });

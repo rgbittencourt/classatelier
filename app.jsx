@@ -1,11 +1,11 @@
 /* eslint-disable */
-// AulaStudio — the application shell. Three columns (palette · canvas ·
+// ClassAtelier — the application shell. Three columns (palette · canvas ·
 // properties), drag-and-drop insert + reorder, edit/preview toggle,
 // localStorage autosave, undo, and export.
 
 const { useState: useStateA, useEffect: useEffectA, useRef: useRefA, useCallback: useCb } = React;
 
-const STORE_KEY = "aulastudio.lesson.v1";
+const STORE_KEY = "classatelier.lesson.v1";
 const TOPIC_TYPES = ["topic", "topic-collapsible", "topic-slider"];
 const isTopicType = (type) => TOPIC_TYPES.indexOf(type) !== -1;
 const topicTargetKey = (id) => `topic:${id}`;
@@ -133,7 +133,7 @@ function reviseRichNotes(blocks, kind, original, next) {
 }
 
 // ── Biblioteca de aulas: cada aula editada fica guardada (IndexedDB) com nome e data ──
-const LIB_DB = "classatelier", LIB_STORE = "lessons", CUR_KEY = "aulastudio.current.v1";
+const LIB_DB = "classatelier", LIB_STORE = "lessons", CUR_KEY = "classatelier.current.v1";
 const libDB = () => window.Versions.open(); // banco único (lojas lessons + versions), definido em versions.jsx
 const libTx = (mode, fn) => libDB().then((db) => new Promise((res, rej) => {
   const tx = db.transaction(LIB_STORE, mode); const out = fn(tx.objectStore(LIB_STORE));
@@ -151,13 +151,13 @@ function loadCurrent() {
   return { id: newLessonId(), source: null };
 }
 
-function AulaStudioApp() {
+function ClassAtelierApp() {
   const [lesson, setLesson] = useStateA(loadLesson);
   const [selected, setSelected] = useStateA(null);
   const [mode, setMode] = useStateA("edit"); // edit | preview
   // painel de propriedades (direita) recolhível; a escolha fica guardada neste navegador
-  const [rightOpen, setRightOpenRaw] = useStateA(() => { try { return localStorage.getItem("aulastudio.rightOpen") !== "0"; } catch (e) { return true; } });
-  const setRightOpen = (v) => { setRightOpenRaw(v); try { localStorage.setItem("aulastudio.rightOpen", v ? "1" : "0"); } catch (e) {} };
+  const [rightOpen, setRightOpenRaw] = useStateA(() => { try { return localStorage.getItem("classatelier.rightOpen") !== "0"; } catch (e) { return true; } });
+  const setRightOpen = (v) => { setRightOpenRaw(v); try { localStorage.setItem("classatelier.rightOpen", v ? "1" : "0"); } catch (e) {} };
   const history = useRefA([]);
   const patchBurst = useRefA({ id: null, at: 0 });
   const [dragType, setDragType] = useStateA(null); // palette drag
@@ -176,7 +176,7 @@ function AulaStudioApp() {
   const [toast, setToast] = useStateA(null);
   const toastTimer = useRefA(null);
   // origem do ClassAuthor que abriu esta aba (aprendida na primeira mensagem dele); permite devolver a aula editada
-  const [authorOrigin, setAuthorOrigin] = useStateA(() => { try { return window.opener ? (sessionStorage.getItem("aulastudio.authorOrigin") || "") : ""; } catch (e) { return ""; } });
+  const [authorOrigin, setAuthorOrigin] = useStateA(() => { try { return window.opener ? (sessionStorage.getItem("classatelier.authorOrigin") || "") : ""; } catch (e) { return ""; } });
   const showToast = (msg) => { setToast(msg); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(null), 7000); };
   useEffectA(() => {
     const t = setTimeout(() => {
@@ -229,7 +229,7 @@ function AulaStudioApp() {
     const onMessage = async (ev) => {
       const d = ev.data;
       if (!opener || ev.source !== opener || !d || d.type !== "classauthor:lesson") return;
-      try { sessionStorage.setItem("aulastudio.authorOrigin", ev.origin); } catch (e) {}
+      try { sessionStorage.setItem("classatelier.authorOrigin", ev.origin); } catch (e) {}
       setAuthorOrigin(ev.origin);
       try {
         const project = extractProjectPayload(d.lesson);
@@ -240,24 +240,24 @@ function AulaStudioApp() {
         const cur = lessonRef.current;
         const hasWork = !isStarterLesson(cur) && !isBlankLesson(cur);
         if (existing && !window.confirm("«" + label + "» já está na biblioteca (última edição em " + fmt(existing.updatedAt) + ").\n\nSubstituir pela versão que veio do ClassAuthor? As edições feitas aqui nessa aula serão perdidas.")) {
-          reply(ev.origin, { type: "aulastudio:declined" });
+          reply(ev.origin, { type: "classatelier:declined" });
           return;
         }
         if (!existing && !libOk && hasWork && !window.confirm("O ClassAuthor quer abrir «" + label + "» aqui.\n\nIsso substitui o projeto que está aberto neste editor. Continuar?")) {
-          reply(ev.origin, { type: "aulastudio:declined" });
+          reply(ev.origin, { type: "classatelier:declined" });
           return;
         }
         if (existing) await snap("safety", "Antes de substituir pela versão do ClassAuthor", existing.id, existing.lesson);
         await switchTo(project, existing ? existing.id : newLessonId(), { app: "classauthor", key });
         const kept = libOk && hasWork;
         showToast("«" + label + "» aberta, vinda do ClassAuthor." + (kept ? " A aula que estava aberta ficou na Biblioteca." : ""));
-        reply(ev.origin, { type: "aulastudio:loaded", title: (project.meta && project.meta.title) || "", savedPrevious: kept });
+        reply(ev.origin, { type: "classatelier:loaded", title: (project.meta && project.meta.title) || "", savedPrevious: kept });
       } catch (err) {
-        reply(ev.origin, { type: "aulastudio:error", message: String(err && err.message || err) });
+        reply(ev.origin, { type: "classatelier:error", message: String(err && err.message || err) });
       }
     };
     window.addEventListener("message", onMessage);
-    reply("*", { type: "aulastudio:ready" });
+    reply("*", { type: "classatelier:ready" });
     return () => window.removeEventListener("message", onMessage);
   }, []);
 
@@ -764,6 +764,7 @@ function Palette({ onDragType, onAdd }) {
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "2px 4px 12px" }}>
           <img src={(window.AULA_BASE || "") + "assets/brand/classatelier-mark.png"} alt="" width="26" height="26" style={{ display: "block", borderRadius: 7 }} />
         <span style={{ fontSize: 17, lineHeight: 1, whiteSpace: "nowrap" }}><b style={{ fontWeight: 800, letterSpacing: "-.045em" }}>Class</b><i style={{ fontFamily: "var(--font-serif, Newsreader, Georgia, serif)", fontStyle: "italic", fontWeight: 400, letterSpacing: "-.02em" }}>Atelier</i></span>
+        <a data-act="acervo" href={(window.AULA_BASE || "") + "acervo/"} target="_blank" rel="noopener" title="ClassAcervo: organize, renomeie e copie os links dos cursos já publicados no GitHub Pages (abre em outra aba)" style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11.5, fontWeight: 600, color: "var(--tool-ink-2)", textDecoration: "none", border: "1px solid var(--tool-line)", background: "var(--tool-surface)", borderRadius: 999, padding: "4px 9px", whiteSpace: "nowrap" }}>Acervo <span aria-hidden="true">↗</span></a>
       </div>
       <div style={{ position: "sticky", top: -14, zIndex: 5, background: "var(--tool-panel)", margin: "0 -2px 12px", padding: "2px 2px 6px" }}>
         <div style={{ position: "relative" }}>
@@ -866,7 +867,7 @@ function CourseDialog({ entries, onClose, onConfirm, onCheck, onMoodle }) {
   const [version, setVersion] = useStateA("1.2");
   const [format, setFormat] = useStateA("site");
   const [busy, setBusy] = useStateA(false);
-  const PUB_KEY = "aulastudio.publish.v1";
+  const PUB_KEY = "classatelier.publish.v1";
   const [gh, setGh] = useStateA(() => {
     let saved = {};
     try { saved = JSON.parse(localStorage.getItem(PUB_KEY) || "{}") || {}; } catch (e) {}
@@ -1073,6 +1074,10 @@ function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, o
                   <span style={{ fontWeight: 600 }}>Colocar no Moodle…</span>
                   <span style={menuSub}>Gera o link (Recurso URL) e o código iframe de uma aula publicada.</span>
                 </button>
+                <a data-act="acervo-menu" href={(window.AULA_BASE || "") + "acervo/"} target="_blank" rel="noopener" onClick={() => setMenu(false)} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)", textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column" }}>
+                  <span style={{ fontWeight: 600 }}>Abrir o ClassAcervo ↗</span>
+                  <span style={menuSub}>Organiza os cursos já publicados no GitHub: renomear, mover, gerar o índice e copiar os links para o Moodle.</span>
+                </a>
                 <button onClick={() => { setMenu(false); onToAuthor && onToAuthor(); }} data-act="to-author" style={{ ...menuItem, borderTop: "1px solid var(--tool-line)", opacity: authorLinked ? 1 : 0.6 }}>
                   <span style={{ fontWeight: 600 }}>Enviar de volta ao ClassAuthor</span>
                   <span style={menuSub}>{authorLinked ? "Devolve a aula editada (projeto e texto) para a semana de origem." : "Disponível quando a aula é aberta pelo ClassAuthor."}</span>
@@ -1110,7 +1115,7 @@ function ThemePicker() {
   if (!current) return null;
   const pick = (id) => {
     if (id === active) { setOpen(false); return; }
-    try { localStorage.setItem("aulastudio.theme", id); } catch (e) {}
+    try { localStorage.setItem("classatelier.theme", id); } catch (e) {}
     const url = new URL(location.href); url.searchParams.set("theme", id); location.href = url.toString();
   };
   const Swatches = ({ list, size }) => (
@@ -1346,10 +1351,10 @@ function Canvas({ lesson, mode, selected, setSelected, updateBlock, dragType, se
   const isEdit = mode === "edit";
   const [inserterAt, setInserterAt] = useStateA(null);
   // prévia em aparelhos (só no modo Visualizar); a escolha fica guardada neste navegador
-  const [device, setDeviceRaw] = useStateA(() => { try { return localStorage.getItem("aulastudio.device") || "desktop"; } catch (e) { return "desktop"; } });
+  const [device, setDeviceRaw] = useStateA(() => { try { return localStorage.getItem("classatelier.device") || "desktop"; } catch (e) { return "desktop"; } });
   const [landscape, setLandscape] = useStateA(false);
   const [devKey, setDevKey] = useStateA(0);
-  const setDevice = (d) => { setDeviceRaw(d); try { localStorage.setItem("aulastudio.device", d); } catch (e) {} };
+  const setDevice = (d) => { setDeviceRaw(d); try { localStorage.setItem("classatelier.device", d); } catch (e) {} };
 
   const handleDropAt = (idx) => {
     if (dragType) { insertBlock(dragType, idx); setDragType(null); }
@@ -1669,4 +1674,4 @@ function LessonMeta({ lesson, setLesson }) {
   );
 }
 
-Object.assign(window, { AulaStudioApp });
+Object.assign(window, { ClassAtelierApp });

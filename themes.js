@@ -1,6 +1,19 @@
 /* eslint-disable */
+// Migração única: copia dados salvos com o nome antigo ("aulastudio.*") para "classatelier.*".
+(function () {
+  try {
+    [localStorage, sessionStorage].forEach(function (st) {
+      Object.keys(st).forEach(function (k) {
+        if (k.indexOf("aulastudio.") !== 0) return;
+        var nk = "classatelier." + k.slice("aulastudio.".length);
+        if (st.getItem(nk) === null) st.setItem(nk, st.getItem(k));
+        st.removeItem(k);
+      });
+    });
+  } catch (e) {}
+})();
 // ════════════════════════════════════════════════════════════
-// AulaStudio — REGISTRO DE TEMAS (design systems)
+// ClassAtelier — REGISTRO DE TEMAS (design systems)
 // ────────────────────────────────────────────────────────────
 // O builder é agnóstico de marca. Cada "tema" descreve QUAL design
 // system carregar: tokens (CSS), fontes, kit de componentes e a cor
@@ -835,7 +848,7 @@ window.resolveAulaTheme = function (forcedId) {
     try { id = new URL(location.href).searchParams.get("theme"); } catch (e) {}
   }
   if (!id) {
-    try { id = localStorage.getItem("aulastudio.theme"); } catch (e) {}
+    try { id = localStorage.getItem("classatelier.theme"); } catch (e) {}
   }
   var found = T.list.find(function (t) { return t.id === id; }) || T.list[0];
   return Object.assign({}, T.shared, found, {

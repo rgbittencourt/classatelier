@@ -1,6 +1,6 @@
 # ClassAtelier
 
-Editor de aulas interativas, com blocos editáveis, pré-visualização e exportação para diferentes destinos. É a etapa de acabamento da aula: o texto nasce no [ClassAuthor](https://github.com/rgbittencourt/aula-generator), que também pode abrir uma semana direto aqui. (Antes se chamava Aula Studio; o endereço e o formato `.aula.json` continuam os mesmos.)
+Editor de aulas interativas, com blocos editáveis, pré-visualização e exportação para diferentes destinos. É a etapa de acabamento da aula: o texto nasce no [ClassAuthor](https://github.com/rgbittencourt/classauthor), que também pode abrir uma semana direto aqui. O formato de projeto continua sendo o `.aula.json`.
 
 ## Formatos de saída
 
@@ -154,6 +154,6 @@ O símbolo e a capa do ClassAtelier usam a janela de ateliê em arco, com o vidr
 
 ## Receber uma semana do ClassAuthor e devolvê-la editada
 
-O ClassAuthor abre esta página em outra aba e envia a semana por `postMessage` (mensagens `aulastudio:ready`, `classauthor:lesson`, `aulastudio:loaded`). Só aceita de quem abriu a aba e pergunta antes de substituir um projeto em andamento.
+O ClassAuthor abre esta página em outra aba e envia a semana por `postMessage` (mensagens `classatelier:ready`, `classauthor:lesson`, `classatelier:loaded`). Só aceita de quem abriu a aba e pergunta antes de substituir um projeto em andamento.
 
 **Devolver o texto.** Em **Exportar → Enviar de volta ao ClassAuthor**, a aula editada volta para a aba do ClassAuthor que a abriu (mensagem `classatelier:lesson`, com o projeto e o texto corrido; resposta `classauthor:received`). O ClassAuthor guarda essa versão na semana de origem e passa a usá-la ao reabrir, baixar o JSON ou montar o ZIP. O item só funciona quando a aula foi aberta pelo ClassAuthor e a aba dele continua aberta; do contrário o aviso diz o que fazer. Duas saídas sempre disponíveis, que não dependem do ClassAuthor: **Copiar o texto da aula** e **Baixar o texto (.txt)** (só as palavras, em ordem, com títulos, destaques, perguntas do quiz e tabelas; sem endereços de imagem nem códigos).

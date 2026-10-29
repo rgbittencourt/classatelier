@@ -1,5 +1,5 @@
 /* eslint-disable */
-// AulaStudio — inline rich-text editing + the approved-marks toolbar.
+// ClassAtelier — inline rich-text editing + the approved-marks toolbar.
 // Text blocks render the REAL Aula component with an <Editable> injected
 // where the text goes, so editing is WYSIWYG and on-brand. The marks the
 // author can apply are constrained to the design system (highlighter +

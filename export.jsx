@@ -1,5 +1,5 @@
 /* eslint-disable */
-// AulaStudio — export the authored lesson as HTML and SCORM packages.
+// ClassAtelier — export the authored lesson as HTML and SCORM packages.
 // The exported file embeds the lesson data + the real kit components and
 // renders with LessonRenderer in "preview" mode — so the output IS a Aula
 // lesson (interactive, SCORM-ready, PDF-capable), not a flattened copy.

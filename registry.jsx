@@ -1,5 +1,5 @@
 /* eslint-disable */
-// AulaStudio — block registry. The single source of truth for WHAT can be
+// ClassAtelier — block registry. The single source of truth for WHAT can be
 // inserted and WITHIN WHICH LIMITS. Tone palette, default props, item
 // templates and per-type editing affordances all live here.
 
