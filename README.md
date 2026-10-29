@@ -114,17 +114,23 @@ No modo **Visualizar**, a barra «Ver como» troca o aparelho: Computador, Table
 
 O botão no canto esquerdo da barra troca o visual da aula inteira (cores, letras e formato dos componentes). O tema escolhido vai junto no pacote exportado, com as fontes dentro, e a aula abre igual sem internet.
 
-| Tema | Letra | Observação |
+| Tema | Letra | Jeito |
 |---|---|---|
-| Aula (padrão) | Fraunces e Instrument Sans | visual editorial do LumeAuthor |
+| Aula (padrão) | Fraunces e Instrument Sans | editorial, do LumeAuthor |
 | Cedar, Carbon, Intergalactic, Persona | as dos próprios sistemas | já existiam |
-| **Material 3** (Google) | Roboto | cantos arredondados, botões em pílula; paleta do esquema claro do Material 3 |
-| **GOV.UK** (inspirado) | Arial do aparelho | cantos retos, foco amarelo, avisos com barra grossa; alto contraste |
-| **Atlassian** (inspirado) | Inter | cantos de 3 a 8 px, azul de ação, sombras sutis |
+| **Material 3** (Google) | Roboto | cores tonais, cantos arredondados, botões em pílula |
+| **Fluent** (Microsoft) | Segoe UI do aparelho | limpo e corporativo, azul de marca, cantos de 4 a 8 px |
+| **Polaris** (Shopify) | Inter | muito espaço em branco, verde-escuro como cor de ação |
+| **Atlassian** | Inter | azul e cinza, funcional, bom para conteúdo técnico |
+| **Primer** (GitHub) | letra do sistema | minimalista, bom para código |
+| **Ant Design** | letra do sistema | denso e organizado, para aulas com muita tabela e dado |
+| **GOV.UK** | Arial do aparelho | foco máximo em leitura e acessibilidade: cantos retos, foco amarelo, contraste altíssimo |
+| **Lightning** (Salesforce) | letra do sistema | corporativo, azul de marca, cantos pequenos |
+| **Spectrum** (Adobe) | Source Sans 3 | botões em pílula, azul Adobe |
 
-Todas as cores de texto e de fundo dos três temas novos têm contraste de pelo menos 4,5:1 (o texto principal passa de 14:1).
+O texto principal de todos os temas novos passa de 13:1 de contraste, o texto de apoio passa de 6:1 e os botões e fundos de acento passam de 4,5:1.
 
-**Marcas e licenças.** O GOV.UK e o Atlassian são *inspirados* nos sistemas deles: usam o mesmo estilo de cores e componentes, mas não trazem logotipo nem a fonte oficial (a GDS Transport e a Atlassian Sans têm uso restrito). Por isso o nome na lista termina em «inspirado». O Material 3 usa a paleta e as medidas públicas do Google. As fontes Roboto e Inter têm licença livre (OFL) e ficam em `material/fonts/` e `atlassian/fonts/`. Para criar mais um tema, copie uma das pastas e registre em `themes.js`.
+**Marcas e licenças.** Com exceção do Material 3, os nomes terminam em «inspirado» no seletor: usam as cores e o estilo dos componentes de cada sistema (todos de código aberto: MIT, Apache-2.0 ou BSD), mas **não trazem logotipo nem a fonte oficial**, que em vários casos é proprietária (Segoe UI, Salesforce Sans, Adobe Clean, GDS Transport, Atlassian Sans). Onde precisou de uma fonte embutida, usei Roboto, Inter ou Source Sans 3 (licença livre OFL), guardadas em `<tema>/fonts/`. Onde a fonte é a do sistema, a aula usa a do aparelho do aluno, então o tamanho do pacote não aumenta. Os temas são só no claro; o modo escuro do Primer ainda não foi feito. Para criar mais um tema, copie uma das pastas e registre em `themes.js`.
 
 ## Identidade visual
 

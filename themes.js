@@ -526,6 +526,290 @@ window.AULA_THEMES = {
       },
     },
 
+    {
+      id: "fluent",
+      label: "Fluent — Microsoft (inspirado)",
+      swatches: ["#0f6cbd", "#242424", "#f5f5f5"],
+
+      css: "fluent/colors_and_type.css",
+      componentsCss: "fluent/components.css",
+      fontsDir: "fluent/fonts/",
+      fontPreload: [
+      ],
+      usesFontAwesome: true,
+      // Inspirado no Fluent 2 (MIT). Sem a Segoe UI embutida (fonte proprietária).
+      topicSurfaces: makeTopicSurfaces({
+        neutrals: {
+          default: { label: "White", cssVar: "--paper", swatch: "#ffffff" },
+          subtle: { label: "Neutral 4", cssVar: "--sand", swatch: "#f5f5f5" },
+          inverse: { label: "Neutral 14", cssVar: "--ink", swatch: "#242424" },
+        },
+        accents: [
+          { soft: { label: "Yellow", cssVar: "--marigold-soft", swatch: "#fffbd6", contentTone: "dark" }, vivid: { label: "Yellow", cssVar: "--marigold", swatch: "#fde300", contentTone: "dark" }, deep: { label: "Yellow dark", cssVar: "--marigold-deep", swatch: "#835b00", contentTone: "light" } },
+          { soft: { label: "Red", cssVar: "--terracotta-soft", swatch: "#fdf3f4", contentTone: "dark" }, vivid: { label: "Red", cssVar: "--terracotta", swatch: "#c50f1f", contentTone: "light" }, deep: { label: "Red dark", cssVar: "--terracotta-deep", swatch: "#6e0811", contentTone: "light" } },
+          { soft: { label: "Purple", cssVar: "--lavender-soft", swatch: "#f6f2fa", contentTone: "dark" }, vivid: { label: "Purple", cssVar: "--lavender", swatch: "#7a5ab0", contentTone: "light" }, deep: { label: "Purple dark", cssVar: "--lavender-deep", swatch: "#4b3867", contentTone: "light" } },
+          { soft: { label: "Green", cssVar: "--sage-soft", swatch: "#f1faf1", contentTone: "dark" }, vivid: { label: "Green", cssVar: "--sage", swatch: "#107c10", contentTone: "light" }, deep: { label: "Green dark", cssVar: "--sage-deep", swatch: "#094509", contentTone: "light" } },
+          { soft: { label: "Brand", cssVar: "--ocean-soft", swatch: "#ebf3fc", contentTone: "dark" }, vivid: { label: "Brand", cssVar: "--ocean", swatch: "#0f6cbd", contentTone: "light" }, deep: { label: "Brand dark", cssVar: "--ocean-deep", swatch: "#0a2e4a", contentTone: "light" } },
+          { soft: { label: "Teal", cssVar: "--coral-soft", swatch: "#e6f6f6", contentTone: "dark" }, vivid: { label: "Teal", cssVar: "--coral", swatch: "#038387", contentTone: "light" }, deep: { label: "Teal dark", cssVar: "--coral-deep", swatch: "#014446", contentTone: "light" } },
+        ],
+      }),
+      topicSurfaceAliases: Object.assign({}, TOPIC_SURFACE_ALIASES),
+
+      tones: {
+        marigold:   "#fde300",
+        terracotta: "#c50f1f",
+        lavender:   "#7a5ab0",
+        sage:       "#107c10",
+        ocean:      "#0f6cbd",
+        coral:      "#038387",
+      },
+
+      tool: {
+        accent:     "#0f6cbd",
+        accentSoft: "#cfe4fa",
+        sel:        "#115ea3",
+        selSoft:    "#ebf3fc",
+        sans:       '"Segoe UI", -apple-system, BlinkMacSystemFont, Segoe UI, Noto Sans, Roboto, Helvetica Neue, Arial, sans-serif',
+      },
+    },
+
+    {
+      id: "polaris",
+      label: "Polaris — Shopify (inspirado)",
+      swatches: ["#004c3f", "#303030", "#f1f1f1"],
+
+      css: "polaris/colors_and_type.css",
+      componentsCss: "polaris/components.css",
+      fontsDir: "polaris/fonts/",
+      fontPreload: [
+        ["polaris/fonts/inter-wght-normal.woff2", "font/woff2"],
+      ],
+      usesFontAwesome: true,
+      // Inspirado no Polaris (MIT). Fonte Inter (OFL), não a Inter da Shopify.
+      topicSurfaces: makeTopicSurfaces({
+        neutrals: {
+          default: { label: "White", cssVar: "--paper", swatch: "#ffffff" },
+          subtle: { label: "Surface secondary", cssVar: "--sand", swatch: "#f1f1f1" },
+          inverse: { label: "Text", cssVar: "--ink", swatch: "#303030" },
+        },
+        accents: [
+          { soft: { label: "Yellow", cssVar: "--marigold-soft", swatch: "#fff5ea", contentTone: "dark" }, vivid: { label: "Yellow", cssVar: "--marigold", swatch: "#ffb800", contentTone: "dark" }, deep: { label: "Yellow dark", cssVar: "--marigold-deep", swatch: "#5e4200", contentTone: "light" } },
+          { soft: { label: "Red", cssVar: "--terracotta-soft", swatch: "#fff4f4", contentTone: "dark" }, vivid: { label: "Red", cssVar: "--terracotta", swatch: "#d72c0d", contentTone: "light" }, deep: { label: "Red dark", cssVar: "--terracotta-deep", swatch: "#8e1f0b", contentTone: "light" } },
+          { soft: { label: "Purple", cssVar: "--lavender-soft", swatch: "#f6f1ff", contentTone: "dark" }, vivid: { label: "Purple", cssVar: "--lavender", swatch: "#7051d8", contentTone: "light" }, deep: { label: "Purple dark", cssVar: "--lavender-deep", swatch: "#3b2a7a", contentTone: "light" } },
+          { soft: { label: "Green", cssVar: "--sage-soft", swatch: "#cdfee1", contentTone: "dark" }, vivid: { label: "Green", cssVar: "--sage", swatch: "#008060", contentTone: "light" }, deep: { label: "Verde-escuro", cssVar: "--sage-deep", swatch: "#0c5132", contentTone: "light" } },
+          { soft: { label: "Blue", cssVar: "--ocean-soft", swatch: "#eaf4ff", contentTone: "dark" }, vivid: { label: "Blue", cssVar: "--ocean", swatch: "#005bd3", contentTone: "light" }, deep: { label: "Blue dark", cssVar: "--ocean-deep", swatch: "#00287a", contentTone: "light" } },
+          { soft: { label: "Teal", cssVar: "--coral-soft", swatch: "#ebf7f8", contentTone: "dark" }, vivid: { label: "Teal", cssVar: "--coral", swatch: "#007d87", contentTone: "light" }, deep: { label: "Teal dark", cssVar: "--coral-deep", swatch: "#004f55", contentTone: "light" } },
+        ],
+      }),
+      topicSurfaceAliases: Object.assign({}, TOPIC_SURFACE_ALIASES),
+
+      tones: {
+        marigold:   "#ffb800",
+        terracotta: "#d72c0d",
+        lavender:   "#7051d8",
+        sage:       "#008060",
+        ocean:      "#005bd3",
+        coral:      "#007d87",
+      },
+
+      tool: {
+        accent:     "#004c3f",
+        accentSoft: "#cdfee1",
+        sel:        "#008060",
+        selSoft:    "#f1fbf6",
+        sans:       '"Inter", -apple-system, "Segoe UI", system-ui, sans-serif',
+      },
+    },
+
+    {
+      id: "primer",
+      label: "Primer — GitHub (inspirado)",
+      swatches: ["#0969da", "#1f2328", "#f6f8fa"],
+
+      css: "primer/colors_and_type.css",
+      componentsCss: "primer/components.css",
+      fontsDir: "primer/fonts/",
+      fontPreload: [
+      ],
+      usesFontAwesome: true,
+      // Inspirado no Primer (MIT). Esquema claro; letra do sistema.
+      topicSurfaces: makeTopicSurfaces({
+        neutrals: {
+          default: { label: "Canvas default", cssVar: "--paper", swatch: "#ffffff" },
+          subtle: { label: "Canvas subtle", cssVar: "--sand", swatch: "#f6f8fa" },
+          inverse: { label: "Fg default", cssVar: "--ink", swatch: "#1f2328" },
+        },
+        accents: [
+          { soft: { label: "Attention", cssVar: "--marigold-soft", swatch: "#fff8c5", contentTone: "dark" }, vivid: { label: "Attention", cssVar: "--marigold", swatch: "#d4a72c", contentTone: "dark" }, deep: { label: "Attention fg", cssVar: "--marigold-deep", swatch: "#7d4e00", contentTone: "light" } },
+          { soft: { label: "Danger", cssVar: "--terracotta-soft", swatch: "#ffebe9", contentTone: "dark" }, vivid: { label: "Danger", cssVar: "--terracotta", swatch: "#cf222e", contentTone: "light" }, deep: { label: "Danger fg", cssVar: "--terracotta-deep", swatch: "#82071e", contentTone: "light" } },
+          { soft: { label: "Done", cssVar: "--lavender-soft", swatch: "#fbefff", contentTone: "dark" }, vivid: { label: "Done", cssVar: "--lavender", swatch: "#8250df", contentTone: "light" }, deep: { label: "Done fg", cssVar: "--lavender-deep", swatch: "#512a97", contentTone: "light" } },
+          { soft: { label: "Success", cssVar: "--sage-soft", swatch: "#dafbe1", contentTone: "dark" }, vivid: { label: "Success", cssVar: "--sage", swatch: "#1a7f37", contentTone: "light" }, deep: { label: "Success fg", cssVar: "--sage-deep", swatch: "#0f5323", contentTone: "light" } },
+          { soft: { label: "Accent", cssVar: "--ocean-soft", swatch: "#ddf4ff", contentTone: "dark" }, vivid: { label: "Accent", cssVar: "--ocean", swatch: "#0969da", contentTone: "light" }, deep: { label: "Accent fg", cssVar: "--ocean-deep", swatch: "#0a3069", contentTone: "light" } },
+          { soft: { label: "Sponsors", cssVar: "--coral-soft", swatch: "#ffeff7", contentTone: "dark" }, vivid: { label: "Sponsors", cssVar: "--coral", swatch: "#bf3989", contentTone: "light" }, deep: { label: "Sponsors fg", cssVar: "--coral-deep", swatch: "#99286e", contentTone: "light" } },
+        ],
+      }),
+      topicSurfaceAliases: Object.assign({}, TOPIC_SURFACE_ALIASES),
+
+      tones: {
+        marigold:   "#d4a72c",
+        terracotta: "#cf222e",
+        lavender:   "#8250df",
+        sage:       "#1a7f37",
+        ocean:      "#0969da",
+        coral:      "#bf3989",
+      },
+
+      tool: {
+        accent:     "#0969da",
+        accentSoft: "#ddf4ff",
+        sel:        "#0550ae",
+        selSoft:    "#f6f8fa",
+        sans:       '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Roboto, "Helvetica Neue", Arial, sans-serif',
+      },
+    },
+
+    {
+      id: "antd",
+      label: "Ant Design (inspirado)",
+      swatches: ["#1668dc", "#141414", "#f5f5f5"],
+
+      css: "antd/colors_and_type.css",
+      componentsCss: "antd/components.css",
+      fontsDir: "antd/fonts/",
+      fontPreload: [
+      ],
+      usesFontAwesome: true,
+      // Inspirado no Ant Design (MIT). Letra do sistema; tamanhos compactos.
+      topicSurfaces: makeTopicSurfaces({
+        neutrals: {
+          default: { label: "White", cssVar: "--paper", swatch: "#ffffff" },
+          subtle: { label: "Fill quaternary", cssVar: "--sand", swatch: "#f5f5f5" },
+          inverse: { label: "Text", cssVar: "--ink", swatch: "#141414" },
+        },
+        accents: [
+          { soft: { label: "Gold", cssVar: "--marigold-soft", swatch: "#fffbe6", contentTone: "dark" }, vivid: { label: "Gold", cssVar: "--marigold", swatch: "#faad14", contentTone: "dark" }, deep: { label: "Gold dark", cssVar: "--marigold-deep", swatch: "#613400", contentTone: "light" } },
+          { soft: { label: "Red", cssVar: "--terracotta-soft", swatch: "#fff1f0", contentTone: "dark" }, vivid: { label: "Red", cssVar: "--terracotta", swatch: "#d9232d", contentTone: "light" }, deep: { label: "Red dark", cssVar: "--terracotta-deep", swatch: "#820014", contentTone: "light" } },
+          { soft: { label: "Purple", cssVar: "--lavender-soft", swatch: "#f9f0ff", contentTone: "dark" }, vivid: { label: "Purple", cssVar: "--lavender", swatch: "#722ed1", contentTone: "light" }, deep: { label: "Purple dark", cssVar: "--lavender-deep", swatch: "#22075e", contentTone: "light" } },
+          { soft: { label: "Green", cssVar: "--sage-soft", swatch: "#f6ffed", contentTone: "dark" }, vivid: { label: "Green", cssVar: "--sage", swatch: "#2a850a", contentTone: "light" }, deep: { label: "Green dark", cssVar: "--sage-deep", swatch: "#135200", contentTone: "light" } },
+          { soft: { label: "Blue", cssVar: "--ocean-soft", swatch: "#e6f4ff", contentTone: "dark" }, vivid: { label: "Blue", cssVar: "--ocean", swatch: "#1668dc", contentTone: "light" }, deep: { label: "Blue dark", cssVar: "--ocean-deep", swatch: "#002c8c", contentTone: "light" } },
+          { soft: { label: "Cyan", cssVar: "--coral-soft", swatch: "#e6fffb", contentTone: "dark" }, vivid: { label: "Cyan", cssVar: "--coral", swatch: "#087f85", contentTone: "light" }, deep: { label: "Cyan dark", cssVar: "--coral-deep", swatch: "#00474f", contentTone: "light" } },
+        ],
+      }),
+      topicSurfaceAliases: Object.assign({}, TOPIC_SURFACE_ALIASES),
+
+      tones: {
+        marigold:   "#faad14",
+        terracotta: "#d9232d",
+        lavender:   "#722ed1",
+        sage:       "#2a850a",
+        ocean:      "#1668dc",
+        coral:      "#087f85",
+      },
+
+      tool: {
+        accent:     "#1668dc",
+        accentSoft: "#bae0ff",
+        sel:        "#0958d9",
+        selSoft:    "#e6f4ff",
+        sans:       '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Roboto, "Helvetica Neue", Arial, sans-serif',
+      },
+    },
+
+    {
+      id: "lightning",
+      label: "Lightning — Salesforce (inspirado)",
+      swatches: ["#0176d3", "#032d60", "#f3f3f3"],
+
+      css: "lightning/colors_and_type.css",
+      componentsCss: "lightning/components.css",
+      fontsDir: "lightning/fonts/",
+      fontPreload: [
+      ],
+      usesFontAwesome: true,
+      // Inspirado no SLDS (BSD-3). Sem a Salesforce Sans nem o logotipo.
+      topicSurfaces: makeTopicSurfaces({
+        neutrals: {
+          default: { label: "White", cssVar: "--paper", swatch: "#ffffff" },
+          subtle: { label: "Surface 2", cssVar: "--sand", swatch: "#f3f3f3" },
+          inverse: { label: "Text default", cssVar: "--ink", swatch: "#181818" },
+        },
+        accents: [
+          { soft: { label: "Warning", cssVar: "--marigold-soft", swatch: "#fff3df", contentTone: "dark" }, vivid: { label: "Warning", cssVar: "--marigold", swatch: "#ffb75d", contentTone: "dark" }, deep: { label: "Warning dark", cssVar: "--marigold-deep", swatch: "#6b3f00", contentTone: "light" } },
+          { soft: { label: "Error", cssVar: "--terracotta-soft", swatch: "#fef1ee", contentTone: "dark" }, vivid: { label: "Error", cssVar: "--terracotta", swatch: "#ba0517", contentTone: "light" }, deep: { label: "Error dark", cssVar: "--terracotta-deep", swatch: "#6b0a12", contentTone: "light" } },
+          { soft: { label: "Violet", cssVar: "--lavender-soft", swatch: "#f6efff", contentTone: "dark" }, vivid: { label: "Violet", cssVar: "--lavender", swatch: "#7f4bd6", contentTone: "light" }, deep: { label: "Violet dark", cssVar: "--lavender-deep", swatch: "#4b2490", contentTone: "light" } },
+          { soft: { label: "Success", cssVar: "--sage-soft", swatch: "#ebf7e6", contentTone: "dark" }, vivid: { label: "Success", cssVar: "--sage", swatch: "#2e844a", contentTone: "light" }, deep: { label: "Success dark", cssVar: "--sage-deep", swatch: "#194e31", contentTone: "light" } },
+          { soft: { label: "Brand", cssVar: "--ocean-soft", swatch: "#eef4ff", contentTone: "dark" }, vivid: { label: "Brand", cssVar: "--ocean", swatch: "#0176d3", contentTone: "light" }, deep: { label: "Brand dark", cssVar: "--ocean-deep", swatch: "#014486", contentTone: "light" } },
+          { soft: { label: "Teal", cssVar: "--coral-soft", swatch: "#e0f7f6", contentTone: "dark" }, vivid: { label: "Teal", cssVar: "--coral", swatch: "#06847c", contentTone: "light" }, deep: { label: "Teal dark", cssVar: "--coral-deep", swatch: "#0b5c55", contentTone: "light" } },
+        ],
+      }),
+      topicSurfaceAliases: Object.assign({}, TOPIC_SURFACE_ALIASES),
+
+      tones: {
+        marigold:   "#ffb75d",
+        terracotta: "#ba0517",
+        lavender:   "#7f4bd6",
+        sage:       "#2e844a",
+        ocean:      "#0176d3",
+        coral:      "#06847c",
+      },
+
+      tool: {
+        accent:     "#0176d3",
+        accentSoft: "#d8e6fe",
+        sel:        "#014486",
+        selSoft:    "#eef4ff",
+        sans:       '-apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Roboto, "Helvetica Neue", Arial, sans-serif',
+      },
+    },
+
+    {
+      id: "spectrum",
+      label: "Spectrum — Adobe (inspirado)",
+      swatches: ["#1473e6", "#2c2c2c", "#f8f8f8"],
+
+      css: "spectrum/colors_and_type.css",
+      componentsCss: "spectrum/components.css",
+      fontsDir: "spectrum/fonts/",
+      fontPreload: [
+        ["spectrum/fonts/source-sans-3-wght-normal.woff2", "font/woff2"],
+      ],
+      usesFontAwesome: true,
+      // Inspirado no Spectrum (Apache-2.0). Fonte Source Sans 3 (OFL).
+      topicSurfaces: makeTopicSurfaces({
+        neutrals: {
+          default: { label: "Gray 50", cssVar: "--paper", swatch: "#ffffff" },
+          subtle: { label: "Gray 100", cssVar: "--sand", swatch: "#f0f0f0" },
+          inverse: { label: "Gray 900", cssVar: "--ink", swatch: "#2c2c2c" },
+        },
+        accents: [
+          { soft: { label: "Yellow", cssVar: "--marigold-soft", swatch: "#fff8cc", contentTone: "dark" }, vivid: { label: "Yellow", cssVar: "--marigold", swatch: "#f8d904", contentTone: "dark" }, deep: { label: "Yellow dark", cssVar: "--marigold-deep", swatch: "#5e4b00", contentTone: "light" } },
+          { soft: { label: "Red", cssVar: "--terracotta-soft", swatch: "#fdecef", contentTone: "dark" }, vivid: { label: "Red", cssVar: "--terracotta", swatch: "#d7373f", contentTone: "light" }, deep: { label: "Red dark", cssVar: "--terracotta-deep", swatch: "#7e1018", contentTone: "light" } },
+          { soft: { label: "Purple", cssVar: "--lavender-soft", swatch: "#f6eefd", contentTone: "dark" }, vivid: { label: "Purple", cssVar: "--lavender", swatch: "#9256d9", contentTone: "light" }, deep: { label: "Purple dark", cssVar: "--lavender-deep", swatch: "#4b2a7b", contentTone: "light" } },
+          { soft: { label: "Green", cssVar: "--sage-soft", swatch: "#e0f5ec", contentTone: "dark" }, vivid: { label: "Green", cssVar: "--sage", swatch: "#1f8260", contentTone: "light" }, deep: { label: "Green dark", cssVar: "--sage-deep", swatch: "#0d4d38", contentTone: "light" } },
+          { soft: { label: "Blue", cssVar: "--ocean-soft", swatch: "#e5f0fd", contentTone: "dark" }, vivid: { label: "Blue", cssVar: "--ocean", swatch: "#1473e6", contentTone: "light" }, deep: { label: "Blue dark", cssVar: "--ocean-deep", swatch: "#0b3f8a", contentTone: "light" } },
+          { soft: { label: "Fuchsia", cssVar: "--coral-soft", swatch: "#fdeaf4", contentTone: "dark" }, vivid: { label: "Fuchsia", cssVar: "--coral", swatch: "#cc2f86", contentTone: "light" }, deep: { label: "Fuchsia dark", cssVar: "--coral-deep", swatch: "#7a1a50", contentTone: "light" } },
+        ],
+      }),
+      topicSurfaceAliases: Object.assign({}, TOPIC_SURFACE_ALIASES),
+
+      tones: {
+        marigold:   "#f8d904",
+        terracotta: "#d7373f",
+        lavender:   "#9256d9",
+        sage:       "#1f8260",
+        ocean:      "#1473e6",
+        coral:      "#cc2f86",
+      },
+
+      tool: {
+        accent:     "#1473e6",
+        accentSoft: "#cae1fb",
+        sel:        "#0d66d0",
+        selSoft:    "#e5f0fd",
+        sans:       '"Source Sans 3", -apple-system, "Segoe UI", system-ui, sans-serif',
+      },
+    },
+
     // ▼ EXEMPLO de tema novo — descomente, crie o kit e ajuste:
     // {
     //   id: "minha-marca",
