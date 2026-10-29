@@ -55,6 +55,8 @@ O que é verificado automaticamente:
 - **Conteúdo externo (iframe):** sem título.
 - **Contraste de cores:** mede o texto da aula **renderizada com o tema atual** (4,5:1; 3:1 para texto grande). Fundos com imagem ou gradiente não são medidos.
 
+**Marcar como OK:** cada item tem **✓ Está OK** (e, quando há vários do mesmo tipo, **OK em todos deste tipo**). O item some da lista e do número do botão e **não é apontado de novo**, mesmo que você não o corrija. A aba **Marcados OK** mostra tudo o que foi dispensado e permite **Reativar**. A marcação fica guardada na própria aula (no projeto `…-ClassAtelier.json`), então acompanha o arquivo.
+
 Não substitui o teste humano: o painel traz a lista do que só uma pessoa confere (teclado, zoom, leitor de tela, legendas).
 
 ## Identidade visual

@@ -467,7 +467,7 @@ function AulaStudioApp() {
   const [richOpen, setRichOpen] = useStateA(false);
   const [a11yOpen, setA11yOpen] = useStateA(false);
   // contagem de erros+avisos (regras de conteúdo) para o selo do botão
-  const a11yCount = React.useMemo(() => { try { return window.A11y.audit(lesson).filter((i) => i.sev !== "tip").length; } catch (e) { return 0; } }, [lesson]);
+  const a11yCount = React.useMemo(() => { try { const ig = new Set((lesson.meta && lesson.meta.a11yIgnored) || []); return window.A11y.audit(lesson).filter((i) => i.sev !== "tip" && !window.A11y.isIgnored(i, ig)).length; } catch (e) { return 0; } }, [lesson]);
   const gotoBlock = (id, trail, findText) => {
     setMode("edit"); if (id) setRightOpen(true); // para corrigir o item, o painel de propriedades precisa estar aberto
     setTimeout(() => {
@@ -603,7 +603,7 @@ function AulaStudioApp() {
       <input ref={fileInputRef} type="file" accept=".json,application/json" onChange={onProjectFile} style={{ display: "none" }} />
       {scormOpen && <ScormDialog lesson={lesson} onClose={() => setScormOpen(false)} onConfirm={exportSCORM} />}
       {clearOpen && <ClearDialog count={(lesson.blocks || []).length} onClose={() => setClearOpen(false)} onConfirm={clearLesson} />}
-      {a11yOpen && <window.A11yPanel lesson={lesson} onClose={() => setA11yOpen(false)} onGoto={gotoBlock} />}
+      {a11yOpen && <window.A11yPanel lesson={lesson} onClose={() => setA11yOpen(false)} onGoto={gotoBlock} ignored={(lesson.meta && lesson.meta.a11yIgnored) || []} onIgnored={(list) => setLesson((L) => ({ ...L, meta: { ...(L.meta || {}), a11yIgnored: list } }))} />}
       {richOpen && <RichNotesDialog lesson={lesson} onClose={() => setRichOpen(false)} onUpdate={(kind, original, next) => { pushHistory(); setLesson((L) => ({ ...L, blocks: reviseRichNotes(L.blocks, kind, original, next) })); }} />}
     </div>
   );

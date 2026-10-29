@@ -265,11 +265,16 @@
     }
   }
 
-  window.A11y = { audit, auditContrast, plain, WCAG };
+  // Chave estável de um item: o que a pessoa marcou como "OK" não volta a aparecer.
+  // "regra|*" vale para todos os itens daquele tipo na aula.
+  const keyOf = (i) => (i.rule === "contrast" && i.swatch ? "contrast|" + i.swatch.fg + "|" + i.swatch.bg : i.rule + "|" + (i.blockId || "") + "|" + i.title);
+  const ruleKey = (i) => i.rule + "|*";
+  const isIgnored = (i, list) => { const set = list instanceof Set ? list : new Set(list || []); return set.has(keyOf(i)) || set.has(ruleKey(i)); };
+  window.A11y = { audit, auditContrast, plain, WCAG, keyOf, ruleKey, isIgnored };
 })();
 
 // ── Painel lateral ──
-function A11yPanel({ lesson, onClose, onGoto }) {
+function A11yPanel({ lesson, onClose, onGoto, ignored, onIgnored }) {
   const [tab, setTab] = React.useState("all");
   const [contrast, setContrast] = React.useState({ state: "idle", items: [] });
   const [tick, setTick] = React.useState(0);
@@ -282,11 +287,17 @@ function A11yPanel({ lesson, onClose, onGoto }) {
     }, 400);
     return () => { live = false; clearTimeout(t); };
   }, [tick]); // contraste só roda ao abrir e ao pedir de novo
-  const all = base.concat(contrast.items);
+  const ignoredSet = React.useMemo(() => new Set(ignored || []), [ignored]);
   const rank = { error: 0, warn: 1, tip: 2 };
-  all.sort((a, b) => rank[a.sev] - rank[b.sev]);
+  const found = base.concat(contrast.items);
+  found.sort((a, b) => rank[a.sev] - rank[b.sev]);
+  const all = found.filter((i) => !window.A11y.isIgnored(i, ignoredSet));
+  const hidden = found.filter((i) => window.A11y.isIgnored(i, ignoredSet));
   const count = (s) => all.filter((i) => i.sev === s).length;
-  const shown = tab === "all" ? all : all.filter((i) => i.sev === tab);
+  const shown = tab === "ok" ? hidden : tab === "all" ? all : all.filter((i) => i.sev === tab);
+  const mark = (keys) => onIgnored(Array.from(new Set((ignored || []).concat(keys))));
+  const unmark = (i) => onIgnored((ignored || []).filter((k) => k !== window.A11y.keyOf(i) && k !== window.A11y.ruleKey(i)));
+  const sameRule = (i) => found.filter((x) => x.rule === i.rule).length;
   const meta = { error: { label: "Erro", color: "#b3372a", bg: "#f9e1dc" }, warn: { label: "Aviso", color: "#8a5a00", bg: "#fbefcf" }, tip: { label: "Sugestão", color: "#2c5b7a", bg: "#e3eef5" } };
   const chip = (id, label, n, color) => (
     <button key={id} onClick={() => setTab(id)} aria-pressed={tab === id}
@@ -294,6 +305,7 @@ function A11yPanel({ lesson, onClose, onGoto }) {
       {label} · {n}
     </button>
   );
+  const btn = { flex: "none", whiteSpace: "nowrap", border: "1px solid var(--tool-line-2)", background: "#fff", borderRadius: 7, padding: "4px 10px", fontSize: 12, fontWeight: 650, cursor: "pointer" };
   const goto = (i) => {
     if (i.blockId) onGoto(i.blockId, i.trail);
     else if (i.find) onGoto(null, [], i.find);
@@ -310,7 +322,7 @@ function A11yPanel({ lesson, onClose, onGoto }) {
           <button onClick={onClose} aria-label="Fechar painel de acessibilidade" style={{ border: 0, background: "none", fontSize: 22, lineHeight: 1, cursor: "pointer", color: "var(--tool-ink-2)" }}>×</button>
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 12 }}>
-          {chip("all", "Todos", all.length)}{chip("error", "Erros", count("error"), meta.error.color)}{chip("warn", "Avisos", count("warn"), meta.warn.color)}{chip("tip", "Sugestões", count("tip"), meta.tip.color)}
+          {chip("all", "Todos", all.length)}{chip("error", "Erros", count("error"), meta.error.color)}{chip("warn", "Avisos", count("warn"), meta.warn.color)}{chip("tip", "Sugestões", count("tip"), meta.tip.color)}{hidden.length > 0 && chip("ok", "Marcados OK", hidden.length, "#2f7d4f")}
         </div>
       </header>
       <div className="tool-scroll" style={{ flex: 1, overflow: "auto", padding: "12px 14px 24px" }}>
@@ -318,7 +330,7 @@ function A11yPanel({ lesson, onClose, onGoto }) {
         {contrast.state === "fail" && <p style={{ fontSize: 12, color: "var(--tool-ink-3)", margin: "0 0 10px" }}>Não consegui medir o contraste desta aula; as demais regras valem.</p>}
         {!shown.length && contrast.state !== "running" && (
           <div style={{ padding: 18, border: "1px dashed var(--tool-line-2)", borderRadius: 10, fontSize: 13, color: "var(--tool-ink-2)", background: "#fff" }}>
-            {all.length ? "Nada nesta categoria." : <><b>Nenhum problema encontrado nas regras automáticas.</b><br />Isso não garante acessibilidade total: veja a lista de conferências manuais abaixo.</>}
+            {tab === "ok" ? "Nada marcado como OK." : all.length ? "Nada nesta categoria." : <><b>{hidden.length ? "Tudo revisado: o que sobrou foi marcado como OK." : "Nenhum problema encontrado nas regras automáticas."}</b><br />Isso não garante acessibilidade total: veja a lista de conferências manuais abaixo.</>}
           </div>
         )}
         {shown.map((i, k) => {
@@ -331,9 +343,13 @@ function A11yPanel({ lesson, onClose, onGoto }) {
                 <strong style={{ fontSize: 13, lineHeight: 1.3 }}>{i.title}</strong>
               </div>
               <p style={{ margin: "0 0 8px", fontSize: 12.5, lineHeight: 1.5, color: "var(--tool-ink-2)" }}>{i.detail}</p>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 10.5, color: "var(--tool-ink-3)" }}>{i.wcag}</span>
-                {(i.blockId || i.find) && <button onClick={() => goto(i)} style={{ flex: "none", whiteSpace: "nowrap", border: "1px solid var(--tool-line-2)", background: "#fff", borderRadius: 7, padding: "4px 10px", fontSize: 12, fontWeight: 650, cursor: "pointer" }}>Ir ao bloco</button>}
+              <div style={{ fontSize: 10.5, color: "var(--tool-ink-3)", marginBottom: 8 }}>{i.wcag}</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+                {(i.blockId || i.find) && <button onClick={() => goto(i)} style={btn}>Ir ao bloco</button>}
+                {tab === "ok"
+                  ? <button onClick={() => unmark(i)} style={btn}>Reativar</button>
+                  : <button onClick={() => mark([window.A11y.keyOf(i)])} title="Já revisei: não apontar este item de novo" style={{ ...btn, borderColor: "#2f7d4f", color: "#2f7d4f" }}>✓ Está OK</button>}
+                {tab !== "ok" && sameRule(i) > 1 && <button onClick={() => mark([window.A11y.ruleKey(i)])} title="Não apontar mais nenhum item deste tipo nesta aula" style={{ ...btn, border: 0, background: "none", color: "var(--tool-ink-3)", textDecoration: "underline", fontWeight: 600, padding: "4px 2px" }}>OK em todos deste tipo ({sameRule(i)})</button>}
               </div>
             </div>
           );
