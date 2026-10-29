@@ -1128,18 +1128,96 @@ function ThemePicker() {
       </button>
       {open && (<>
         <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 41 }} />
-        <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 42, background: "#fff", border: "1px solid var(--tool-line)", borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.16)", width: 250, overflow: "auto", maxHeight: "calc(100vh - 80px)" }}>
+        <div data-tp="panel" style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, zIndex: 42, background: "#fff", border: "1px solid var(--tool-line)", borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.16)", width: "min(392px, calc(100vw - 24px))", overflow: "auto", maxHeight: "calc(100vh - 80px)" }}>
           <div style={{ padding: "9px 13px", fontSize: 10.5, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", color: "var(--tool-ink-3)", borderBottom: "1px solid var(--tool-line)" }}>Tema (design system)</div>
-          {themes.map((t) => (
-            <button key={t.id} onClick={() => pick(t.id)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left", padding: "10px 13px", border: 0, background: t.id === active ? "var(--tool-sel-soft)" : "#fff", cursor: "pointer", fontFamily: "inherit" }}>
-              <Swatches list={t.swatches} size={16} />
-              <span style={{ fontSize: 13, fontWeight: t.id === active ? 700 : 500, color: "var(--tool-ink)", flex: 1 }}>{t.label}</span>
-              {t.id === active && <window.TIcon name="check" size={15} color="var(--tool-sel)" />}
-            </button>
-          ))}
-          <div style={{ padding: "9px 13px", fontSize: 11, color: "var(--tool-ink-3)", lineHeight: 1.4, borderTop: "1px solid var(--tool-line)", background: "var(--tool-surface)" }}>Trocar o tema recarrega o builder. Sua aula em andamento é preservada.</div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, padding: 10 }}>
+            {themes.map((t) => {
+              const parts = String(t.label).split(" — ");
+              const paren = /^(.*?) \(([^)]*)\)$/.exec(parts[0]);
+              const name = paren ? paren[1] : parts[0];
+              const sub = parts[1] ? parts[1] : (paren ? paren[2] : "");
+              const on = t.id === active;
+              return (
+                <button key={t.id} data-tp="tile" data-theme-id={t.id} onClick={() => pick(t.id)} aria-pressed={on} style={{ textAlign: "left", padding: 6, border: on ? "2px solid var(--tool-sel)" : "1px solid var(--tool-line)", margin: on ? 0 : 1, borderRadius: 10, background: on ? "var(--tool-sel-soft)" : "#fff", cursor: "pointer", fontFamily: "inherit", display: "flex", flexDirection: "column", gap: 6, minWidth: 0 }}>
+                  <ThemeThumb theme={t} />
+                  <span style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 2px 2px" }}>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: "block", fontSize: 12.5, fontWeight: on ? 700 : 600, color: "var(--tool-ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{name}</span>
+                      {sub && <span style={{ display: "block", fontSize: 10.5, color: "var(--tool-ink-3)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sub}</span>}
+                    </span>
+                    {on && <window.TIcon name="check" size={15} color="var(--tool-sel)" />}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ padding: "9px 13px", fontSize: 11, color: "var(--tool-ink-3)", lineHeight: 1.4, borderTop: "1px solid var(--tool-line)", background: "var(--tool-surface)" }}>Cada miniatura usa as cores, a letra e o formato de botões e avisos do próprio tema. Trocar o tema recarrega o editor; sua aula em andamento é preservada.</div>
         </div>
       </>)}
+    </div>
+  );
+}
+
+// ── Miniatura de um tema: lê as variáveis dos próprios CSS do tema (nada é copiado à mão) ──
+const themeTokenCache = {};
+const themeFontsLoaded = {};
+function themeCssVars(text) {
+  const out = {};
+  const clean = String(text).replace(/\/\*[\s\S]*?\*\//g, "");
+  const re = /:root\s*\{([^}]*)\}/g; let m;
+  while ((m = re.exec(clean))) {
+    m[1].split(";").forEach((decl) => { const i = decl.indexOf(":"); if (i > 0) { const k = decl.slice(0, i).trim(); if (k.startsWith("--")) out[k] = decl.slice(i + 1).trim(); } });
+  }
+  const h1 = /(?:^|\n)\s*h1[^{]*\{[^}]*font-weight:\s*(\d+)/.exec(clean);
+  if (h1) out["--h1-weight"] = h1[1];
+  return out;
+}
+function loadThemeTokens(t) {
+  if (themeTokenCache[t.id]) return themeTokenCache[t.id];
+  const base = window.AULA_BASE || "";
+  const shared = (window.AULA_THEMES && window.AULA_THEMES.shared) || {};
+  const files = [t.css, t.componentsBase || shared.componentsBase, t.componentsCss].filter(Boolean);
+  themeTokenCache[t.id] = Promise.all(files.map((f) => fetch(base + f).then((r) => (r.ok ? r.text() : "")).catch(() => ""))).then((texts) => {
+    const vars = Object.assign({}, ...texts.map(themeCssVars));
+    const get = (name, depth) => {
+      let v = vars[name]; if (v == null) return "";
+      for (let i = 0; i < 6 && /var\(/.test(v); i++) v = v.replace(/var\(\s*(--[\w-]+)\s*(?:,\s*([^)]*))?\)/g, (_, n, fb) => (vars[n] != null ? vars[n] : (fb || "")));
+      return v.trim();
+    };
+    return new Proxy({}, { get: (_, k) => get(String(k)) });
+  });
+  return themeTokenCache[t.id];
+}
+function ThemeThumb({ theme }) {
+  const [v, setV] = useStateA(null);
+  useEffectA(() => {
+    let live = true;
+    const base = window.AULA_BASE || "";
+    if (theme.fontsDir && !themeFontsLoaded[theme.id]) {
+      themeFontsLoaded[theme.id] = true;
+      const l = document.createElement("link"); l.rel = "stylesheet"; l.href = base + theme.fontsDir + "fonts.css"; document.head.appendChild(l);
+    }
+    loadThemeTokens(theme).then((tokens) => { if (live) setV(tokens); });
+    return () => { live = false; };
+  }, [theme.id]);
+  if (!v) return <div style={{ height: 112, borderRadius: 7, background: "var(--tool-surface)" }} aria-hidden="true" />;
+  const none = (s) => !s || s === "none";
+  const withColor = (s, color) => (none(s) ? "none" : (/^\s*\d+(\.\d+)?px\s+(solid|dashed)\s*$/.test(s) ? s + " " + color : s));
+  const accents = ["marigold", "terracotta", "lavender", "sage", "ocean", "coral"];
+  const cardR = v["--c-card-radius"] || "6px";
+  const atenR = v["--c-aten-radius"] || cardR;
+  const atenBorder = withColor(v["--c-aten-border-left"], v["--marigold-deep"] || "#999");
+  const w = v["--h1-weight"] || "600";
+  return (
+    <div data-tp="thumb" aria-hidden="true" style={{ height: 112, boxSizing: "border-box", background: v["--paper"], color: v["--ink"], border: "1px solid " + (v["--rule"] || "rgba(0,0,0,.12)"), borderRadius: 7, padding: "8px 9px", display: "flex", flexDirection: "column", gap: 4, overflow: "hidden", pointerEvents: "none" }}>
+      <span style={{ fontFamily: v["--font-sans"], fontSize: 6.5, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: v["--c-hero-eyebrow-color"] || v["--c-accent"] }}>Semana 1</span>
+      <span style={{ fontFamily: v["--font-display"], fontSize: 15, lineHeight: 1.05, fontWeight: Number(w), letterSpacing: v["--ls-display"] || "normal", color: v["--ink"] }}>Aula de leitura</span>
+      <span style={{ fontFamily: v["--font-serif"], fontSize: 8.5, lineHeight: 1.25, color: v["--ink-soft"] }}>O texto corrido usa esta letra.</span>
+      <span style={{ background: v["--marigold-soft"], borderLeft: atenBorder, borderRadius: atenR, fontFamily: v["--font-sans"], fontSize: 7.5, fontWeight: 600, color: v["--marigold-deep"], padding: "3px 6px" }}>Atenção</span>
+      <span style={{ display: "flex", alignItems: "center", gap: 6, marginTop: "auto" }}>
+        <span style={{ background: v["--c-btn-primary-bg"], color: v["--c-btn-primary-fg"] || "#fff", borderRadius: v["--c-btn-radius"] || "4px", fontFamily: v["--font-sans"], fontSize: 7.5, fontWeight: 700, padding: "3px 9px" }}>Começar</span>
+        <span style={{ display: "flex", gap: 2.5, marginLeft: "auto" }}>{accents.map((a) => <i key={a} style={{ width: 6, height: 6, borderRadius: "50%", background: v["--" + a] }} />)}</span>
+      </span>
     </div>
   );
 }
