@@ -155,6 +155,17 @@
           else if (t.length > 1400) add("tip", "text-long", b, "Parágrafo muito longo", `${t.length} caracteres seguidos. Quebre em parágrafos menores ou use um título; ajuda a todos, e muito quem tem dislexia ou baixa visão.`, WCAG.content);
           break;
         }
+        case "forum":
+          if (!plain(p.title)) add("warn", "text-empty", b, "Fórum sem título", "Dê um título ao fórum para o aluno saber do que se trata.", WCAG.content);
+          if (!plain(p.prompt)) add("warn", "text-empty", b, "Fórum sem pergunta", "Escreva a pergunta ou o tema da discussão.", WCAG.content);
+          if (PLACEHOLDER_HREF(p.href)) add("error", "link-empty", b, "Fórum sem endereço", "Cole no painel o link do fórum de verdade (ainda está vazio ou “https://”); sem ele o botão não leva a lugar nenhum.", WCAG.link);
+          break;
+        case "equacao": {
+          const lx = String(p.latex || "").trim();
+          if (!lx) add("warn", "text-empty", b, "Equação vazia", "Escreva a fórmula no painel ou remova o bloco.", WCAG.content);
+          else { const r = window.renderEquation ? window.renderEquation(lx) : null; if (r && r.error) add("warn", "math-error", b, "Fórmula com erro de sintaxe", "O KaTeX não conseguiu desenhar a fórmula: " + r.error, WCAG.alt); }
+          break;
+        }
         case "citacao":
           if (!plain(p.quote)) add("warn", "text-empty", b, "Citação vazia", "Preencha ou remova o bloco.", WCAG.content);
           break;

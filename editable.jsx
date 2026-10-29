@@ -156,6 +156,28 @@ function closestEditable(node) {
   while (n && n.nodeType === 3) n = n.parentNode;
   return n ? n.closest("[contenteditable='true']") : null;
 }
+// Último ponto de cursor dentro de um texto editável da aula (o painel lateral tira o foco do texto ao clicar).
+// Usado por «Inserir equação no cursor» para dividir o parágrafo exatamente ali.
+document.addEventListener("selectionchange", () => {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return;
+  const r = sel.getRangeAt(0);
+  const host = closestEditable(r.commonAncestorContainer);
+  if (host && host.closest("[data-lz-canvas]") && host.dataset.lzSingle !== "1") window.__lzCaret = { host, range: r.cloneRange() };
+});
+// Divide o texto do bloco `blockId` no último cursor: { before, after } em HTML, ou null.
+window.splitProseAtCaret = function (blockId) {
+  const c = window.__lzCaret;
+  if (!c || !c.host.isConnected) return null;
+  const wrap = c.host.closest("[data-bid]");
+  if (!wrap || wrap.getAttribute("data-bid") !== blockId) return null;
+  const html = (frag) => { const d = document.createElement("div"); d.appendChild(frag); return d.innerHTML; };
+  try {
+    const a = c.range.cloneRange(); a.setStart(c.host, 0); a.setEnd(c.range.startContainer, c.range.startOffset);
+    const b = c.range.cloneRange(); b.setStart(c.range.endContainer, c.range.endOffset); b.setEnd(c.host, c.host.childNodes.length);
+    return { before: html(a.cloneContents()), after: html(b.cloneContents()) };
+  } catch (e) { return null; }
+};
 function fireInput(host) { host.dispatchEvent(new Event("input", { bubbles: true })); }
 
 // ── The editable text region ────────────────────────────────

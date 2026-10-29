@@ -137,6 +137,34 @@ function BlockCore({ block, mode, renderNestedList }) {
         />
       );
 
+    case "forum":
+      return (
+        <Forum
+          editing={isEdit}
+          storageKey={block.id}
+          title={isEdit ? E("title", { single: true, placeholder: "Título do fórum" }) : p.title}
+          prompt={isEdit ? E("prompt", { placeholder: "Escreva a pergunta ou o tema da discussão" }) : <div dangerouslySetInnerHTML={{ __html: p.prompt || "" }} />}
+          dueInitial={p.dueInitial} dueReplies={p.dueReplies}
+          dueInitialNode={E("dueInitial", { single: true, placeholder: "ex.: até 12/11" })}
+          dueRepliesNode={E("dueReplies", { single: true, placeholder: "ex.: até 19/11" })}
+          rules={p.rules}
+          showCriteria={!!p.showCriteria}
+          criteria={isEdit ? E("criteria", { placeholder: "Como a participação será avaliada" }) : <div dangerouslySetInnerHTML={{ __html: p.criteria || "" }} />}
+          href={p.href} buttonLabel={p.buttonLabel} showDraft={p.showDraft !== false}
+        />
+      );
+
+    case "equacao":
+      return (
+        <Equacao
+          latex={p.latex}
+          number={E("number", { single: true, placeholder: "(1)" })}
+          numberText={p.number}
+          showNumber={p.showNumber !== false}
+          ariaLabel={p.ariaLabel}
+        />
+      );
+
     // ───── Destaques ─────
     case "destaque":
       return (

@@ -127,6 +127,12 @@ const BLOCKS = [
     props: { quote: "Uma frase marcante que merece destaque editorial.", author: "Autor", source: "Obra, ano", showAttribution: true },
   },
   {
+    type: "equacao", label: "Equação", icon: "sigma", cat: "Texto",
+    kind: "text", bg: "neutral-default", pad: "tight",
+    fields: [{ key: "number", placeholder: "(1)", single: true }],
+    props: { latex: "E = mc^{2}", number: "(1)", showNumber: true, ariaLabel: "", autoNumber: true },
+  },
+  {
     type: "eyebrow", label: "Eyebrow (sobrelinha)", icon: "heading", cat: "Texto",
     kind: "text", bg: "neutral-default", pad: "tight",
     fields: [{ key: "text", placeholder: "Sobrelinha", single: true }],
@@ -385,6 +391,25 @@ const BLOCKS = [
     props: { title: "Para ir além", items: [
       { type: "artigo", title: "Leitura recomendada", source: "Fonte", href: "https://" },
     ] },
+  },
+  {
+    type: "forum", label: "Fórum de discussão", icon: "message-square", cat: "Interativos",
+    kind: "text", bg: "neutral-default", pad: "normal",
+    fields: [
+      { key: "title", placeholder: "Título do fórum", single: true },
+      { key: "prompt", placeholder: "Escreva a pergunta ou o tema da discussão" },
+      { key: "dueInitial", placeholder: "ex.: até 12/11", single: true },
+      { key: "dueReplies", placeholder: "ex.: até 19/11", single: true },
+      { key: "criteria", placeholder: "Como a participação será avaliada" },
+    ],
+    props: {
+      title: "Fórum: o que você pensa sobre isso?",
+      prompt: "<p>Apresente seu ponto de vista sobre o tema da aula, com um exemplo do seu contexto de trabalho.</p>",
+      dueInitial: "", dueReplies: "",
+      rules: ["Poste sua contribuição inicial com pelo menos 150 palavras.", "Responda a, no mínimo, dois colegas, com respeito e argumentos.", "Cite as fontes que usar."],
+      showCriteria: false, criteria: "<p>Clareza, aprofundamento e interação com os colegas.</p>",
+      href: "https://", buttonLabel: "Participar do fórum", showDraft: true,
+    },
   },
 ];
 const BLOCK_BY_TYPE = Object.fromEntries(BLOCKS.map((b) => [b.type, b]));

@@ -101,7 +101,15 @@ const VENDOR_FILES = [
   "vendor/fontawesome/webfonts/fa-regular-400.woff2",
   "vendor/fontawesome/webfonts/fa-solid-900.woff2",
   "vendor/fontawesome/webfonts/fa-v4compatibility.woff2",
+  // KaTeX (bloco Equação): só entra no pacote quando a aula tem equação
+  "vendor/katex/katex.min.css",
+  "vendor/katex/katex.min.js",
+  ...["AMS-Regular","Caligraphic-Bold","Caligraphic-Regular","Fraktur-Bold","Fraktur-Regular","Main-Bold","Main-BoldItalic","Main-Italic","Main-Regular","Math-BoldItalic","Math-Italic","SansSerif-Bold","SansSerif-Italic","SansSerif-Regular","Script-Regular","Size1-Regular","Size2-Regular","Size3-Regular","Size4-Regular","Typewriter-Regular"].map((n) => "vendor/katex/fonts/KaTeX_" + n + ".woff2"),
 ];
+const KATEX_VERSION = "0.19.1";
+const KATEX_CDN_CSS = { href: "https://unpkg.com/katex@" + KATEX_VERSION + "/dist/katex.min.css", integrity: "sha384-WwGtaC6ywCHxA5cstpj/3+xIZvTez8dq2IcBQaXRkenHZ7FVVq1ZROtURwfbtTlG" };
+const KATEX_CDN_JS = { src: "https://unpkg.com/katex@" + KATEX_VERSION + "/dist/katex.min.js", integrity: "sha384-a1WQdjRj162i159OYq041X6I4K8NenkrI09LlPmiHg0YOb7CR+wJOraXwK9abpnE" };
+function lessonUsesMath(lesson) { return !!(window.listEquations && window.listEquations((lesson && lesson.blocks) || []).length); }
 async function buildExportHTML(lesson, opts = {}) {
   const fontsMode = opts.fonts || "embed";
   // Pacote .zip (fontes externas) → bibliotecas locais em vendor/. Arquivo único → CDN (senão passaria de 3 MB).
@@ -150,6 +158,7 @@ async function buildExportHTML(lesson, opts = {}) {
 
   const data = JSON.stringify(lesson);
   const usesFontAwesome = !!(theme && theme.usesFontAwesome);
+  const usesMath = lessonUsesMath(lesson);
   const forcePDF = opts.pdf === true;
   const forceAutoPrint = opts.autoPrint === true;
 
@@ -159,6 +168,7 @@ async function buildExportHTML(lesson, opts = {}) {
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>${escapeHtml(lesson.meta?.title || "Aula")}</title>
+${usesMath ? (localLibs ? '<link rel="stylesheet" href="vendor/katex/katex.min.css" />' : `<link rel="stylesheet" href="${KATEX_CDN_CSS.href}" integrity="${KATEX_CDN_CSS.integrity}" crossorigin="anonymous" />`) : ""}
 ${usesFontAwesome ? (localLibs ? '<link rel="stylesheet" href="vendor/fontawesome/css/all.min.css" />' : '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer" />') : ""}
 <style>
 ${fontStyle}
@@ -179,6 +189,7 @@ ${pdfCss}
 <button id="aula-print-button" type="button" data-pdf-hide aria-label="Imprimir versão PDF" title="Imprimir versão PDF" style="position:fixed;right:20px;bottom:20px;z-index:9999;width:48px;height:48px;border:0;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--paper);box-shadow:0 8px 28px rgba(0,0,0,.22);cursor:pointer;font:600 20px/1 sans-serif">&#128424;</button>
 <div id="app-root"></div>
 
+${usesMath ? (localLibs ? '<script src="vendor/katex/katex.min.js"><\/script>' : `<script src="${KATEX_CDN_JS.src}" integrity="${KATEX_CDN_JS.integrity}" crossorigin="anonymous"><\/script>`) : ""}
 ${localLibs ? `<script src="vendor/react.production.min.js"><\/script>
 <script src="vendor/react-dom.production.min.js"><\/script>
 <script src="vendor/babel.min.js"><\/script>` : `<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"><\/script>
@@ -281,6 +292,8 @@ function ExportCore({ block }) {
       return h("div", null, h("div", { className: dropcapClass(p), dangerouslySetInnerHTML: { __html: p.body || "" } }), inlineVideo);
     }
     case "eyebrow": return h(R.Eyebrow, { icon: p.icon }, htmlSpan(p.text));
+    case "forum": return h(R.Forum, { storageKey: p.slotId || block.id, title: htmlSpan(p.title), prompt: html(p.prompt), dueInitial: (p.dueInitial || "").replace(/<[^>]*>/g, "").trim() ? htmlSpan(p.dueInitial) : null, dueReplies: (p.dueReplies || "").replace(/<[^>]*>/g, "").trim() ? htmlSpan(p.dueReplies) : null, rules: p.rules, showCriteria: !!p.showCriteria, criteria: html(p.criteria), href: p.href, buttonLabel: p.buttonLabel, showDraft: p.showDraft !== false });
+    case "equacao": return h(R.Equacao, { latex: p.latex, number: htmlSpan(p.number), numberText: p.number, showNumber: p.showNumber !== false, ariaLabel: p.ariaLabel });
     case "citacao": return h(R.Citacao, { quote: htmlSpan(p.quote), author: htmlSpan(p.author), source: htmlSpan(p.source), showAttribution: p.showAttribution !== false });
     case "destaque": return h(R.Destaque, { title: htmlSpan(p.title), tone: p.tone, icon: p.icon }, html(p.body));
     case "atencao": return h(R.Atencao, { title: htmlSpan(p.title), tone: p.tone, icon: p.icon }, html(p.body));
@@ -392,7 +405,7 @@ async function downloadExport(lesson) {
   zip.file("index.html", html);
   addProjectFile(zip, lesson);
   lessonImageAssets.forEach((asset) => zip.file(asset.path, asset.base64, { base64: true }));
-  await addPackageSupportFiles(zip);
+  await addPackageSupportFiles(zip, undefined, [lesson]);
   const blob = await zip.generateAsync({ type: "blob" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -469,8 +482,9 @@ function externalizeLessonImages(lesson, prefix) {
   return assets;
 }
 
-async function addPackageSupportFiles(zip, packagedFiles) {
+async function addPackageSupportFiles(zip, packagedFiles, lessons) {
   const files = packagedFiles || [];
+  const usesMath = (lessons || []).some(lessonUsesMath);
   const theme = window.AULA_ACTIVE_THEME || (window.resolveAulaTheme ? window.resolveAulaTheme() : null);
   const base = window.AULA_BASE != null ? window.AULA_BASE : "../";
   const themeAssets = await loadThemeAssets(theme, base);
@@ -494,6 +508,7 @@ async function addPackageSupportFiles(zip, packagedFiles) {
   const usesFA = !!(theme && theme.usesFontAwesome);
   for (const f of VENDOR_FILES) {
     if (!usesFA && f.includes("fontawesome")) continue;
+    if (!usesMath && f.includes("katex")) continue;
     const res = await fetch(base + f);
     if (!res.ok) throw new Error("Biblioteca não encontrada para o pacote: " + f);
     zip.file(f, await res.arrayBuffer());
@@ -597,7 +612,7 @@ async function buildSCORMBlob(lesson, opts) {
     packagedFiles.push(asset.path);
   });
 
-  await addPackageSupportFiles(zip, packagedFiles);
+  await addPackageSupportFiles(zip, packagedFiles, [lesson]);
 
   zip.file("imsmanifest.xml", buildManifest({ ...opts, files: packagedFiles }));
 
@@ -676,7 +691,7 @@ async function buildCourseSCORMBlob(lessons, opts) {
     images.forEach((a) => { zip.file(a.path, a.base64, { base64: true }); files.push(a.path); });
     items.push({ title: label, href, files, mastery });
   }
-  const shared = await addPackageSupportFiles(zip, []);
+  const shared = await addPackageSupportFiles(zip, [], lessons);
   zip.file("imsmanifest.xml", buildCourseManifest({ title: opts.title, version: opts.version, items, shared }));
   const blob = await zip.generateAsync({ type: "blob" });
   return { blob, name: lessonSlug(opts.title) };
@@ -700,7 +715,7 @@ async function buildCourseSiteFiles(lessons, opts) {
     images.forEach((a) => zip.file(a.path, a.base64, { base64: true }));
     entries.push({ n, label, href: "aula-" + n + ".html" });
   }
-  await addPackageSupportFiles(zip, []);
+  await addPackageSupportFiles(zip, [], lessons);
   const title = opts.title || "Curso";
   const list = entries.map((e) => `<li><a href="${xmlEscape(e.href)}"><span>${e.n}</span><strong>${xmlEscape(e.label)}</strong><i aria-hidden="true">→</i></a></li>`).join("\n");
   zip.file("index.html", `<!doctype html>

@@ -87,7 +87,7 @@ window.AULA_THEMES = {
     scorm: "scorm.js",            // dentro do kit
     pdfCss: "aula-pdf.css",       // dentro do kit
     components: ["components.jsx"],
-    globals: ["glossario.js"],    // na raiz do projeto
+    globals: ["glossario.js", "equacao.js", "forum.js"],    // na raiz do projeto
     assets: ["assets/classatelier-mark.svg"],
     // Tokens de ANATOMIA dos componentes (defaults Aula) — carregado
     // SEMPRE, em todo tema, logo após o CSS do tema. O que o tema não

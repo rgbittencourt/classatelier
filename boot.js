@@ -13,8 +13,8 @@
 (function () {
   var BASE = window.AULA_BASE || "";
   // Versão do ClassAtelier (Versionamento Semântico; histórico em CHANGELOG.md).
-  window.CLASSATELIER_VERSION = "1.0.0";
-  var BUILD_REV = "20261029-v1.0.0";
+  window.CLASSATELIER_VERSION = "1.1.0";
+  var BUILD_REV = "20261029-v1.1.0";
   var theme = window.resolveAulaTheme();
   window.AULA_ACTIVE_THEME = theme;
 
@@ -48,6 +48,10 @@
   if (theme.usesFontAwesome) {
     w('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer" />');
   }
+
+  // 3b) KaTeX (bloco Equação): CSS e script locais; as aulas exportadas levam a própria cópia
+  w('<link rel="stylesheet" href="' + attr(rev(BASE + "vendor/katex/katex.min.css")) + '" />');
+  w('<script src="' + attr(rev(BASE + "vendor/katex/katex.min.js")) + '"><\/script>');
 
   // 4) "Pele" da ferramenta a partir do tema (sobrescreve os defaults do index.html)
   var t = theme.tool || {};

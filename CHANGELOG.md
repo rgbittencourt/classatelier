@@ -4,12 +4,25 @@ Este repositório tem dois aplicativos, cada um com a própria versão, em [Vers
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.0.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.1.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.0.0** | subtítulo do cabeçalho, rodapé de créditos e rodapé dos índices que ele gera; constante `APP_VERSION` em `acervo/acervo.js` |
 
 Ao mudar a versão, altere os dois lugares de cada aplicativo e a data abaixo.
 
 ## ClassAtelier
+
+### 1.1.0 · 29/10/2026 · equações, fórum e ícones
+
+**Acrescentado**
+- **Bloco Equação** (categoria Texto): fórmulas matemáticas, físicas e químicas escritas em LaTeX e desenhadas pelo KaTeX 0.19.1 (MIT, incluído em `vendor/katex/`). A fórmula fica centralizada em linha própria, dentro de uma **caixa de borda visível**; o **número** fica na extremidade direita da mesma linha, **fora da caixa**, em qualquer formato (`(1)`, `(1.1)`, `Eq. 1`) e editável direto na página. O painel traz botões de estruturas (fração, raiz, potência, somatório, integral, limite…), símbolos gregos e operadores, exemplos prontos e aviso de erro de sintaxe sem travar a aula.
+- **Numeração automática**: a primeira equação é (1); cada equação nova na mesma aula recebe o número seguinte da sequência, mantendo o formato do número anterior; todos continuam editáveis, e o botão **Renumerar todas as equações** refaz a sequência.
+- A equação entra dentro de **Tópico, Colunas, Acordeão e Linha do tempo**; e o painel do **Parágrafo** ganhou **Inserir equação no cursor**, que divide o parágrafo naquele ponto e coloca a fórmula no meio, em linha própria.
+- **Bloco Fórum de discussão** (categoria Interativos): título, pergunta, prazos da postagem inicial e das respostas, regras de participação, critérios de avaliação opcionais, botão que abre o fórum de verdade (Moodle, Padlet, Teams…) em nova aba e **rascunho da mensagem** salvo no navegador do aluno, com contador de palavras e botão de copiar.
+- A exportação inclui o KaTeX **só quando a aula tem equação** (arquivo único usa a CDN com SRI; pacotes `.zip`/SCORM levam os arquivos locais). Acessibilidade: a fórmula sai também em MathML (leitores de tela); o verificador avisa equação vazia ou com erro e fórum sem endereço.
+- Texto da aula (.txt) e busca de blocos reconhecem os dois blocos novos.
+
+**Corrigido**
+- Faltavam os ícones de **Tópico slider**, **Conteúdo externo (iframe)** e **Colunas** na paleta de blocos.
 
 ### 1.0.0 · 29/10/2026 · primeira versão de produção
 

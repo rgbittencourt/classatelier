@@ -344,7 +344,7 @@ function QuizEditor({ p, setP }) {
 }
 
 // ── the panel ──
-function PropertiesPanel({ block, update, mergePrev }) {
+function PropertiesPanel({ block, update, mergePrev, onRenumberEquations, onInsertEquation }) {
   if (!block) {
     return <div style={{ padding: 24, color: "var(--tool-ink-3)", fontSize: 13, lineHeight: 1.5 }}>Selecione um bloco na página para editar suas propriedades, ou arraste um bloco da biblioteca à esquerda.</div>;
   }
@@ -388,7 +388,7 @@ function PropertiesPanel({ block, update, mergePrev }) {
       {/* Conteúdo estrutural por tipo */}
       <div style={ps.group}>
         <p style={ps.groupTitle}>Conteúdo</p>
-        {renderTypeContent(block, p, setP, mergePrev)}
+        {renderTypeContent(block, p, setP, mergePrev, onRenumberEquations, onInsertEquation)}
         <div style={{ height: 8 }} />
       </div>
     </div>
@@ -555,7 +555,89 @@ function TimelineEditor({ p, setP }) {
   </>);
 }
 
-function renderTypeContent(block, p, setP, mergePrev) {
+
+// ── Equação: fórmula em LaTeX (KaTeX) com atalhos para quem não conhece a sintaxe ──
+const EQ_STRUCT = [
+  ["a/b", "\\frac{¤}{}", "Fração"], ["√", "\\sqrt{¤}", "Raiz quadrada"], ["ⁿ√", "\\sqrt[¤]{}", "Raiz de índice n"],
+  ["xⁿ", "^{¤}", "Potência (expoente)"], ["xₙ", "_{¤}", "Índice (subscrito)"], ["Σ", "\\sum_{i=1}^{n} ¤", "Somatório"],
+  ["∫", "\\int_{a}^{b} ¤\\,dx", "Integral"], ["lim", "\\lim_{x \\to ¤}", "Limite"], ["v⃗", "\\vec{¤}", "Vetor"],
+  ["x̄", "\\bar{¤}", "Barra (média)"], ["∂", "\\frac{\\partial ¤}{\\partial x}", "Derivada parcial"], ["abc", "\\text{¤}", "Texto dentro da fórmula"],
+  ["( )", "\\left( ¤ \\right)", "Parênteses que crescem"],
+];
+const EQ_SYMS = [
+  ["α", "\\alpha "], ["β", "\\beta "], ["γ", "\\gamma "], ["Δ", "\\Delta "], ["θ", "\\theta "], ["λ", "\\lambda "], ["μ", "\\mu "], ["π", "\\pi "],
+  ["ρ", "\\rho "], ["σ", "\\sigma "], ["τ", "\\tau "], ["φ", "\\varphi "], ["ω", "\\omega "], ["Ω", "\\Omega "],
+  ["±", "\\pm "], ["×", "\\times "], ["·", "\\cdot "], ["÷", "\\div "], ["≤", "\\leq "], ["≥", "\\geq "], ["≠", "\\neq "], ["≈", "\\approx "],
+  ["∞", "\\infty "], ["→", "\\rightarrow "], ["⇒", "\\Rightarrow "], ["°", "^{\\circ}"], ["∝", "\\propto "], ["∈", "\\in "],
+];
+const EQ_EXAMPLES = [
+  ["Teorema de Pitágoras", "a^{2} + b^{2} = c^{2}"],
+  ["Fórmula de Bhaskara", "x = \\frac{-b \\pm \\sqrt{b^{2} - 4ac}}{2a}"],
+  ["Velocidade média", "v_m = \\frac{\\Delta s}{\\Delta t}"],
+  ["2ª lei de Newton", "\\vec{F} = m\\,\\vec{a}"],
+  ["Energia cinética", "E_c = \\frac{1}{2}\\, m\\, v^{2}"],
+  ["Lei de Ohm", "V = R \\cdot I"],
+  ["Gravitação universal", "F = G\\,\\frac{m_1\\, m_2}{r^{2}}"],
+  ["Equivalência massa-energia", "E = mc^{2}"],
+  ["Derivada (definição)", "\\frac{dy}{dx} = \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}"],
+  ["Teorema fundamental do cálculo", "\\int_{a}^{b} f(x)\\,dx = F(b) - F(a)"],
+  ["Média aritmética", "\\bar{x} = \\frac{1}{n} \\sum_{i=1}^{n} x_i"],
+];
+function EquationPanel({ p, setP, onRenumber }) {
+  const ref = React.useRef(null);
+  const plain = (s) => String(s == null ? "" : s).replace(/<[^>]+>/g, "");
+  const insert = (snippet) => {
+    const ta = ref.current, cur = p.latex || "";
+    const at = ta ? ta.selectionStart : cur.length, end = ta ? ta.selectionEnd : cur.length;
+    const mark = snippet.indexOf("¤");
+    const text = snippet.replace("¤", ta && end > at ? cur.slice(at, end) : "");
+    const next = cur.slice(0, at) + text + cur.slice(end);
+    setP({ latex: next });
+    const pos = at + (mark >= 0 ? mark + (end > at ? end - at : 0) : text.length);
+    setTimeout(() => { if (ta) { ta.focus(); ta.setSelectionRange(pos, pos); } }, 0);
+  };
+  const btn = { border: "1px solid var(--tool-line-2)", background: "#fff", borderRadius: 7, padding: "5px 0", minWidth: 34, fontSize: 13, cursor: "pointer", color: "var(--tool-ink)", fontFamily: "inherit" };
+  const err = (() => { const r = window.renderEquation ? window.renderEquation(p.latex) : null; return r && r.error ? r.error : ""; })();
+  return (<>
+    <Field label="Fórmula (LaTeX)">
+      <textarea ref={ref} spellCheck={false} value={p.latex || ""} onChange={(e) => setP({ latex: e.target.value })} placeholder="Ex.: E = mc^{2}" rows={4}
+        style={{ ...ps.area, fontFamily: "var(--font-mono, JetBrains Mono, ui-monospace, Menlo, monospace)", fontSize: 12.5, minHeight: 84 }} />
+      {err ? <p style={{ ...hint, color: "#9a2f1b" }}>Erro na fórmula: {err}</p> : <p style={hint}>A fórmula aparece pronta na página. Use os atalhos abaixo ou digite em LaTeX.</p>}
+    </Field>
+    <Field label="Estruturas">
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+        {EQ_STRUCT.map(([l, s, t]) => <button key={t} type="button" title={t} aria-label={t} onClick={() => insert(s)} style={btn}>{l}</button>)}
+      </div>
+    </Field>
+    <Field label="Símbolos">
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+        {EQ_SYMS.map(([l, s]) => <button key={l} type="button" title={s.trim()} aria-label={"Inserir " + s.trim()} onClick={() => insert(s)} style={btn}>{l}</button>)}
+      </div>
+    </Field>
+    <Field label="Exemplos prontos">
+      <select value="" onChange={(e) => { const ex = EQ_EXAMPLES[Number(e.target.value)]; if (ex) setP({ latex: ex[1] }); }} style={ps.input}>
+        <option value="">Substituir por um exemplo…</option>
+        {EQ_EXAMPLES.map((ex, i) => <option key={ex[0]} value={i}>{ex[0]}</option>)}
+      </select>
+    </Field>
+    <div style={{ borderTop: "1px solid var(--tool-line)", margin: "4px 0 14px" }} />
+    <Field><Toggle value={p.showNumber !== false} onChange={(v) => setP({ showNumber: v })} label="Mostrar número da equação" /></Field>
+    {p.showNumber !== false && (
+      <Field label="Número da equação">
+        <TextInput value={plain(p.number)} onChange={(v) => setP({ number: v })} placeholder="(1)" />
+        <p style={hint}>Escreva no formato que quiser: (1), (1.1), Eq. 1… Também dá para clicar no número, na página, e digitar. Uma equação nova recebe sozinha o número seguinte ao da anterior.</p>
+        <button type="button" onClick={onRenumber} style={{ ...btn, width: "100%", marginTop: 8, padding: "7px 10px", fontSize: 12.5 }}>Renumerar todas as equações em sequência</button>
+        <p style={hint}>Segue o formato da primeira equação da aula e reescreve o número de todas as outras.</p>
+      </Field>
+    )}
+    <Field label="Descrição para leitores de tela (opcional)">
+      <TextInput value={p.ariaLabel || ""} onChange={(v) => setP({ ariaLabel: v })} placeholder="Ex.: Equação de Bhaskara" />
+      <p style={hint}>A fórmula já é lida como MathML. Use este campo só se quiser um nome curto para ela.</p>
+    </Field>
+  </>);
+}
+
+function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquation) {
   const def = window.BLOCK_BY_TYPE[block.type];
   switch (block.type) {
     case "pagebreak":
@@ -580,6 +662,19 @@ function renderTypeContent(block, p, setP, mergePrev) {
         <Field label="Data / edição"><TextInput value={p.date} onChange={(v) => setP({ date: v })} /></Field>
         <p style={hint}>Sobrelinha, título e linha de abertura são editados direto na página.</p>
       </>);
+    case "forum":
+      return (<>
+        <Field label="Endereço do fórum (Moodle, Padlet, Teams…)"><TextInput value={p.href} onChange={(v) => setP({ href: v })} placeholder="https://" /></Field>
+        <Field label="Texto do botão"><TextInput value={p.buttonLabel} onChange={(v) => setP({ buttonLabel: v })} /></Field>
+        <p style={hint}>Cole o link do fórum de verdade: o debate acontece lá. Na aula, o botão abre o fórum em nova aba.</p>
+        <div style={{ height: 14 }} />
+        <Field label="Como participar (uma regra por linha)"><StringList items={p.rules || []} onChange={(v) => setP({ rules: v })} label="Regra" placeholder="Ex.: Responda a, no mínimo, dois colegas." /></Field>
+        <Field><Toggle value={!!p.showCriteria} onChange={(v) => setP({ showCriteria: v })} label="Mostrar critérios de avaliação" /></Field>
+        <Field><Toggle value={p.showDraft !== false} onChange={(v) => setP({ showDraft: v })} label="Oferecer rascunho da mensagem ao aluno" /></Field>
+        <p style={hint}>O rascunho fica salvo só no navegador do aluno e tem botão para copiar e colar no fórum. Título, pergunta, prazos e critérios são editados direto na página.</p>
+      </>);
+    case "equacao":
+      return <EquationPanel p={p} setP={setP} onRenumber={onRenumber} />;
     case "citacao":
       return (<>
         <Field><Toggle value={p.showAttribution !== false} onChange={(v) => setP({ showAttribution: v })} label="Mostrar autor e fonte/ano" /></Field>
@@ -612,6 +707,15 @@ function renderTypeContent(block, p, setP, mergePrev) {
           <Field label="Cor da capitular"><DropcapTones value={p.dropcapTone || "terracotta"} onChange={(v) => setP({ dropcapTone: v })} /></Field>
         )}
         <p style={hint}>A capitular eleva a primeira letra do primeiro parágrafo. Use só uma vez, na abertura de um trecho mais longo.</p>
+        {onInsertEquation && <>
+          <div style={{ height: 14 }} />
+          <Field label="Equação no meio do texto">
+            <button type="button" onClick={onInsertEquation} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 12px", borderRadius: 10, border: "1px solid var(--tool-line, #d8d3c6)", background: "var(--tool-card, #fff)", cursor: "pointer", font: "600 13px var(--font-sans)", color: "var(--tool-ink)" }}>
+              <window.Icon name="sigma" size={16} stroke={1.8} /> Inserir equação no cursor
+            </button>
+          </Field>
+          <p style={hint}>Clique no ponto do parágrafo onde a fórmula deve entrar e use o botão: o texto se divide ali e a equação fica no meio, em linha própria.</p>
+        </>}
       </>);
     case "pitaco":
       return (<>

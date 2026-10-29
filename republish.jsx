@@ -94,7 +94,7 @@
     const projName = "projetos/" + window.projectFileName(L, n);
     zip.file(projName, JSON.stringify(projectLesson, null, 2));
     images.forEach((a) => zip.file(a.path, a.base64, { base64: true }));
-    await addPackageSupportFiles(zip, []);   // fontes, bibliotecas e imagens do tema: só vão se faltarem
+    await addPackageSupportFiles(zip, [], [L]);   // fontes, bibliotecas e imagens do tema: só vão se faltarem
     const changes = []; const send = [];
     for (const f of zip.files) {
       const bytes = toBytes(f); const path = ctx.prefix + f.path; const sha = await gitBlobSha(bytes);

@@ -280,7 +280,7 @@ function ClassAtelierApp() {
     if (prev) setLesson(JSON.parse(prev));
   };
 
-  const commit = (next) => { pushHistory(); setLesson(next); };
+  const commit = (next) => { pushHistory(); setLesson(window.autoNumberEquations ? window.autoNumberEquations(next) : next); };
 
   // Children of a topic share its band; a topic-child id is found by scanning
   // each topic's props.children. These helpers keep root + child ops uniform.
@@ -375,6 +375,32 @@ function ClassAtelierApp() {
     if (window.ROOT_STRUCTURE_TYPES.indexOf(type) !== -1) return insertRootAtChild(topicId, type, idx);
     if (type === "collapsebreak") return insertCollapseBreak(topicId, idx);
     return insertInto(topicTargetKey(topicId), type, idx);
+  };
+
+  // «Inserir equação no cursor» (painel do Parágrafo): divide o parágrafo no cursor e põe a equação no meio.
+  const insertEquationInProse = (blockId) => {
+    const next = JSON.parse(JSON.stringify(lesson));
+    const src = collectBlockLists(next.blocks, undefined, [], true).find((ref) => ref.list.some((b) => b.id === blockId));
+    if (!src) return;
+    const i = src.list.findIndex((b) => b.id === blockId);
+    const prose = src.list[i];
+    const sp = window.splitProseAtCaret ? window.splitProseAtCaret(blockId) : null;
+    const emptyHtml = (h) => !String(h || "").replace(/<[^>]*>/g, "").replace(/&nbsp;|\s/g, "");
+    const eq = window.newChildBlock("equacao");
+    if (src.meta.kind === "topic" && src.meta.owner.type === "topic-slider") eq.slide = prose.slide;
+    if (prose.slide != null) eq.slide = prose.slide;
+    const parts = [];
+    if (!sp) { parts.push(prose, eq); }
+    else {
+      const keepBefore = !emptyHtml(sp.before), keepAfter = !emptyHtml(sp.after);
+      if (keepBefore || !keepAfter) parts.push({ ...prose, props: { ...prose.props, body: keepBefore ? sp.before : "<p></p>" } });
+      parts.push(eq);
+      if (keepAfter) { const n = window.newChildBlock("prose"); n.props = { ...n.props, body: sp.after, dropcap: false }; if (prose.slide != null) n.slide = prose.slide; parts.push(n); }
+    }
+    src.list.splice(i, 1, ...parts);
+    commit(next);
+    setSelected(eq.id);
+    setMode("edit");
   };
 
   // Merge a patch into a block whether it lives at root or inside a topic.
@@ -654,7 +680,7 @@ function ClassAtelierApp() {
             <button onClick={() => setRightOpen(false)} title="Recolher painel de propriedades" aria-label="Recolher painel de propriedades" aria-expanded="true"
               style={{ position: "absolute", top: 11, right: 10, zIndex: 6, width: 28, height: 28, display: "grid", placeItems: "center", border: "1px solid var(--tool-line)", background: "#fff", borderRadius: 7, cursor: "pointer", color: "var(--tool-ink-2)", fontSize: 15, lineHeight: 1 }}>»</button>
             {selBlock
-              ? <window.PropertiesPanel block={selBlock} update={(patch) => updateBlock(selBlock.id, patch)} mergePrev={mergeInfo(selBlock) ? () => mergeTopicWithPrevious(selBlock) : null} />
+              ? <window.PropertiesPanel block={selBlock} update={(patch) => updateBlock(selBlock.id, patch)} mergePrev={mergeInfo(selBlock) ? () => mergeTopicWithPrevious(selBlock) : null} onRenumberEquations={() => commit(window.autoNumberEquations(lesson, true))} onInsertEquation={() => insertEquationInProse(selBlock.id)} />
               : <LessonMeta lesson={lesson} setLesson={(L) => setLesson(L)} />}
           </>) : (
             <button onClick={() => setRightOpen(true)} title="Abrir painel de propriedades" aria-label="Abrir painel de propriedades" aria-expanded="false"
@@ -701,6 +727,8 @@ const PALETTE_KEYS = {
   referencias: "bibliografia abnt citações citacoes livros artigos fontes",
   prose: "texto parágrafo paragrafo corpo escrever conteúdo conteudo",
   citacao: "frase autor epígrafe epigrafe aspas depoimento",
+  forum: "fórum forum debate discussão discussao conversa moodle participação participacao pergunta colegas interação interacao",
+  equacao: "fórmula formula equação matemática matematica física fisica química quimica latex katex cálculo calculo expressão expressao somatório integral fração fracao raiz",
   eyebrow: "sobrelinha rótulo rotulo chamada pequeno",
   destaque: "nota importante veja bem dica caixa realçar realcar",
   atencao: "cuidado alerta aviso perigo warning",
