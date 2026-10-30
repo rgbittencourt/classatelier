@@ -4,14 +4,14 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.4.0** (em teste) | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.4.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.0** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
 
-### 1.4.0 · em teste (ramo `codigo`, cópia em `/teste/`) · bloco de código
+### 1.4.0 · 29/10/2026 · bloco de código
 
 - **Novo bloco «Código»** (paleta, em Texto; busca por "código", "python", "sql"…), para aulas de programação. O código é digitado ou colado direto na página, com destaque de sintaxe, recuo preservado, numeração de linhas opcional, cabeçalho com a linguagem e botão **Copiar código**.
 - **Botão `</>` na barra de ferramentas** («Inserir bloco de código»): no cursor do parágrafo selecionado (o parágrafo se divide ali), depois do bloco selecionado ou no fim da aula. O painel do Parágrafo também ganhou **Inserir bloco de código no cursor**.
