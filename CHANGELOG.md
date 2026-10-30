@@ -4,12 +4,16 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.4.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.4.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.0** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.4.1 · 30/10/2026 · cursos organizados por aula
+
+- Aula vinda de um curso que o ClassAuthor organiza **por aula** é salva como `AulaNN-título-ClassAtelier.json` (antes virava `SemanaNN-…`). A republicação no GitHub reconhece os dois nomes ao trocar a versão antiga. Cursos por semana seguem iguais.
 
 ### 1.4.0 · 29/10/2026 · bloco de código
 
