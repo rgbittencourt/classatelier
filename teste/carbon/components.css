@@ -1,0 +1,121 @@
+/* ============================================================
+   Carbon (IBM) — COMPONENT ANATOMY (Opção A · "fiel")
+   ------------------------------------------------------------
+   Overrides dos tokens --c-* (defaults Aula em /components.css).
+   Anatomia inspirada nos padrões reais do Carbon Design System:
+   · Callouts → "inline notification": faixa com borda esquerda
+     de 3px, fundo tom-10, cantos retos, sem sombra, ícone bare,
+     rótulo em sentence-case (não eyebrow).
+   · Citação → blockquote Carbon: alinhada à esquerda, sans,
+     sem aspas decorativas, filete azul.
+   · Botões → retos, azul IBM. Acentos de progresso → azul.
+   O que NÃO está declarado aqui cai nos defaults do Aula.
+   ============================================================ */
+
+:root {
+  /* Acento de interação/progresso — azul IBM */
+  --c-accent: var(--ocean);
+
+  /* Cards: delimitados por borda, não por sombra; cantos retos */
+  --c-card-bg: var(--paper);
+  --c-card-border: 1px solid var(--rule);
+  --c-card-radius: 0;
+  --c-card-shadow: none;
+  --c-media-radius: 0;
+
+  /* Botões Carbon: retos, azul 60, texto branco */
+  --c-btn-radius: 0;
+  --c-btn-primary-bg: var(--ocean);
+  --c-btn-primary-fg: #ffffff;
+  --c-chip-radius: 0;
+
+  /* Rótulo de callout: sentence-case 14px/600 (estilo notification) */
+  --c-callout-label-size: 14px;
+  --c-callout-label-weight: 600;
+  --c-callout-label-ls: 0;
+  --c-callout-label-transform: none;
+
+  /* DESTAQUE → inline notification "success" (green) */
+  --c-dest-bg: var(--sage-soft);
+  --c-dest-border: 1px solid color-mix(in oklab, var(--sage) 35%, transparent);
+  --c-dest-border-left: 3px solid var(--sage);
+  --c-dest-radius: 0;
+  --c-dest-shadow: none;
+  --c-dest-pad: 18px 22px;
+  --c-dest-icon-bg: transparent;
+  --c-dest-icon-color: var(--sage);
+  --c-dest-icon-box: 22px;
+  --c-dest-icon-box-radius: 0;
+  --c-dest-icon-size: 20px;
+  --c-dest-icon-stroke: 2;
+  --c-dest-label-color: var(--ink);
+
+  /* ATENÇÃO → inline notification "warning" (yellow) */
+  --c-aten-bg: var(--marigold-soft);
+  --c-aten-border: 1px solid color-mix(in oklab, var(--marigold) 55%, transparent);
+  --c-aten-border-left: 3px solid var(--marigold);
+  --c-aten-radius: 0;
+  --c-aten-shadow: none;
+  --c-aten-pad: 18px 22px;
+  --c-aten-icon-bg: transparent;
+  --c-aten-icon-color: var(--marigold-deep);
+  --c-aten-icon-box: 22px;
+  --c-aten-icon-box-radius: 0;
+  --c-aten-icon-size: 20px;
+  --c-aten-icon-stroke: 2;
+  --c-aten-label-color: var(--ink);
+
+  /* REFLEXÃO → inline notification "info" (purple), texto sans */
+  --c-refl-bg: var(--lavender-soft);
+  --c-refl-border: 1px solid color-mix(in oklab, var(--lavender) 35%, transparent);
+  --c-refl-border-left: 3px solid var(--lavender);
+  --c-refl-radius: 0;
+  --c-refl-shadow: none;
+  --c-refl-pad: 18px 22px 20px;
+  --c-refl-icon-bg: transparent;
+  --c-refl-icon-color: var(--lavender);
+  --c-refl-icon-box: 22px;
+  --c-refl-icon-box-radius: 0;
+  --c-refl-icon-size: 20px;
+  --c-refl-icon-stroke: 2;
+  --c-refl-label-color: var(--ink);
+  --c-refl-q-font: var(--font-sans);
+  --c-refl-q-style: normal;
+
+  /* CITAÇÃO → blockquote Carbon (esquerda, sans, filete azul) */
+  --c-cit-mark-display: none;
+  --c-cit-align: left;
+  --c-cit-font: var(--font-sans);
+  --c-cit-style: normal;
+  --c-cit-border-left: 3px solid var(--ocean);
+  --c-cit-pad-left: 24px;
+  --c-cit-q-margin: 0 0 18px;
+
+  /* QUIZ — tiles retos, seleção azul */
+  --c-quiz-radius: 0;
+  --c-quiz-opt-radius: 0;
+  --c-quiz-opt-border: 1px solid var(--rule-strong);
+  --c-quiz-accent: var(--ocean);
+
+  /* FLASHCARDS — tiles retos com hairline em vez de sombra */
+  --c-flash-radius: 0;
+  --c-flash-shadow: inset 0 0 0 1px rgba(22, 22, 22, 0.10);
+
+  /* MATERIAIS — layer cinza com borda, sem tint amarelo */
+  --c-mat-bg: var(--paper-warm);
+  --c-mat-border: 1px solid var(--rule);
+  --c-mat-radius: 0;
+  --c-mat-item-radius: 0;
+
+  /* FEATURE GRID — tiles quadrados */
+  --c-feature-badge-radius: 0;
+
+  /* PITACO — balão reto, layer cinza */
+  --c-bubble-bg: var(--paper-warm);
+  --c-bubble-radius: 0;
+
+  /* HERO — azul IBM no eyebrow e avatar */
+  --c-hero-eyebrow-color: var(--ocean);
+  --c-hero-eyebrow-icon: var(--ocean);
+  --c-hero-avatar-bg: var(--ocean);
+}

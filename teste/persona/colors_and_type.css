@@ -1,0 +1,555 @@
+/* ============================================================
+   Persona (Privy) — Foundations for ClassAtelier
+   Mesmos NOMES de variáveis e seletores do tema Aula, para que
+   os componentes re-skinnem sozinhos — com os design tokens
+   OFICIAIS do Persona Design System, da Privy (MIT)
+   (github.com/privy-open-source/design-system ·
+    packages/tailwind-preset).
+
+   Caráter: dashboard amigável — neutros frios azulados (ramp
+   gray do Persona), página em gray.5 #F4F5F7 com cards quase
+   brancos #FBFCFD, acento azul #008AFF, semânticas com tints
+   "0/milk", raios generosos, sombras suaves em camadas.
+
+   Fontes: DM Sans + DM Mono (as oficiais do Persona, OFL).
+   ============================================================ */
+
+@import url("./fonts/fonts.css");
+
+:root {
+  /* ─── Surfaces — Persona light ────────────────────────────
+     ground = gray.5 como fundo de página; cards/layers em
+     gray.0 quase branco; separação por borda subtle + sombra sm. */
+  --paper:        #F4F5F7;  /* bg-ground — gray.5 */
+  --paper-warm:   #E6E7EB;  /* gray.10 — layer rebaixada / code */
+  --sand:         #D9DDE3;  /* gray.15 — quebra de seção */
+  --bone:         #FBFCFD;  /* gray.0 — cards / hero / popovers */
+  --ink:          #1F2329;  /* gray.95 — text-default */
+  --ink-soft:     #383F4A;  /* gray.80 */
+  --ink-mute:     #5B6778;  /* gray.60 — text-subtle */
+  --ink-faint:    #728196;  /* gray.50 */
+  --rule:         #E6E7EB;  /* gray.10 — border-subtle */
+  --rule-strong:  #CBD1D8;  /* gray.20 — border-default */
+
+  --content-dark-primary: var(--ink);
+  --content-dark-secondary: var(--ink-soft);
+  --content-dark-muted: var(--ink-mute);
+  --content-dark-faint: var(--ink-faint);
+  --content-dark-border: var(--rule);
+  --content-dark-border-strong: var(--rule-strong);
+  --content-light-primary: var(--bone);
+  --content-light-secondary: color-mix(in oklab, var(--bone) 86%, transparent);
+  --content-light-muted: color-mix(in oklab, var(--bone) 70%, transparent);
+  --content-light-faint: color-mix(in oklab, var(--bone) 56%, transparent);
+  --content-light-border: color-mix(in oklab, var(--bone) 24%, transparent);
+  --content-light-border-strong: color-mix(in oklab, var(--bone) 42%, transparent);
+
+  /* ─── Accent palette — hues oficiais do Persona ───────────
+     base = tom 40 ("emphasis") · soft = tom 0 · deep = tom 60/70
+     (textos acessíveis usam sempre o deep). */
+
+  /* Marigold → Orange (warning) */
+  --marigold:        #FF9E00;  /* orange.40 */
+  --marigold-soft:   #FFF5E5;  /* orange.0 */
+  --marigold-deep:   #8C5700;  /* orange.70 — text-warning */
+
+  /* Terracotta → Red (danger / brand Privy) */
+  --terracotta:      #E42E2C;  /* red.40 — brand-action */
+  --terracotta-soft: #FCEAE9;  /* red.0 */
+  --terracotta-deep: #9F201F;  /* red.60 — text-danger */
+
+  /* Lavender → Purple */
+  --lavender:        #8000FF;  /* purple.40 */
+  --lavender-soft:   #F2E5FF;  /* purple.0 */
+  --lavender-deep:   #46008C;  /* purple.70 */
+
+  /* Sage → Green (success) */
+  --sage:            #34C759;  /* green.40 */
+  --sage-soft:       #EAF9EE;  /* green.0 */
+  --sage-deep:       #1D6D31;  /* green.70 */
+
+  /* Ocean → Blue (accent / info — assinatura do Persona) */
+  --ocean:           #008AFF;  /* blue.40 — brand-accent */
+  --ocean-soft:      #E5F3FF;  /* blue.0 */
+  --ocean-deep:      #004C8C;  /* blue.70 */
+
+  /* Coral → Teal (CTA / interação lúdica) */
+  --coral:           #00C7A9;  /* teal.40 */
+  --coral-soft:      #E5F9F6;  /* teal.0 */
+  --coral-deep:      #006D5D;  /* teal.70 */
+
+  /* Highlighter — translúcido sobre as hues Persona */
+  --hl-yellow:  rgba(255, 215, 0, 0.40);   /* yellow.40 */
+  --hl-pink:    rgba(206, 50, 217, 0.18);  /* pink.50 */
+  --hl-green:   rgba(52, 199, 89, 0.24);   /* green.40 */
+  --hl-blue:    rgba(0, 138, 255, 0.16);   /* blue.40 */
+
+  /* ─── Type — DM Sans em tudo, DM Mono no código ───────────
+     Como no Persona: uma família geométrica-humanista; a
+     hierarquia vem de tamanho e peso (regular/medium/bold). */
+  --font-display: "DM Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-serif:   "DM Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-sans:    "DM Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-mono:    "DM Mono", "SF Mono", Consolas, monospace;
+
+  /* Escala — degraus do fontSize do Persona (16/20/24/36/48/60) */
+  --fs-display:   clamp(2.25rem, 1.5rem + 2.8vw, 3.75rem); /* 4xl→6xl @kind other */
+  --fs-h1:        clamp(1.75rem, 1.35rem + 1.5vw, 2.25rem); /* →4xl @kind other */
+  --fs-h2:        clamp(1.375rem, 1.2rem + 0.7vw, 1.5rem); /* →2xl @kind other */
+  --fs-h3:        1.25rem; /* xl @kind font */
+  --fs-h4:        1.125rem; /* @kind font */
+  --fs-lead:      1.25rem; /* xl @kind font */
+  --fs-body:      1rem; /* base @kind font */
+  --fs-small:     0.875rem; /* sm @kind font */
+  --fs-meta:      0.8125rem; /* @kind font */
+  --fs-cap:       0.75rem; /* xs @kind font */
+
+  /* Entrelinhas — lineHeight do Persona */
+  --lh-tight:     1.15; /* @kind font */
+  --lh-snug:      1.33; /* tightest @kind font */
+  --lh-body:      1.5; /* normal @kind font */
+  --lh-loose:     1.7; /* @kind font */
+
+  /* Tracking — Persona usa passos de 0.2px */
+  --ls-display:   -0.012em; /* tighter @kind font */
+  --ls-tight:     -0.006em; /* tight @kind font */
+  --ls-eyebrow:   0.1em; /* widest @kind font */
+
+  /* ─── Layout ────────────────────────────────────────────── */
+  --measure:      66ch; /* @kind spacing */
+  --page-pad:     clamp(1.25rem, 4vw, 3rem); /* @kind spacing */
+
+  /* Spacing — base 4 (Tailwind, como o Persona) */
+  --sp-0: 0; /* @kind spacing */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4rem;
+  --sp-9: 6rem;
+  --sp-10: 8rem;
+
+  /* Radii — borderRadius do Persona (generoso, amigável) */
+  --r-0: 0; /* @kind radius */
+  --r-sm: 6px;   /* xs */
+  --r-md: 8px;   /* DEFAULT */
+  --r-lg: 12px;  /* md */
+  --r-xl: 16px;  /* xl */
+  --r-pill: 999px; /* full */
+
+  /* Sombras — boxShadow do Persona (gray.100 #191C21 na base) */
+  --sh-1: 0 1px 3px rgba(25, 28, 33, 0.10), 0 1px 2px rgba(25, 28, 33, 0.05);   /* sm */
+  --sh-2: 0 4px 6px -1px rgba(25, 28, 33, 0.10), 0 2px 4px rgba(25, 28, 33, 0.05); /* md */
+  --sh-3: 0 0 1px rgba(25, 28, 33, 0.15), 0 8px 10px -2px rgba(25, 28, 33, 0.10), 0 16px 25px -2px rgba(25, 28, 33, 0.10); /* xl */
+  --sh-inset: inset 0 0 0 1px rgba(25, 28, 33, 0.05);
+
+  /* Motion — suave, padrão de produto */
+  --ease-out:  cubic-bezier(0, 0, 0.2, 1); /* @kind other */
+  --ease-in:   cubic-bezier(0.4, 0, 1, 1); /* @kind other */
+  --ease-spring: cubic-bezier(0.34, 1.25, 0.5, 1); /* @kind other */
+  --dur-1: 150ms; /* @kind other */
+  --dur-2: 250ms; /* @kind other */
+  --dur-3: 400ms; /* @kind other */
+  --dur-4: 700ms; /* @kind other */
+}
+
+/* ============================================================
+   Base styles
+   ============================================================ */
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-feature-settings: "kern", "liga", "calt";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection { background: #ADD9FF; color: var(--ink); } /* blue.10 */
+
+/* ─── Typography elements ───────────────────────────────── */
+
+h1, .h1 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-display);
+  margin: 0 0 var(--sp-4);
+  color: var(--ink);
+  text-wrap: balance;
+}
+h2, .h2 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-tight);
+  margin: var(--sp-7) 0 var(--sp-3);
+  text-wrap: balance;
+}
+h3, .h3 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  line-height: var(--lh-snug);
+  margin: var(--sp-6) 0 var(--sp-2);
+}
+h4, .h4 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h4);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+  margin: var(--sp-5) 0 var(--sp-2);
+}
+
+.display {
+  font-family: var(--font-display);
+  font-size: var(--fs-display);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: var(--ls-display);
+  text-wrap: balance;
+}
+
+.lead {
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-weight: 400;
+  font-size: var(--fs-lead);
+  line-height: 1.45;
+  color: var(--ink-mute);
+  text-wrap: pretty;
+}
+
+p {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  margin: 0 0 var(--sp-5);
+  text-wrap: pretty;
+}
+
+/* ─── Drop cap ───────────────────────────────────────────── */
+.dropcap::first-letter,
+.dropcap > :first-child::first-letter {
+  float: left;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-style: normal;
+  font-size: 3.4em;
+  line-height: 0.82;
+  padding: 0.04em 0.1em 0 0;
+  margin: 0.08em 0.04em 0 0;
+  color: var(--ocean);          /* azul Persona */
+}
+.dropcap-ink::first-letter,      .dropcap-ink > :first-child::first-letter      { color: var(--ink); }
+.dropcap-ocean::first-letter,    .dropcap-ocean > :first-child::first-letter    { color: var(--ocean); }
+.dropcap-sage::first-letter,     .dropcap-sage > :first-child::first-letter     { color: var(--sage-deep); }
+.dropcap-lavender::first-letter, .dropcap-lavender > :first-child::first-letter { color: var(--lavender); }
+.dropcap-marigold::first-letter, .dropcap-marigold > :first-child::first-letter { color: var(--marigold-deep); }
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--fs-cap);
+  font-weight: 700;
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.meta {
+  font-family: var(--font-sans);
+  font-size: var(--fs-meta);
+  color: var(--ink-mute);
+  line-height: 1.42;
+}
+
+.caption {
+  font-family: var(--font-sans);
+  font-size: var(--fs-meta);
+  color: var(--ink-mute);
+  line-height: 1.45;
+  font-style: normal;
+}
+
+/* Links — Persona text-link = blue.50 */
+a {
+  color: #0075D9;
+  text-decoration: underline;
+  text-decoration-color: rgba(0, 117, 217, 0.35);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+a:hover { color: var(--ocean-deep); text-decoration-color: currentColor; }
+
+strong, b { font-weight: 700; color: var(--ink); }
+em, i { font-style: italic; }
+
+blockquote {
+  margin: var(--sp-6) 0;
+  padding: var(--sp-1) 0 var(--sp-1) var(--sp-5);
+  border-left: 3px solid var(--ocean);
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-weight: 400;
+  font-size: 1.25rem;
+  line-height: 1.42;
+  color: var(--ink-soft);
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--paper-warm);
+  padding: 0.12em 0.4em;
+  border-radius: var(--r-sm);
+  color: var(--ink);
+}
+pre {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  background: #272C33;            /* gray.90 — bg dark-ground */
+  color: #E6E7EB;                 /* gray.10 */
+  padding: var(--sp-5);
+  border-radius: var(--r-lg);
+  overflow-x: auto;
+  line-height: 1.5;
+}
+pre code { background: transparent; padding: 0; color: inherit; }
+
+hr {
+  border: 0;
+  height: 1px;
+  background: var(--rule);
+  margin: var(--sp-7) auto;
+  width: 100%;
+}
+
+ul, ol {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  padding-left: 1.4em;
+  margin: 0 0 var(--sp-5);
+}
+li { margin-bottom: var(--sp-2); }
+li::marker { color: var(--ink-faint); }
+
+img { max-width: 100%; height: auto; display: block; }
+
+/* ─── Highlighter mark ───────────────────────────────────── */
+mark, .mark, .hl {
+  background: linear-gradient(
+    100deg,
+    transparent 0.4%,
+    var(--hl-yellow) 1%,
+    var(--hl-yellow) 99%,
+    transparent 99.6%
+  );
+  background-size: 100% 60%;
+  background-position: 0 60%;
+  background-repeat: no-repeat;
+  padding: 0.05em 0.12em;
+  color: inherit;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.hl-pink  { background-image: linear-gradient(100deg, transparent 0.4%, var(--hl-pink) 1%, var(--hl-pink) 99%, transparent 99.6%); }
+.hl-green { background-image: linear-gradient(100deg, transparent 0.4%, var(--hl-green) 1%, var(--hl-green) 99%, transparent 99.6%); }
+.hl-blue  { background-image: linear-gradient(100deg, transparent 0.4%, var(--hl-blue) 1%, var(--hl-blue) 99%, transparent 99.6%); }
+
+/* Underline scribble — azul Persona */
+.scribble {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12' preserveAspectRatio='none'><path d='M2 7 Q 30 2, 60 6 T 120 7 T 198 5' stroke='%23008AFF' stroke-width='2.2' fill='none' stroke-linecap='round'/></svg>");
+  background-repeat: no-repeat;
+  background-size: 100% 0.42em;
+  background-position: 0 100%;
+  padding-bottom: 0.18em;
+}
+
+/* ─── Glossário ──────────────────────────────────────────── */
+.termo {
+  display: inline;
+  position: relative;
+  cursor: help;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--rule-strong);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--dur-1) var(--ease-out);
+}
+.termo:hover,
+.termo:focus-visible,
+.termo[aria-expanded="true"] { text-decoration-color: var(--ocean); }
+
+.termo__pop {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 11px);
+  transform: translateX(-50%) translateY(5px);
+  z-index: 60;
+  width: max-content;
+  max-width: min(290px, 78vw);
+  padding: 13px 16px 14px;
+  text-align: left;
+  background: var(--bone);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-3);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--dur-1) var(--ease-out),
+              transform var(--dur-1) var(--ease-out),
+              visibility var(--dur-1) linear;
+}
+.termo[aria-expanded="true"] .termo__pop {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+.termo__pop::before {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top-color: var(--bone);
+  filter: drop-shadow(0 1px 0 var(--rule));
+}
+.termo--below .termo__pop { bottom: auto; top: calc(100% + 11px); }
+.termo--below .termo__pop::before {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: var(--bone);
+  filter: drop-shadow(0 -1px 0 var(--rule));
+}
+.termo__label {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--ocean);
+  margin-bottom: 5px;
+}
+.termo__word {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+  margin-bottom: 3px;
+}
+.termo__def {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* ─── Auto-contraste em faixas escuras ───────────────────── */
+.aula-fullbleed[data-dark] a { color: inherit; text-decoration-color: color-mix(in oklab, currentColor 45%, transparent); }
+.aula-fullbleed[data-dark] a:hover { text-decoration-color: currentColor; }
+.aula-fullbleed[data-dark] strong,
+.aula-fullbleed[data-dark] b { color: inherit; }
+.aula-fullbleed[data-dark] code { background: color-mix(in oklab, currentColor 16%, transparent); color: inherit; }
+.aula-fullbleed[data-dark] blockquote { color: inherit; border-left-color: color-mix(in oklab, currentColor 55%, transparent); }
+.aula-fullbleed[data-dark] li::marker { color: color-mix(in oklab, currentColor 62%, transparent); }
+.aula-fullbleed[data-dark] hr { background: color-mix(in oklab, currentColor 24%, transparent); }
+.aula-fullbleed[data-dark] .dropcap::first-letter,
+.aula-fullbleed[data-dark] .dropcap > :first-child::first-letter { color: #3DA6FF; } /* blue.30 */
+.aula-fullbleed[data-dark] .termo { text-decoration-color: color-mix(in oklab, currentColor 50%, transparent); }
+.aula-fullbleed[data-dark] .termo:hover,
+.aula-fullbleed[data-dark] .termo[aria-expanded="true"] { text-decoration-color: #3DA6FF; }
+
+/* ─── Case cards — grade responsiva ──────────────────────── */
+.aula-cases-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 22px;
+}
+@media (min-width: 560px) {
+  .aula-cases-grid[data-cols="2"],
+  .aula-cases-grid[data-cols="3"] { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 900px) {
+  .aula-cases-grid[data-cols="3"] { grid-template-columns: repeat(3, 1fr); }
+}
+.aula-case-card { display: flex; flex-direction: column; }
+.aula-case-cover { aspect-ratio: 3 / 2; }
+
+.aula-cases-grid.is-horizontal { grid-template-columns: 1fr; }
+@media (min-width: 800px) {
+  .aula-cases-grid.is-horizontal[data-cols="2"] { grid-template-columns: repeat(2, 1fr); }
+}
+.aula-cases-grid.is-horizontal .aula-case-card { flex-direction: row; align-items: stretch; }
+.aula-cases-grid.is-horizontal .aula-case-cover {
+  aspect-ratio: auto;
+  flex: 0 0 42%;
+  min-height: 150px;
+}
+.aula-cases-grid.is-horizontal .aula-case-body { justify-content: center; }
+@media (max-width: 519px) {
+  .aula-cases-grid.is-horizontal .aula-case-card { flex-direction: column; }
+  .aula-cases-grid.is-horizontal .aula-case-cover { flex: none; aspect-ratio: 3 / 2; min-height: 0; }
+}
+
+/* ─── Feature grid ───────────────────────────────────────── */
+.aula-feature-grid { grid-template-columns: 1fr; }
+@media (min-width: 560px) {
+  .aula-feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 880px) {
+  .aula-feature-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.aula-feature-item i { line-height: 1; }
+
+/* ─── Tópico de conteúdo ─────────────────────────────────── */
+.aula-topic { display: flex; flex-direction: column; }
+.aula-topic > .aula-topic-item { margin: 0; }
+.aula-topic > .aula-topic-item > * { margin-top: 0 !important; margin-bottom: 0 !important; }
+.aula-topic > .aula-topic-item + .aula-topic-item { margin-top: 1.15em; }
+.aula-topic > .aula-topic-item[data-type="prose"] p + p { margin-top: 0.9em; }
+.aula-topic > .aula-topic-item[data-type="titulo"] { margin-top: 2.1em; }
+.aula-topic > .aula-topic-item[data-type="titulo"] + .aula-topic-item { margin-top: 0.65em; }
+.aula-topic > .aula-topic-item[data-type="destaque"],
+.aula-topic > .aula-topic-item[data-type="atencao"],
+.aula-topic > .aula-topic-item[data-type="reflexao"],
+.aula-topic > .aula-topic-item[data-type="pitaco"],
+.aula-topic > .aula-topic-item[data-type="citacao"] { margin-top: 1.5em; }
+.aula-topic > .aula-topic-item:first-child { margin-top: 0 !important; }
+
+/* ─── Focus ring — anel suave blue.10 (estilo Persona) ───── */
+:focus-visible {
+  outline: 3px solid #ADD9FF;
+  outline-offset: 1px;
+  border-radius: var(--r-sm);
+}
+
+/* ─── Reduced motion ─────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
