@@ -154,6 +154,8 @@ function loadCurrent() {
 function ClassAtelierApp() {
   const [lesson, setLesson] = useStateA(loadLesson);
   const [selected, setSelected] = useStateA(null);
+  // pasta do projeto: o projeto aberto é gravado também em projetos/ a cada alteração
+  useEffectA(() => { if (window.PastaProjeto) window.PastaProjeto.autosave(lesson); }, [lesson]);
   const [mode, setMode] = useStateA("edit"); // edit | preview
   // painel de propriedades (direita) recolhível; a escolha fica guardada neste navegador
   const [rightOpen, setRightOpenRaw] = useStateA(() => { try { return localStorage.getItem("classatelier.rightOpen") !== "0"; } catch (e) { return true; } });
@@ -1171,6 +1173,7 @@ function Topbar({ onInsertCode, onLibrary, onCourse, lesson, mode, setMode, onUn
         <button onClick={onLibrary} title="Biblioteca: todas as aulas guardadas neste navegador (as semanas do ClassAuthor entram aqui)" style={textBtn}><window.TIcon name="library" size={15} /><span className="tb-label">Biblioteca</span></button>
         <button className="tb-sec" onClick={onOpenProject} title="Abrir projeto (…-ClassAtelier.json)" style={textBtn}><window.TIcon name="folder" size={15} /><span className="tb-label">Abrir</span></button>
         <button onClick={onDownloadProject} title="Salvar projeto: baixa o arquivo para continuar depois ou em outro computador" style={textBtn}><window.TIcon name="save" size={15} /><span className="tb-label">Salvar</span></button>
+        <PastaButton />
         <button className="tb-sec" onClick={onVersions} title="Histórico de versões: volte a uma versão anterior da aula ou recupere um bloco apagado" style={textBtn}><window.TIcon name="history" size={15} /><span className="tb-label">Histórico</span></button>
         <button className="tb-sec" onClick={onRichNotes} title="Termos e links: revisar glossário e links de toda a aula" style={textBtn}><window.TIcon name="link" size={15} /><span className="tb-label">Termos e links</span></button>
         <button onClick={onA11y} aria-pressed={!!a11yOpen} title="Acessibilidade: verifica imagens sem descrição, contraste, títulos, links, vídeos e tabelas" style={{ ...textBtn, position: "relative", background: a11yOpen ? "var(--tool-surface)" : undefined }}><window.TIcon name="a11y" size={15} /><span className="tb-label">Acessibilidade</span>{a11yCount > 0 && <span aria-label={a11yCount + " itens para revisar"} style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 999, background: "#b3372a", color: "#fff", fontSize: 10.5, fontWeight: 800, display: "inline-grid", placeItems: "center", marginLeft: 2 }}>{a11yCount > 99 ? "99+" : a11yCount}</span>}</button>
@@ -1251,6 +1254,43 @@ function Topbar({ onInsertCode, onLibrary, onCourse, lesson, mode, setMode, onUn
     </header>
   );
 }
+// ── Pasta do projeto ──
+function PastaButton() {
+  const P = window.PastaProjeto;
+  const [st, setSt] = useStateA(() => (P ? P.status() : { supported: false }));
+  const [open, setOpen] = useStateA(false);
+  const [err, setErr] = useStateA("");
+  useEffectA(() => { if (!P) return; P.ready.then(setSt); return P.subscribe(setSt); }, []);
+  if (!P) return null;
+  const on = st.connected && st.state === "granted";
+  const waiting = st.connected && st.state !== "granted";
+  const run = (fn) => { setErr(""); fn().then(setSt, (e) => { if (!e || e.name !== "AbortError") setErr((e && e.message) || String(e)); }); };
+  const dot = { width: 8, height: 8, borderRadius: 999, background: on ? "#2a9d8f" : waiting ? "#d4a017" : "var(--tool-line-2)", flexShrink: 0 };
+  return (
+    <div style={{ position: "relative" }}>
+      <button data-act="pasta-projeto" onClick={() => setOpen((v) => !v)} aria-expanded={open} title={on ? "Pasta do projeto: " + st.name + " (tudo o que você salvar vai para lá)" : waiting ? "Pasta do projeto aguardando sua permissão" : "Pasta do projeto: escolha onde salvar tudo, separado em subpastas"} style={{ ...textBtn, borderColor: on ? "#2a9d8f" : waiting ? "#d4a017" : undefined }}>
+        <window.TIcon name="folder" size={15} /><span style={dot} /><span className="tb-label">Pasta</span>
+      </button>
+      {open && (<>
+        <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 41 }} />
+        <div role="dialog" aria-label="Pasta do projeto" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 42, background: "#fff", border: "1px solid var(--tool-line)", borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.16)", width: 330, padding: 14, display: "flex", flexDirection: "column", gap: 10, fontSize: 12.5, color: "var(--tool-ink)", lineHeight: 1.45 }}>
+          <strong style={{ fontSize: 13.5 }}>{on ? "Pasta do projeto: " + st.name : waiting ? "Pasta " + st.name + " (aguardando permissão)" : "Pasta do projeto"}</strong>
+          {!st.supported ? <span style={{ color: "var(--tool-ink-2)" }}>Este navegador não deixa o site gravar numa pasta do computador. No Chrome ou no Edge (computador), tudo o que o ClassAtelier salva vai para uma pasta, separado em subpastas. Aqui, os arquivos continuam indo para Downloads.</span>
+          : on ? <span style={{ color: "var(--tool-ink-2)" }}>{st.inAuthor ? "Ligado à pasta do projeto do ClassAuthor: o ClassAtelier usa a subpasta classatelier/ dela. " : ""}Tudo o que você salvar ou exportar vai para cá, cada tipo na sua subpasta ({st.subfolders.join(", ")}). O projeto aberto também é gravado em projetos/ a cada alteração. Para o PDF, salve na pasta pdf/ pela janela de impressão.</span>
+          : waiting ? <span style={{ color: "var(--tool-ink-2)" }}>Depois que a página é recarregada, o navegador pede sua autorização de novo. Enquanto isso, os arquivos vão para Downloads.</span>
+          : <span style={{ color: "var(--tool-ink-2)" }}>Escolha a pasta do projeto criada pelo ClassAuthor (o ClassAtelier usa a subpasta classatelier/ dela) ou qualquer outra pasta (ele cria classatelier/ dentro). Projeto, HTML, pacotes, SCORM, site do curso e texto passam a ser salvos lá, separados em subpastas.</span>}
+          {err && <span style={{ color: "#b3372a" }}>{err}</span>}
+          {st.supported && <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {waiting && <button onClick={() => run(P.reconnect)} style={{ ...textBtn, background: "var(--tool-accent)", color: "#fff", border: 0 }}>Reconectar pasta</button>}
+            <button onClick={() => run(P.choose)} style={!st.connected ? { ...textBtn, background: "var(--tool-accent)", color: "#fff", border: 0 } : textBtn}>{st.connected ? "Trocar pasta" : "Escolher pasta"}</button>
+            {st.connected && <button onClick={() => { if (window.confirm("Desligar a pasta? Nada é apagado dela; os próximos arquivos voltam a ir para Downloads.")) run(P.forget); }} style={textBtn}>Desligar</button>}
+          </div>}
+        </div>
+      </>)}
+    </div>
+  );
+}
+
 const menuItem = { display: "flex", flexDirection: "column", gap: 2, width: "100%", textAlign: "left", padding: "11px 14px", border: 0, background: "#fff", cursor: "pointer", fontSize: 13, color: "var(--tool-ink)", fontFamily: "inherit" };
 const menuSub = { fontSize: 11.5, color: "var(--tool-ink-3)", lineHeight: 1.35 };
 
