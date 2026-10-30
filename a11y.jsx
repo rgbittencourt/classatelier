@@ -160,6 +160,9 @@
           if (!plain(p.prompt)) add("warn", "text-empty", b, "Fórum sem pergunta", "Escreva a pergunta ou o tema da discussão.", WCAG.content);
           if (PLACEHOLDER_HREF(p.href)) add("error", "link-empty", b, "Fórum sem endereço", "Cole no painel o link do fórum de verdade (ainda está vazio ou “https://”); sem ele o botão não leva a lugar nenhum.", WCAG.link);
           break;
+        case "codigo":
+          if (!String(p.code || "").trim()) add("warn", "text-empty", b, "Bloco de código vazio", "Digite ou cole o código, ou remova o bloco.", WCAG.content);
+          break;
         case "equacao": {
           const lx = String(p.latex || "").trim();
           if (!lx) add("warn", "text-empty", b, "Equação vazia", "Escreva a fórmula no painel ou remova o bloco.", WCAG.content);

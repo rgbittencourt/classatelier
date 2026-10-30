@@ -293,6 +293,7 @@ function ExportCore({ block }) {
     }
     case "eyebrow": return h(R.Eyebrow, { icon: p.icon }, htmlSpan(p.text));
     case "forum": return h(R.Forum, { storageKey: p.slotId || block.id, title: htmlSpan(p.title), prompt: html(p.prompt), dueInitial: (p.dueInitial || "").replace(/<[^>]*>/g, "").trim() ? htmlSpan(p.dueInitial) : null, dueReplies: (p.dueReplies || "").replace(/<[^>]*>/g, "").trim() ? htmlSpan(p.dueReplies) : null, rules: p.rules, showCriteria: !!p.showCriteria, criteria: html(p.criteria), href: p.href, buttonLabel: p.buttonLabel, showDraft: p.showDraft !== false });
+    case "codigo": return h(R.Codigo, { code: p.code, language: p.language, title: p.title, showLineNumbers: p.showLineNumbers !== false, startLine: p.startLine, tabSize: p.tabSize, wrap: !!p.wrap, appearance: p.appearance, ariaLabel: p.ariaLabel });
     case "equacao": return h(R.Equacao, { latex: p.latex, number: htmlSpan(p.number), numberText: p.number, showNumber: p.showNumber !== false, ariaLabel: p.ariaLabel, size: p.size, autoFit: p.autoFit, framed: p.framed });
     case "citacao": return h(R.Citacao, { quote: htmlSpan(p.quote), author: htmlSpan(p.author), source: htmlSpan(p.source), showAttribution: p.showAttribution !== false });
     case "destaque": return h(R.Destaque, { title: htmlSpan(p.title), tone: p.tone, icon: p.icon }, html(p.body));
