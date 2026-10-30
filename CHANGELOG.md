@@ -4,12 +4,16 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.4.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.4.2** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.0** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.4.2 · 30/10/2026 · correção no bloco de código
+
+- **Shift+Tab** numa linha sem seleção desfazia o recuo, mas deixava os espaços restantes selecionados: a próxima tecla apagava o recuo inteiro. Agora o cursor fica no lugar, com um nível a menos de recuo.
 
 ### 1.4.1 · 30/10/2026 · cursos organizados por aula
 

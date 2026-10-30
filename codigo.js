@@ -368,7 +368,10 @@
           if (l.charAt(0) === "\t") return l.slice(1);
           var sp = (/^ */.exec(l) || [""])[0].length; return l.slice(Math.min(sp, tab));
         }).join("\n");
-        ta.setSelectionRange(ls, le); insertAtCursor(ta, changed); ta.setSelectionRange(ls, ls + changed.length);
+        ta.setSelectionRange(ls, le); insertAtCursor(ta, changed);
+        // Sem seleção, o cursor fica onde estava (deslocado pelo recuo); com seleção, as linhas continuam selecionadas.
+        if (s === en) { var caret = Math.max(ls, s + (changed.length - block.length)); ta.setSelectionRange(caret, caret); }
+        else ta.setSelectionRange(ls, ls + changed.length);
       }
     };
     return h("figure", { className: blockClass(props), style: blockStyle(props, code), role: "group", "aria-label": "Editor de código em " + LANG_LABEL[lang] },
