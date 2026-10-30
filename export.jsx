@@ -378,16 +378,18 @@ function lessonSlug(title) {
 }
 
 // Nome do arquivo de projeto: Semana01-titulo-da-aula-ClassAtelier.json (sem título, "aula").
+// Curso organizado por aulas no ClassAuthor (meta.unit "aula"): Aula01-titulo-ClassAtelier.json.
 function projectFileName(lesson, fallbackNumber) {
   const m = (lesson && lesson.meta) || {};
   let n = Number(m.weekNumber) || 0;
-  if (!n) { const found = /semana\s*0*(\d+)/i.exec((m.weekLabel || "") + " " + (m.title || "")); if (found) n = Number(found[1]); }
+  const unitPrefix = m.unit === "aula" || /^aula\b/i.test(String(m.weekLabel || "")) ? "Aula" : "Semana";
+  if (!n) { const found = /(?:semana|aula)\s*0*(\d+)/i.exec((m.weekLabel || "") + " " + (m.title || "")); if (found) n = Number(found[1]); }
   if (!n && fallbackNumber) n = Number(fallbackNumber) || 0;
   let slug = m.title ? lessonSlug(m.title) : "";
-  slug = slug.replace(/^semana-0*\d+-?/, "");
+  slug = slug.replace(/^(?:semana|aula)-0*\d+-?/, "");
   if (slug.length > 60) slug = slug.slice(0, 60).replace(/-[^-]*$/, "") || slug.slice(0, 60);
   slug = slug.replace(/(-(de|da|do|das|dos|em|na|no|nas|nos|e|a|o|as|os|para|com|por|que|um|uma))+$/, "").replace(/-$/, "") || "aula";
-  return (n ? "Semana" + String(n).padStart(2, "0") + "-" : "") + slug + "-ClassAtelier.json";
+  return (n ? unitPrefix + String(n).padStart(2, "0") + "-" : "") + slug + "-ClassAtelier.json";
 }
 
 function addProjectFile(zip, lesson, packagedFiles) {

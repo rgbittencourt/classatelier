@@ -109,7 +109,7 @@
     // imagens antigas desta aula que não são mais usadas
     oldImgs.forEach((rel) => { const p = ctx.prefix + rel; if (ctx.existing.has(p) && !keep.has(p) && !del.includes(p)) del.push(p); });
     // projeto antigo da mesma semana com outro nome (o título mudou)
-    const sem = /^Semana\d+-/.exec(projName.slice("projetos/".length));
+    const sem = /^(?:Semana|Aula)\d+-/.exec(projName.slice("projetos/".length));
     if (sem) ctx.existing.forEach((sha, p) => { if (p.startsWith(ctx.prefix + "projetos/" + sem[0]) && p.endsWith("-ClassAtelier.json") && !keep.has(p)) del.push(p); });
     del.forEach((p) => changes.push({ path: p, rel: p.slice(ctx.prefix.length), kind: "apagar", bytes: 0 }));
 
