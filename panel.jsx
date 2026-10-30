@@ -344,7 +344,7 @@ function QuizEditor({ p, setP }) {
 }
 
 // ── the panel ──
-function PropertiesPanel({ block, update, mergePrev, onRenumberEquations, onInsertEquation, onInsertImage, onBreakProse, onBreakTopic }) {
+function PropertiesPanel({ block, update, mergePrev, onRenumberEquations, onInsertEquation, onInsertImage, onInsertCode, onBreakProse, onBreakTopic }) {
   if (!block) {
     return <div style={{ padding: 24, color: "var(--tool-ink-3)", fontSize: 13, lineHeight: 1.5 }}>Selecione um bloco na página para editar suas propriedades, ou arraste um bloco da biblioteca à esquerda.</div>;
   }
@@ -388,7 +388,7 @@ function PropertiesPanel({ block, update, mergePrev, onRenumberEquations, onInse
       {/* Conteúdo estrutural por tipo */}
       <div style={ps.group}>
         <p style={ps.groupTitle}>Conteúdo</p>
-        {renderTypeContent(block, p, setP, mergePrev, onRenumberEquations, onInsertEquation, { onInsertImage, onBreakProse, onBreakTopic })}
+        {renderTypeContent(block, p, setP, mergePrev, onRenumberEquations, onInsertEquation, { onInsertImage, onInsertCode, onBreakProse, onBreakTopic })}
         <div style={{ height: 8 }} />
       </div>
     </div>
@@ -719,6 +719,28 @@ function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquati
       </>);
     case "equacao":
       return <EquationPanel p={p} setP={setP} onRenumber={onRenumber} />;
+    case "codigo":
+      return (<>
+        <Field label="Linguagem">
+          <select value={p.language || "text"} onChange={(e) => setP({ language: e.target.value })} style={ps.input}>
+            {(window.CODE_LANGUAGES || []).map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+          </select>
+        </Field>
+        <Field label="Nome do arquivo ou título (opcional)"><TextInput value={p.title || ""} onChange={(v) => setP({ title: v })} placeholder="Ex.: main.py" /></Field>
+        <Field><Toggle value={p.showLineNumbers !== false} onChange={(v) => setP({ showLineNumbers: v })} label="Numerar as linhas" /></Field>
+        {p.showLineNumbers !== false && (
+          <Field label="Primeira linha"><input type="number" min={1} max={99999} value={p.startLine || 1} onChange={(e) => setP({ startLine: Math.max(1, Number(e.target.value) || 1) })} style={ps.input} /></Field>
+        )}
+        <Field label="Aparência">
+          <Segmented value={p.appearance || "claro"} onChange={(v) => setP({ appearance: v })} options={[{ id: "claro", label: "Clara" }, { id: "escuro", label: "Escura" }, { id: "auto", label: "Do aparelho" }]} />
+        </Field>
+        <Field label="Recuo (Tab)">
+          <Segmented value={p.useTabs ? "tab" : String(p.tabSize || 4)} onChange={(v) => setP(v === "tab" ? { useTabs: true } : { useTabs: false, tabSize: Number(v) })} options={[{ id: "2", label: "2 espaços" }, { id: "4", label: "4 espaços" }, { id: "tab", label: "Tabulação" }]} />
+        </Field>
+        <Field><Toggle value={!!p.wrap} onChange={(v) => setP({ wrap: v })} label="Quebrar linhas longas (sem rolagem lateral)" /></Field>
+        <Field label="Descrição para leitor de tela (opcional)"><TextInput value={p.ariaLabel || ""} onChange={(v) => setP({ ariaLabel: v })} placeholder="Ex.: Função que soma dois números em Python" /></Field>
+        <p style={hint}>O código é digitado ou colado direto na página. <strong>Tab</strong> recua, <strong>Enter</strong> mantém o recuo, <strong>Shift+Tab</strong> desfaz o recuo e <strong>Ctrl/⌘ + Enter</strong> (ou «Continuar o texto») sai do bloco e abre um parágrafo logo abaixo. O destaque de cores é só visual: o código nunca é executado.</p>
+      </>);
     case "citacao":
       return (<>
         <Field><Toggle value={p.showAttribution !== false} onChange={(v) => setP({ showAttribution: v })} label="Mostrar autor e fonte/ano" /></Field>
@@ -759,6 +781,15 @@ function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquati
             </button>
           </Field>
           <p style={hint}>Clique no ponto do parágrafo onde a fórmula deve entrar e use o botão: o texto se divide ali e a equação fica no meio, em linha própria.</p>
+        </>}
+        {cursorActions.onInsertCode && <>
+          <div style={{ height: 14 }} />
+          <Field label="Código no meio do texto">
+            <button type="button" data-act="insert-code" onClick={cursorActions.onInsertCode} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 12px", borderRadius: 10, border: "1px solid var(--tool-line, #d8d3c6)", background: "var(--tool-card, #fff)", cursor: "pointer", font: "600 13px var(--font-ui, inherit)", color: "var(--tool-ink, #1b1a17)" }}>
+              <span aria-hidden="true" style={{ font: "700 13px ui-monospace, Menlo, monospace", width: 16, textAlign: "center" }}>{"</>"}</span> Inserir bloco de código no cursor
+            </button>
+          </Field>
+          <p style={hint}>Para aulas de programação: o parágrafo se divide no cursor e o bloco de código entra no meio, com destaque de sintaxe e botão de copiar.</p>
         </>}
         {onInsertImage && <>
           <div style={{ height: 14 }} />

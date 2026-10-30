@@ -407,6 +407,47 @@ function ClassAtelierApp() {
   };
   const insertEquationInProse = (blockId) => { insertChildInProse(blockId, window.newChildBlock("equacao")); };
 
+  // Coloca `child` logo depois do bloco `afterId`, na mesma lista (na raiz, dentro de um tópico próprio).
+  const insertAfterBlock = (afterId, child) => {
+    const next = JSON.parse(JSON.stringify(lesson));
+    const src = collectBlockLists(next.blocks, undefined, [], true).find((ref) => ref.list.some((b) => b.id === afterId));
+    if (!src) return false;
+    const i = src.list.findIndex((b) => b.id === afterId);
+    const prev = src.list[i];
+    let item = child;
+    if (src.list === next.blocks && window.CHILD_TYPES && window.CHILD_TYPES.indexOf(child.type) !== -1) { item = window.newBlock("topic"); item.props.children = [child]; }
+    else if (prev && prev.slide != null) child.slide = prev.slide;
+    src.list.splice(i + 1, 0, item);
+    commit(next);
+    setSelected(child.id);
+    setMode("edit");
+    return true;
+  };
+  // «Inserir bloco de código» (botão </> da barra, ou do painel do parágrafo): no cursor do parágrafo
+  // selecionado; com outro bloco selecionado, logo depois dele; sem seleção, no fim da aula.
+  const insertCodeBlock = (blockId) => {
+    const target = blockId || selected;
+    const block = target ? findBlockDeep(lesson.blocks, target) : null;
+    const child = window.newChildBlock("codigo");
+    child.props = { ...child.props, code: "" };
+    if (block && block.type === "prose") { insertChildInProse(block.id, child); }
+    else if (block) { insertAfterBlock(block.id, child); }
+    else { const topic = window.newBlock("topic"); topic.props.children = [child]; commit({ ...lesson, blocks: [...lesson.blocks, topic] }); setSelected(child.id); setMode("edit"); }
+    setTimeout(() => { const ta = document.querySelector('[data-bid="' + child.id + '"] .aula-code textarea'); if (ta) ta.focus(); }, 80);
+  };
+  // Sair do bloco de código (Ctrl/⌘ + Enter ou «Continuar o texto»): abre um parágrafo logo abaixo.
+  useEffectA(() => {
+    const onExit = (e) => {
+      const id = e.detail && e.detail.id;
+      if (!id) return;
+      const para = window.newChildBlock("prose");
+      para.props = { ...para.props, body: "<p></p>", dropcap: false };
+      if (insertAfterBlock(id, para)) setTimeout(() => { const ed = document.querySelector('[data-bid="' + para.id + '"] [contenteditable="true"]'); if (ed) ed.focus(); }, 80);
+    };
+    window.addEventListener("classatelier:code-exit", onExit);
+    return () => window.removeEventListener("classatelier:code-exit", onExit);
+  });
+
   // «Inserir imagem no cursor»: guarda o ponto do cursor, abre a janela (arquivo ou IA) e, ao confirmar, insere.
   const openImageDialog = (blockId) => {
     const sp = window.splitProseAtCaret ? window.splitProseAtCaret(blockId) : null;
@@ -734,7 +775,7 @@ function ClassAtelierApp() {
       <div style={{ display: "flex", flexDirection: "column", minWidth: 0, minHeight: 0, overflow: "hidden", borderLeft: mode === "edit" ? "1px solid var(--tool-line)" : "none", borderRight: mode === "edit" ? "1px solid var(--tool-line)" : "none" }}>
         <Topbar
           lesson={lesson} setLesson={commit} mode={mode} setMode={setMode}
-          onUndo={undo} canUndo={history.current.length > 0}
+          onUndo={undo} canUndo={history.current.length > 0} onInsertCode={mode === "edit" ? () => insertCodeBlock(null) : null}
           onExportHTML={exportHTML} onExportStandaloneHTML={exportStandaloneHTML} onExportSCORM={() => setScormOpen(true)} onPrintPDF={printPDF}
           onOpenProject={openProjectClick} onDownloadProject={downloadProject}
           onRichNotes={() => setRichOpen(true)} onA11y={() => setA11yOpen((v) => !v)} a11yOpen={a11yOpen} a11yCount={a11yCount} onLibrary={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(false); setLibOpen(true); }} onCourse={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(true); setLibOpen(true); }}
@@ -757,7 +798,7 @@ function ClassAtelierApp() {
             <button onClick={() => setRightOpen(false)} title="Recolher painel de propriedades" aria-label="Recolher painel de propriedades" aria-expanded="true"
               style={{ position: "absolute", top: 11, right: 10, zIndex: 6, width: 28, height: 28, display: "grid", placeItems: "center", border: "1px solid var(--tool-line)", background: "#fff", borderRadius: 7, cursor: "pointer", color: "var(--tool-ink-2)", fontSize: 15, lineHeight: 1 }}>»</button>
             {selBlock
-              ? <window.PropertiesPanel block={selBlock} update={(patch) => updateBlock(selBlock.id, patch)} mergePrev={mergeInfo(selBlock) ? () => mergeTopicWithPrevious(selBlock) : null} onRenumberEquations={() => commit(window.autoNumberEquations(lesson, true))} onInsertEquation={() => insertEquationInProse(selBlock.id)} onInsertImage={() => openImageDialog(selBlock.id)} onBreakProse={() => breakProseAtCaret(selBlock.id)} onBreakTopic={() => breakTopicAtCaret(selBlock.id)} />
+              ? <window.PropertiesPanel block={selBlock} update={(patch) => updateBlock(selBlock.id, patch)} mergePrev={mergeInfo(selBlock) ? () => mergeTopicWithPrevious(selBlock) : null} onRenumberEquations={() => commit(window.autoNumberEquations(lesson, true))} onInsertEquation={() => insertEquationInProse(selBlock.id)} onInsertImage={() => openImageDialog(selBlock.id)} onInsertCode={() => insertCodeBlock(selBlock.id)} onBreakProse={() => breakProseAtCaret(selBlock.id)} onBreakTopic={() => breakTopicAtCaret(selBlock.id)} />
               : <LessonMeta lesson={lesson} setLesson={(L) => setLesson(L)} />}
           </>) : (
             <button onClick={() => setRightOpen(true)} title="Abrir painel de propriedades" aria-label="Abrir painel de propriedades" aria-expanded="false"
@@ -806,6 +847,7 @@ const PALETTE_KEYS = {
   prose: "texto parágrafo paragrafo corpo escrever conteúdo conteudo",
   citacao: "frase autor epígrafe epigrafe aspas depoimento",
   forum: "fórum forum debate discussão discussao conversa moodle participação participacao pergunta colegas interação interacao",
+  codigo: "código codigo programação programacao code snippet trecho python javascript typescript html css sql java c++ c# php json xml bash terminal script algoritmo sintaxe",
   equacao: "fórmula formula equação matemática matematica física fisica química quimica latex katex cálculo calculo expressão expressao somatório integral fração fracao raiz",
   eyebrow: "sobrelinha rótulo rotulo chamada pequeno",
   destaque: "nota importante veja bem dica caixa realçar realcar",
@@ -1109,7 +1151,7 @@ function RichNotesDialog({ lesson, onClose, onUpdate }) {
 const emptyNote={padding:18,border:"1px dashed var(--tool-line-2)",borderRadius:9,color:"var(--tool-ink-3)",fontSize:12};
 
 // ── Top bar ──
-function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear, onVersions, onRepublish, onMoodle, onCopyText, onDownloadText, onToAuthor, authorLinked }) {
+function Topbar({ onInsertCode, onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear, onVersions, onRepublish, onMoodle, onCopyText, onDownloadText, onToAuthor, authorLinked }) {
   const [busy, setBusy] = useStateA(false);
   const [menu, setMenu] = useStateA(false);
   const [more, setMore] = useStateA(false);
@@ -1124,6 +1166,7 @@ function Topbar({ onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, o
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
         <button onClick={onUndo} disabled={!canUndo} title="Desfazer (⌘Z)" style={{ ...ghostBtn, opacity: canUndo ? 1 : 0.4 }}><window.TIcon name="undo" size={15} /></button>
+        {onInsertCode && <button data-act="insert-code-toolbar" onMouseDown={(e) => e.preventDefault()} onClick={onInsertCode} title="Inserir bloco de código: no cursor do parágrafo, depois do bloco selecionado ou no fim da aula" aria-label="Inserir bloco de código" style={{ ...ghostBtn, width: "auto", padding: "0 8px", font: "700 13px ui-monospace, Menlo, monospace" }}>{"</>"}</button>}
         <button className="tb-sec" onClick={onClear} disabled={!canClear} title="Limpar página" style={{ ...ghostBtn, opacity: canClear ? 1 : 0.4, color: canClear ? "var(--coral-deep)" : "var(--tool-ink-3)" }}><window.TIcon name="trash" size={15} /></button>
         <button onClick={onLibrary} title="Biblioteca: todas as aulas guardadas neste navegador (as semanas do ClassAuthor entram aqui)" style={textBtn}><window.TIcon name="library" size={15} /><span className="tb-label">Biblioteca</span></button>
         <button className="tb-sec" onClick={onOpenProject} title="Abrir projeto (…-ClassAtelier.json)" style={textBtn}><window.TIcon name="folder" size={15} /><span className="tb-label">Abrir</span></button>

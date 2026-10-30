@@ -4,12 +4,22 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.3.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.4.0** (em teste) | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.0** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.4.0 · em teste (ramo `codigo`, cópia em `/teste/`) · bloco de código
+
+- **Novo bloco «Código»** (paleta, em Texto; busca por "código", "python", "sql"…), para aulas de programação. O código é digitado ou colado direto na página, com destaque de sintaxe, recuo preservado, numeração de linhas opcional, cabeçalho com a linguagem e botão **Copiar código**.
+- **Botão `</>` na barra de ferramentas** («Inserir bloco de código»): no cursor do parágrafo selecionado (o parágrafo se divide ali), depois do bloco selecionado ou no fim da aula. O painel do Parágrafo também ganhou **Inserir bloco de código no cursor**.
+- Linguagens: Python, JavaScript, TypeScript, HTML, CSS, SQL, Java, C, C++, C#, PHP, JSON, XML, Bash e Texto simples.
+- Edição: **Tab** recua (2 ou 4 espaços, ou tabulação), **Shift+Tab** desfaz o recuo, **Enter** mantém o recuo (e acrescenta um nível depois de `:` no Python ou de `{`, `[`, `(`), **Ctrl/⌘ + Enter** ou **Continuar o texto** sai do bloco e abre um parágrafo logo abaixo.
+- Aparência clara, escura ou do aparelho; quebra de linhas opcional (senão, rolagem lateral); título/nome do arquivo e descrição para leitor de tela.
+- Aula exportada (HTML, SCORM, site) mantém o destaque e o botão de copiar; o aluno seleciona e copia, mas não edita. O destaque é só visual: o código nunca é executado. Texto da aula (copiar/baixar) leva o código em bloco ```.
+- Verificação de acessibilidade avisa bloco de código vazio.
 
 ### 1.3.0 · 29/10/2026 · imagem e quebras no cursor; ClassAcervo com endereço próprio
 

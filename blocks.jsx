@@ -18,7 +18,7 @@ const {
 } = window;
 const {
   Quiz, VideoYouTube, AudioPodcast, ExternalEmbed, CaseCards, FeatureGrid, MateriaisExtras, ReferenciasABNT, PitacoDo, ParallaxImage,
-  Tabela, Filmstrip, LinhaDoTempo, TextoImagem,
+  Tabela, Filmstrip, LinhaDoTempo, TextoImagem, Codigo, CodigoEditor,
 } = window;
 
 // Vertical-padding band + reading-measure wrapper used by root-level blocks.
@@ -165,6 +165,14 @@ function BlockCore({ block, mode, renderNestedList }) {
           size={p.size} autoFit={p.autoFit} framed={p.framed}
         />
       );
+
+    case "codigo":
+      return isEdit
+        ? <CodigoEditor {...p}
+            onChange={(v) => set("code", v)}
+            onLanguage={(v) => set("language", v)}
+            onExit={() => window.dispatchEvent(new CustomEvent("classatelier:code-exit", { detail: { id: block.id } }))} />
+        : <Codigo {...p} />;
 
     // ───── Destaques ─────
     case "destaque":

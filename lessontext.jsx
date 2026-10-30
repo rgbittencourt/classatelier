@@ -40,6 +40,7 @@
     if (T === "prose") return plain(p.body);
     if (T === "citacao") { const q = plain(p.quote); const a = [plain(p.author), plain(p.source)].filter(Boolean).join(", "); return q ? "> " + q.replace(/\n+/g, " ") + (a ? "\n> — " + a : "") : ""; }
     if (T === "forum") { const rs = (Array.isArray(p.rules) ? p.rules : []).map((r) => "- " + plain(r)).filter((x) => x.length > 2); return ["## Fórum: " + (plain(p.title) || "discussão"), plain(p.prompt), plain(p.dueInitial) ? "Postagem inicial: " + plain(p.dueInitial) : "", plain(p.dueReplies) ? "Respostas aos colegas: " + plain(p.dueReplies) : "", ...rs, p.showCriteria ? "Critérios: " + plain(p.criteria) : "", p.href && !/^https?:\/\/$/i.test(String(p.href).trim()) ? "Link: " + p.href : ""].filter(Boolean).join("\n"); }
+    if (T === "codigo") { const c = String(p.code || ""); if (!c.trim()) return ""; return "```" + (p.language && p.language !== "text" ? p.language : "") + (p.title ? " " + plain(p.title) : "") + "\n" + c.replace(/\s+$/, "") + "\n```"; }
     if (T === "equacao") { const l = String(p.latex || "").trim(); if (!l) return ""; const n = plain(p.number); return "$$ " + l + " $$" + (p.showNumber !== false && n ? "  " + n : ""); }
     if (T === "eyebrow") return plain(p.text);
     if (T === "destaque" || T === "atencao" || T === "reflexao") {

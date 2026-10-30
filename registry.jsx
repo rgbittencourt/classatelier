@@ -133,6 +133,12 @@ const BLOCKS = [
     props: { latex: "E = mc^{2}", number: "(1)", showNumber: true, ariaLabel: "", autoNumber: true, size: 100, autoFit: true, framed: true },
   },
   {
+    type: "codigo", label: "Código", icon: "code", cat: "Texto",
+    kind: "text", bg: "neutral-default", pad: "tight",
+    fields: [],
+    props: { code: "def saudacao(nome):\n    return f\"Olá, {nome}!\"\n\nprint(saudacao(\"turma\"))", language: "python", title: "", showLineNumbers: true, startLine: 1, tabSize: 4, useTabs: false, wrap: false, appearance: "claro", ariaLabel: "" },
+  },
+  {
     type: "eyebrow", label: "Eyebrow (sobrelinha)", icon: "heading", cat: "Texto",
     kind: "text", bg: "neutral-default", pad: "tight",
     fields: [{ key: "text", placeholder: "Sobrelinha", single: true }],
