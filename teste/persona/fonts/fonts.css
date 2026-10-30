@@ -1,0 +1,32 @@
+/* Tema Persona (Privy) — DM Sans + DM Mono (Google Fonts, OFL).
+   Fontes oficiais do Persona Design System (tailwind-preset):
+   sans: 'DM Sans' · mono: 'DM Mono'. */
+
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 100 1000;
+  font-display: swap;
+  src: url(./DMSans-var.ttf) format('truetype-variations');
+}
+@font-face {
+  font-family: 'DM Sans';
+  font-style: italic;
+  font-weight: 100 1000;
+  font-display: swap;
+  src: url(./DMSans-Italic-var.ttf) format('truetype-variations');
+}
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(./DMMono-Regular.ttf) format('truetype');
+}
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(./DMMono-Medium.ttf) format('truetype');
+}
