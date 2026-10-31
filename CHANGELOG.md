@@ -4,12 +4,19 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.4.2** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.5.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.0** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.5.0 · 30/10/2026 · pasta do projeto
+
+- Botão **Pasta** na barra superior (Chrome e Edge no computador): liga uma pasta do computador e tudo o que o ClassAtelier salva vai para ela, separado em subpastas: `projetos/` (o projeto aberto, gravado sozinho a cada alteração, e o Salvar), `html/` (arquivo HTML e pacote HTML), `scorm/`, `site/` (site do curso), `textos/` (texto da aula), `pdf/` (para salvar o PDF pela janela de impressão) e `outros/`.
+- Se a pasta escolhida for a pasta de projeto criada pelo ClassAuthor 1.3.0, o ClassAtelier trabalha na subpasta `classatelier/` dela, ao lado dos arquivos que vêm do ClassAuthor. Em outra pasta, cria `classatelier/` dentro.
+- Depois de recarregar a página, o navegador pede a autorização de novo (bolinha amarela, "Reconectar pasta"). Sem pasta, ou em navegadores sem suporte, os arquivos vão para Downloads como antes.
+- `pasta.js` carrega direto no `index.html`; não entra nos pacotes exportados.
 
 ### 1.4.2 · 30/10/2026 · correção no bloco de código
 
