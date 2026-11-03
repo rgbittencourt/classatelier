@@ -643,6 +643,7 @@ function ClassAtelierApp() {
   const [busyMsg, setBusyMsg] = useStateA(null);
   const [richOpen, setRichOpen] = useStateA(false);
   const [a11yOpen, setA11yOpen] = useStateA(false);
+  const [presenting, setPresenting] = useStateA(null); // { at } enquanto o modo apresentação está aberto
   // contagem de erros+avisos (regras de conteúdo) para o selo do botão
   const a11yCount = React.useMemo(() => { try { const ig = new Set((lesson.meta && lesson.meta.a11yIgnored) || []); return window.A11y.audit(lesson).filter((i) => i.sev !== "tip" && !window.A11y.isIgnored(i, ig)).length; } catch (e) { return 0; } }, [lesson]);
   const gotoBlock = (id, trail, findText) => {
@@ -781,7 +782,7 @@ function ClassAtelierApp() {
         <Topbar
           lesson={lesson} setLesson={commit} mode={mode} setMode={setMode}
           onUndo={undo} canUndo={history.current.length > 0} onInsertCode={mode === "edit" ? () => insertCodeBlock(null) : null}
-          onExportHTML={exportHTML} onExportStandaloneHTML={exportStandaloneHTML} onExportDelivery={exportDelivery} onExportSCORM={() => setScormOpen(true)} onPrintPDF={printPDF}
+          onExportHTML={exportHTML} onExportStandaloneHTML={exportStandaloneHTML} onExportDelivery={exportDelivery} onExportSCORM={() => setScormOpen(true)} onPrintPDF={printPDF} onPresent={() => setPresenting({ at: mode === "edit" ? window.presentStartIndex(lesson, selected) : 0 })}
           onOpenProject={openProjectClick} onDownloadProject={downloadProject}
           onRichNotes={() => setRichOpen(true)} onA11y={() => setA11yOpen((v) => !v)} a11yOpen={a11yOpen} a11yCount={a11yCount} onLibrary={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(false); setLibOpen(true); }} onCourse={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(true); setLibOpen(true); }}
           onClear={() => setClearOpen(true)} canClear={hasLessonContent} onVersions={() => setVersionsOpen(true)} onRepublish={() => setRepublishOpen(true)} onMoodle={() => setMoodle({ links: [] })} onCopyText={copyLessonText} onDownloadText={downloadLessonText} onToAuthor={sendToAuthor} authorLinked={!!authorOrigin && !!window.opener}
@@ -821,6 +822,7 @@ function ClassAtelierApp() {
         onCourse={(entries) => setCourseEntries(entries)} />}
       {courseEntries && <CourseDialog entries={courseEntries} onMoodle={(links) => setMoodle({ links })} onClose={() => setCourseEntries(null)} onCheck={(title, load) => setScormCheck({ title, load })}
         onConfirm={async (opts) => { try { await (opts.format === "site" ? window.downloadCourseSite : window.downloadCourseSCORM)(opts.lessons, opts); setCourseEntries(null); showToast("Pacote do curso gerado."); } catch (e) { alert("Erro ao gerar o pacote do curso: " + e.message); } }} />}
+      {presenting && window.PresentMode && <window.PresentMode lesson={lesson} startAt={presenting.at} onClose={() => setPresenting(null)} />}
       {toast && <div role="status" style={{ position: "fixed", left: "50%", bottom: 24, transform: "translateX(-50%)", zIndex: 10000, maxWidth: 520, padding: "12px 18px", borderRadius: 12, background: "#14213D", color: "#fff", fontSize: 13, lineHeight: 1.5, boxShadow: "0 18px 44px rgba(20,33,61,.3)" }}>{toast}</div>}
       <window.MarkToolbar />
       <input ref={fileInputRef} type="file" accept=".json,application/json" onChange={onProjectFile} style={{ display: "none" }} />
@@ -1156,7 +1158,7 @@ function RichNotesDialog({ lesson, onClose, onUpdate }) {
 const emptyNote={padding:18,border:"1px dashed var(--tool-line-2)",borderRadius:9,color:"var(--tool-ink-3)",fontSize:12};
 
 // ── Top bar ──
-function Topbar({ onInsertCode, onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportDelivery, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear, onVersions, onRepublish, onMoodle, onCopyText, onDownloadText, onToAuthor, authorLinked }) {
+function Topbar({ onPresent, onInsertCode, onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportDelivery, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear, onVersions, onRepublish, onMoodle, onCopyText, onDownloadText, onToAuthor, authorLinked }) {
   const [busy, setBusy] = useStateA(false);
   const [menu, setMenu] = useStateA(false);
   const [more, setMore] = useStateA(false);
@@ -1184,6 +1186,7 @@ function Topbar({ onInsertCode, onLibrary, onCourse, lesson, mode, setMode, onUn
           <button onClick={() => setMode("edit")} style={segBtn(mode === "edit")}><window.TIcon name="pencil" size={13} /> <span className="tb-seg-label">Editar</span></button>
           <button onClick={() => setMode("preview")} style={segBtn(mode === "preview")}><window.TIcon name="eye" size={13} /> <span className="tb-seg-label">Visualizar</span></button>
         </div>
+        <button data-act="present" onClick={onPresent} disabled={!lesson.blocks.length} title="Apresentar: mostra a aula em tela cheia, uma seção por vez, para projetar em sala (Esc sai)" style={{ ...textBtn, opacity: lesson.blocks.length ? 1 : 0.45 }}><window.TIcon name="present" size={14} /><span className="tb-label">Apresentar</span></button>
         <button className="tb-sec" onClick={onPrintPDF} title="Imprimir PDF: abre a versão expandida da aula para imprimir" style={textBtn}><window.TIcon name="printer" size={15} /><span className="tb-label">Imprimir PDF</span></button>
         <div className="tb-more" style={{ position: "relative" }}>
           <button onClick={() => setMore((v) => !v)} title="Mais ações: abrir projeto, termos e links, imprimir PDF, limpar página" aria-haspopup="menu" aria-expanded={more} aria-label="Mais ações" style={{ ...ghostBtn, fontSize: 18, lineHeight: 1, paddingBottom: 5 }}>⋯</button>

@@ -4,12 +4,22 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.8.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.9.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.9.0 · 03/11/2026 · Modo apresentação
+
+**Acrescentado**
+- Botão **Apresentar** na barra superior: abre a aula em **tela cheia, uma seção por vez** (cada bloco de nível mais alto é uma tela), para projetar em sala ou numa videochamada. Nada é exportado nem gravado.
+- Teclado: **→ ↓ Page Down Espaço** avança; **← ↑ Page Up** volta; **Home / End** vão ao começo e ao fim; **I** abre o índice das seções; **+ / −** mudam o tamanho do texto; **F** alterna a tela cheia; **Esc** sai. Em celular e tablet, deslize para os lados.
+- Barra de controles (anterior, contador, próxima, A−/A+, tela cheia, sair) que some depois de 3 segundos sem movimento. Barra de progresso fina no topo. Índice com o título de cada seção.
+- No editor, a apresentação começa pela seção do bloco selecionado; na prévia, pela primeira.
+- Tamanho do texto de 100% a 200%, lembrado neste navegador.
+- Acessibilidade: janela com `role="dialog"`, aviso por leitor de tela a cada troca («Seção 3 de 12: título») e foco devolvido ao botão ao sair.
 
 ### 1.8.0 · 03/11/2026 · Buscar legendas do YouTube
 
