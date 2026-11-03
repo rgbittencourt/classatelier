@@ -50,8 +50,8 @@
     }
     if (T === "pitaco") { const who = plain(p.kicker) || plain(p.name); return (who ? "**" + who + ":** " : "") + plain(p.body); }
     if (T === "imagem" || T === "parallax") { const c = [plain(p.overlayTitle), plain(p.caption)].filter(Boolean).join(" — "); return c ? "[Imagem: " + c + "]" : ""; }
-    if (T === "video") { const c = [plain(p.title), plain(p.caption)].filter(Boolean).join(" — "); return c ? "[Vídeo: " + c + "]" : ""; }
-    if (T === "audio") { const c = [plain(p.title), plain(p.show), plain(p.description)].filter(Boolean).join(" — "); return c ? "[Áudio: " + c + "]" : ""; }
+    if (T === "video") { const c = [plain(p.title), plain(p.caption)].filter(Boolean).join(" — "); const tr = String(p.transcript || "").trim(); return c ? "[Vídeo: " + c + "]" + (tr ? "\n\nTranscrição:\n" + tr : "") : ""; }
+    if (T === "audio") { const c = [plain(p.title), plain(p.show), plain(p.description)].filter(Boolean).join(" — "); const tr = String(p.transcript || "").trim(); return c ? "[Áudio: " + c + "]" + (tr ? "\n\nTranscrição:\n" + tr : "") : ""; }
     if (T === "quiz") {
       const qs = Array.isArray(p.questions) ? p.questions : [];
       const head = plain(p.title) || "Quiz";

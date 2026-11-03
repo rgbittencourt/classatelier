@@ -862,6 +862,10 @@ function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquati
         <Field label="Legenda"><TextInput value={p.caption} onChange={(v) => setP({ caption: v })} /></Field>
         <Field label="Crédito"><TextInput value={p.credit} onChange={(v) => setP({ credit: v })} /></Field>
         <Field label="Início (segundos)"><TextInput value={p.start} onChange={(v) => setP({ start: v })} /></Field>
+        <Toggle value={!!p.captionsOk} onChange={(v) => setP({ captionsOk: v })} label="Conferi: o vídeo tem legendas" />
+        <Field label="Transcrição (texto do vídeo)"><TextArea value={p.transcript} onChange={(v) => setP({ transcript: v })} placeholder="Cole aqui a transcrição. Separe parágrafos com uma linha em branco." /></Field>
+        <Field label="Ou link da transcrição"><TextInput value={p.transcriptUrl} onChange={(v) => setP({ transcriptUrl: v })} placeholder="https://…" /></Field>
+        <p style={hint}>A transcrição aparece na aula como “Transcrição”, recolhida. Quem não ouve ou não vê o vídeo lê o texto no lugar.</p>
       </>);
     case "audio":
       return (<>
@@ -871,6 +875,9 @@ function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquati
         <Field label="Programa / show"><TextInput value={p.show} onChange={(v) => setP({ show: v })} /></Field>
         <Field label="Título do episódio"><TextInput value={p.title} onChange={(v) => setP({ title: v })} /></Field>
         <Field label="Descrição"><TextArea value={p.description} onChange={(v) => setP({ description: v })} /></Field>
+        <Field label="Transcrição (texto do áudio)"><TextArea value={p.transcript} onChange={(v) => setP({ transcript: v })} placeholder="Cole aqui a transcrição. Separe parágrafos com uma linha em branco." /></Field>
+        <Field label="Ou link da transcrição"><TextInput value={p.transcriptUrl} onChange={(v) => setP({ transcriptUrl: v })} placeholder="https://…" /></Field>
+        <p style={hint}>Quem não ouve precisa de um texto equivalente. A transcrição aparece na aula, recolhida.</p>
       </>);
     case "externalembed":
       return (<>

@@ -755,8 +755,22 @@ function ExternalEmbed({ embed, title = "Conteúdo incorporado", responsive = tr
   return <div className="aula-external-embed" style={{ maxWidth: intrinsicWidth }}><div className="aula-external-embed__frame" style={frameStyle}><iframe src={parsed.src} title={titleText || "Conteúdo incorporado"} loading="lazy" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen" allowFullScreen /></div></div>;
 }
 
+// TRANSCRIÇÃO — alternativa em texto para vídeo e áudio (WCAG 1.2.1/1.2.3). Texto puro: parágrafos separados por linha em branco.
+function MediaTranscript({ text, url, label = "Transcrição" }) {
+  const paras = String(text || "").split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean);
+  if (!paras.length && !url) return null;
+  const link = url ? <div className="aula-transcript__link"><RecursoLink rotulo={`${label} completa em`} href={url} /></div> : null;
+  const body = paras.map((t, i) => <p key={i}>{t.split("\n").map((line, j, all) => <React.Fragment key={j}>{line}{j < all.length - 1 && <br />}</React.Fragment>)}</p>);
+  if (usePDF() || !paras.length) return <section className="aula-transcript is-print">{paras.length > 0 && <h4>{label}</h4>}{paras.length > 0 && <div className="aula-transcript__body">{body}</div>}{link}</section>;
+  return <details className="aula-transcript">
+    <summary><strong>{label}</strong><Icon name="chevron-down" size={18} stroke={1.7} /></summary>
+    <div className="aula-transcript__body">{body}</div>
+    {link}
+  </details>;
+}
+
 // VIDEO YOUTUBE — responsive 16:9 embed with caption
-function VideoYouTube({ id, title = "Vídeo", caption, credit, start }) {
+function VideoYouTube({ id, title = "Vídeo", caption, credit, start, transcript, transcriptUrl }) {
   const titleText = richPlain(title) || "Vídeo";
   if (usePDF()) {
     // PDF: static poster + the public YouTube URL underneath.
@@ -774,6 +788,7 @@ function VideoYouTube({ id, title = "Vídeo", caption, credit, start }) {
         </div>
         {caption && <figcaption className="aula-media-cap"><RichInline value={caption}/>{credit && <span className="aula-media-credit"> — <RichInline value={credit}/></span>}</figcaption>}
         <RecursoLink rotulo="Assista em" href={url} />
+        <MediaTranscript text={transcript} url={transcriptUrl} />
       </figure>
     );
   }
@@ -808,6 +823,7 @@ function VideoYouTube({ id, title = "Vídeo", caption, credit, start }) {
           <RichInline value={caption}/>{credit && <span className="aula-media-credit"> — <RichInline value={credit}/></span>}
         </figcaption>
       )}
+      <MediaTranscript text={transcript} url={transcriptUrl} />
     </figure>
   );
 }
@@ -827,7 +843,11 @@ function toSpotifyEmbed(input) {
   return null;
 }
 
-function AudioPodcast({ src, spotify, slotId, title, show, duration, description, tall = false }) {
+function AudioPodcast({ transcript, transcriptUrl, ...rest }) {
+  const tr = <MediaTranscript text={transcript} url={transcriptUrl} />;
+  return <><AudioPodcastBody {...rest} />{tr}</>;
+}
+function AudioPodcastBody({ src, spotify, slotId, title, show, duration, description, tall = false }) {
   if (usePDF()) {
     // PDF: static podcast card + the public resource URL underneath.
     let href = null, rotulo = "Ouça em";

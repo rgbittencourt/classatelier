@@ -4,12 +4,21 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.6.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.7.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.7.0 · 03/11/2026 · Transcrição de vídeo e áudio
+
+**Acrescentado**
+- Blocos **Vídeo (YouTube)** e **Áudio / Podcast** ganharam o campo **Transcrição** (texto, com parágrafos separados por linha em branco) e o campo **Ou link da transcrição**. Na aula, a transcrição aparece como uma seção recolhida «Transcrição» logo abaixo do player (aberta no PDF); o link aparece como recurso. A transcrição também vai para a exportação de texto.
+- Bloco de vídeo: opção **Conferi: o vídeo tem legendas**, para quando as legendas já estão ativas no YouTube.
+
+**Mudou**
+- Verificador de acessibilidade: «Vídeo sem legendas nem transcrição» passou de dica a **aviso** (some quando há legendas conferidas, transcrição com 80 caracteres ou mais, ou link). O aviso «Áudio sem transcrição» também reconhece o novo campo.
 
 ### 1.6.0 · 03/11/2026 · Pacote de entrega
 

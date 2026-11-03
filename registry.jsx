@@ -208,12 +208,12 @@ const BLOCKS = [
   {
     type: "video", label: "Vídeo (YouTube)", icon: "play-circle", cat: "Mídia",
     kind: "list", bg: "neutral-default", pad: "normal",
-    props: { id: "dQw4w9WgXcQ", title: "Vídeo", caption: "Legenda do vídeo.", credit: "", start: "" },
+    props: { id: "dQw4w9WgXcQ", title: "Vídeo", caption: "Legenda do vídeo.", credit: "", start: "", captionsOk: false, transcript: "", transcriptUrl: "" },
   },
   {
     type: "audio", label: "Áudio / Podcast", icon: "headphones", cat: "Mídia",
     kind: "list", bg: "neutral-default", pad: "normal",
-    props: { spotify: "", src: "", title: "Título do episódio", show: "Podcast", description: "Breve descrição.", duration: "" },
+    props: { spotify: "", src: "", title: "Título do episódio", show: "Podcast", description: "Breve descrição.", duration: "", transcript: "", transcriptUrl: "" },
   },
   {
     type: "cases", label: "Cards de casos", icon: "layers", cat: "Mídia",

@@ -23,6 +23,7 @@
 
   const entities = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'", "&nbsp;": " " };
   const plain = (h) => String(h == null ? "" : h).replace(/<[^>]*>/g, " ").replace(/&(amp|lt|gt|quot|#39|nbsp);/g, (m) => entities[m]).replace(/\s+/g, " ").trim();
+  const hasTranscript = (p) => String(p.transcript || "").trim().length >= 80 || /^https?:\/\//i.test(String(p.transcriptUrl || "").trim());
   const clip = (t, n = 60) => (t.length > n ? t.slice(0, n - 1) + "…" : t);
 
   const TOPICS = ["topic", "topic-collapsible", "topic-slider"];
@@ -118,13 +119,13 @@
           if (!p.id || p.id === "dQw4w9WgXcQ") add("error", "video-placeholder", b, "Vídeo de exemplo ainda no lugar", "O endereço é o vídeo-modelo que vem com o bloco. Troque pelo seu vídeo.", WCAG.media);
           const t = plain(p.title);
           if (!t || /^v[ií]deo$/i.test(t)) add("warn", "video-title", b, "Vídeo sem título descritivo", "O título do vídeo é o nome que o leitor de tela anuncia no player. Use algo como “Entrevista com a coordenadora (8 min)”.", WCAG.frame);
-          add("tip", "video-captions", b, "Confirme legendas ou transcrição", "Vídeos precisam de legendas (surdos e ensurdecidos) e de alternativa em texto. No YouTube, ative as legendas e, se possível, ofereça a transcrição na própria aula.", WCAG.media);
+          if (!p.captionsOk && !hasTranscript(p)) add("warn", "video-captions", b, "Vídeo sem legendas nem transcrição", "Surdos e ensurdecidos precisam de legendas ou de um texto equivalente. No YouTube, ative as legendas e marque “Conferi: o vídeo tem legendas” no bloco, ou cole a transcrição (ou o link dela) no campo Transcrição.", WCAG.media);
           break;
         }
         case "audio": {
           const d = plain(p.description);
           if (!p.src && !p.spotify) add("warn", "audio-empty", b, "Bloco de áudio sem arquivo", "Informe o arquivo ou o endereço do áudio.", WCAG.media);
-          if (d.length < 250) add("warn", "audio-transcript", b, "Áudio sem transcrição", "Quem não ouve precisa de um texto equivalente. Cole a transcrição do episódio (ou um link para ela) na descrição ou em um bloco logo abaixo.", WCAG.media);
+          if (d.length < 250 && !hasTranscript(p)) add("warn", "audio-transcript", b, "Áudio sem transcrição", "Quem não ouve precisa de um texto equivalente. Cole a transcrição do episódio (ou o link dela) no campo Transcrição do bloco.", WCAG.media);
           break;
         }
         case "externalembed": {
