@@ -4,12 +4,17 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.10.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.10.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.10.1 · 03/11/2026 · Manual Class atualizado
+
+**Acrescentado**
+- O **Manual Class** (botão **Manual ↗**) descreve agora tudo o que entrou nas versões 1.6.0 a 1.10.0: Pacote de entrega, Transcrição e legendas do YouTube, Modo apresentação e a lista de fóruns para criar no Moodle, com capturas de tela novas. Também cobre as novidades do ClassAuthor 1.4.0 a 1.11.0 e do ClassAcervo 1.3.0 e 1.4.0.
 
 ### 1.10.0 · 03/11/2026 · Fóruns para criar no Moodle
 
