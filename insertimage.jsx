@@ -7,12 +7,20 @@
 // em SVG, sempre rotulado "Ilustração criada por IA". Quem insere no texto é o app.jsx.
 (function () {
   const { useState, useRef, useEffect } = React;
-  const LS_BASE = "classatelier.ai.base", LS_CODE = "classatelier.ai.code";
+  const LS_BASE = "classatelier.ai.base", LS_CODE = "classatelier.ai.code", LS_KEY = "classatelier.ai.key";
   const DEFAULT_BASE = "https://classauthor.vercel.app";
   const MAX_SIDE = 1600;
 
   const safeGet = (store, key) => { try { return window[store].getItem(key) || ""; } catch (e) { return ""; } };
   const safeSet = (store, key, value) => { try { if (value) window[store].setItem(key, value); else window[store].removeItem(key); } catch (e) { /* sem armazenamento */ } };
+
+
+  // Chave de IA própria (para quem não tem o código de acesso): fica só na sessão desta aba, nunca em localStorage.
+  // Vai ao servidor do ClassAuthor em cabeçalhos x-aula-*; o servidor a usa na hora, sem guardar nem registrar.
+  const keyHeaders = (aiKey) => {
+    const key = String(aiKey || "").trim();
+    return /^[A-Za-z0-9._-]{16,300}$/.test(key) ? { "x-aula-ai-key": key, "x-aula-ai-provider": /^sk-ant-/.test(key) ? "anthropic" : "openai" } : {};
+  };
 
   // Lê o arquivo e, se for foto grande, reduz o lado maior para 1600 px (a aula exportada fica leve).
   function readImage(file) {
@@ -39,18 +47,18 @@
     });
   }
 
-  async function askFigure({ base, code, prompt, context, title }) {
+  async function askFigure({ base, code, aiKey, prompt, context, title }) {
     const url = String(base || DEFAULT_BASE).trim().replace(/\/+$/, "") + "/api/figure";
     const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 170000);
     let res;
     try {
-      res = await fetch(url, { method: "POST", signal: ctl.signal, headers: { "Content-Type": "application/json", ...(code ? { "x-aula-access-code": code } : {}) }, body: JSON.stringify({ action: "figure", prompt, context, title }) });
+      res = await fetch(url, { method: "POST", signal: ctl.signal, headers: { "Content-Type": "application/json", ...(code ? { "x-aula-access-code": code } : {}), ...keyHeaders(aiKey) }, body: JSON.stringify({ action: "figure", prompt, context, title }) });
     } catch (e) {
       throw new Error(e && e.name === "AbortError" ? "A IA demorou demais. Tente de novo, com uma descrição mais simples." : "Não consegui falar com o ClassAuthor em " + url.replace(/\/api\/figure$/, "") + ". Confira o endereço e a conexão (e se esta versão do ClassAuthor já tem a criação de figuras).");
     } finally { clearTimeout(timer); }
     let data = null; try { data = await res.json(); } catch (e) { /* resposta sem JSON */ }
     if (!res.ok || !data || !data.ok) {
-      if (res.status === 401) throw new Error("O código de acesso do ClassAuthor não foi aceito. É o mesmo que você digita na entrada do ClassAuthor.");
+      if (res.status === 401) throw new Error("O código de acesso do ClassAuthor não foi aceito. É o mesmo que você digita na entrada do ClassAuthor. Sem o código? Cole a sua chave de IA no campo ao lado.");
       if (res.status === 503) throw new Error("O ClassAuthor está sem chave de IA configurada. " + ((data && data.error) || ""));
       throw new Error((data && data.error) || "O ClassAuthor respondeu com erro " + res.status + ".");
     }
@@ -65,6 +73,7 @@
     const [base, setBase] = useState(safeGet("localStorage", LS_BASE) || DEFAULT_BASE);
     const [code, setCode] = useState(safeGet("localStorage", LS_CODE) || safeGet("sessionStorage", LS_CODE));
     const [remember, setRemember] = useState(!!safeGet("localStorage", LS_CODE));
+    const [aiKey, setAiKey] = useState(safeGet("sessionStorage", LS_KEY));
     const [busy, setBusy] = useState("");
     const [err, setErr] = useState("");
     const fileRef = useRef(null);
@@ -81,9 +90,9 @@
       if (String(prompt).trim().length < 4) { setErr("Descreva o que a imagem deve mostrar (uma ideia por figura)."); return; }
       setBusy("Criando a figura… leva de 20 a 60 segundos.");
       try {
-        const r = await askFigure({ base, code: code.trim(), prompt: prompt.trim(), context, title });
+        const r = await askFigure({ base, code: code.trim(), aiKey, prompt: prompt.trim(), context, title });
         safeSet("localStorage", LS_BASE, base.trim() === DEFAULT_BASE ? "" : base.trim());
-        safeSet("sessionStorage", LS_CODE, code.trim()); safeSet("localStorage", LS_CODE, remember ? code.trim() : "");
+        safeSet("sessionStorage", LS_CODE, code.trim()); safeSet("localStorage", LS_CODE, remember ? code.trim() : ""); safeSet("sessionStorage", LS_KEY, String(aiKey || "").trim());
         setImg({ src: r.src, alt: r.alt || "", caption: r.caption || "", credit: r.credit || "", ai: true });
       } catch (e) { setErr(e.message); }
       finally { setBusy(""); }
@@ -124,6 +133,7 @@
                 <div style={{ flex: 1.3 }}><label style={lab}>Endereço do ClassAuthor</label><input value={base} onChange={(e) => setBase(e.target.value)} autoComplete="off" spellCheck={false} style={inp} data-ii="base" /></div>
                 <div style={{ flex: 1 }}><label style={lab}>Código de acesso</label><input type="password" value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" spellCheck={false} style={inp} data-ii="code" /></div>
               </div>
+              <div style={{ marginBottom: 8 }}><label style={lab}>Sem o código? Use a sua chave de IA (Anthropic ou OpenAI)</label><input type="password" value={aiKey} onChange={(e) => setAiKey(e.target.value)} autoComplete="off" spellCheck={false} placeholder="Opcional: cole a sua chave (sk-ant-… ou sk-…)" style={inp} data-ii="aikey" /><p style={{ fontSize: 11.5, color: "var(--tool-ink-3)", margin: "4px 0 0", lineHeight: 1.45 }}>O custo vai para a sua conta no provedor. A chave fica só nesta aba (some ao fechar), vai por conexão segura e o servidor não a guarda.</p></div>
               <label style={{ display: "flex", gap: 8, fontSize: 12.5, color: "var(--tool-ink-3)", margin: "0 0 12px" }}><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> Lembrar o código neste navegador (não use em computador compartilhado)</label>
               <button type="button" onClick={create} disabled={!!busy} style={primary} data-ii="create">{img && img.ai ? "Criar de novo" : "Criar imagem"}</button>
               {busy && <p role="status" style={{ fontSize: 12.5, color: "var(--tool-ink-2)", margin: "12px 0 0" }}>{busy}</p>}
@@ -150,18 +160,18 @@
   }
 
   // ── Legendas do YouTube → campo Transcrição (painel do bloco Vídeo) ──
-  async function askCaptions({ base, code, video }) {
+  async function askCaptions({ base, code, aiKey, video }) {
     const url = String(base || DEFAULT_BASE).trim().replace(/\/+$/, "") + "/api/captions";
     const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 40000);
     let res;
     try {
-      res = await fetch(url, { method: "POST", signal: ctl.signal, headers: { "Content-Type": "application/json", ...(code ? { "x-aula-access-code": code } : {}) }, body: JSON.stringify({ action: "captions", video, language: "pt" }) });
+      res = await fetch(url, { method: "POST", signal: ctl.signal, headers: { "Content-Type": "application/json", ...(code ? { "x-aula-access-code": code } : {}), ...keyHeaders(aiKey) }, body: JSON.stringify({ action: "captions", video, language: "pt" }) });
     } catch (e) {
       throw new Error(e && e.name === "AbortError" ? "O YouTube demorou demais. Tente de novo." : "Não consegui falar com o ClassAuthor em " + url.replace(/\/api\/captions$/, "") + ". Confira o endereço e a conexão.");
     } finally { clearTimeout(timer); }
     let data = null; try { data = await res.json(); } catch (e) { /* sem JSON */ }
     if (!res.ok || !data || !data.ok) {
-      if (res.status === 401) throw new Error("O código de acesso do ClassAuthor não foi aceito. É o mesmo que você digita na entrada do ClassAuthor.");
+      if (res.status === 401) throw new Error("O código de acesso do ClassAuthor não foi aceito. É o mesmo que você digita na entrada do ClassAuthor. Sem o código? Cole a sua chave de IA no campo ao lado.");
       throw new Error((data && data.error) || "O ClassAuthor respondeu com erro " + res.status + ".");
     }
     return data;
@@ -171,6 +181,7 @@
     const [base, setBase] = useState(safeGet("localStorage", LS_BASE) || DEFAULT_BASE);
     const [code, setCode] = useState(safeGet("localStorage", LS_CODE) || safeGet("sessionStorage", LS_CODE));
     const [remember, setRemember] = useState(!!safeGet("localStorage", LS_CODE));
+    const [aiKey, setAiKey] = useState(safeGet("sessionStorage", LS_KEY));
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState("");
     const [note, setNote] = useState("");
@@ -181,9 +192,9 @@
       if (hasText && !confirm) { setConfirm(true); return; }
       setConfirm(false); setBusy(true);
       try {
-        const r = await askCaptions({ base, code: code.trim(), video });
+        const r = await askCaptions({ base, code: code.trim(), aiKey, video });
         safeSet("localStorage", LS_BASE, base.trim() === DEFAULT_BASE ? "" : base.trim());
-        safeSet("sessionStorage", LS_CODE, code.trim()); safeSet("localStorage", LS_CODE, remember ? code.trim() : "");
+        safeSet("sessionStorage", LS_CODE, code.trim()); safeSet("localStorage", LS_CODE, remember ? code.trim() : ""); safeSet("sessionStorage", LS_KEY, String(aiKey || "").trim());
         onFill(r);
         setNote((r.auto ? "Legenda automática do YouTube" : "Legenda do YouTube") + " (" + (r.languageName || r.language) + ", " + r.paragraphs + " parágrafos) colocada no campo. Leia e corrija antes de publicar.");
       } catch (e) { setErr(e.message); }
@@ -193,6 +204,7 @@
       <div data-cf="box" style={{ margin: "8px 0 10px", padding: "10px 12px", border: "1px solid var(--tool-line)", borderRadius: 9, background: "var(--tool-surface)" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div><label style={{ display: "block", fontSize: 11.5, fontWeight: 600, margin: "0 0 3px" }}>Código de acesso do ClassAuthor</label><input type="password" value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" spellCheck={false} style={inp} data-cf="code" /></div>
+          <div><label style={{ display: "block", fontSize: 11.5, fontWeight: 600, margin: "0 0 3px" }}>Sem o código? Sua chave de IA (só serve de passe: buscar legenda não gasta IA)</label><input type="password" value={aiKey} onChange={(e) => setAiKey(e.target.value)} autoComplete="off" spellCheck={false} placeholder="Opcional (sk-ant-… ou sk-…)" style={inp} data-cf="aikey" /></div>
           <button type="button" onClick={go} disabled={busy || !video} data-cf="go" style={{ padding: "7px 12px", border: "1px solid var(--tool-accent)", borderRadius: 7, background: confirm ? "var(--tool-accent)" : "#fff", color: confirm ? "#fff" : "var(--tool-accent)", fontWeight: 600, fontSize: 12.5, cursor: busy || !video ? "not-allowed" : "pointer", whiteSpace: "nowrap" }}>{busy ? "Buscando…" : confirm ? "Substituir o texto" : "Buscar legendas do YouTube"}</button>
         </div>
         {confirm && <p role="status" style={{ fontSize: 12, margin: "6px 0 0", color: "var(--tool-ink-2)" }}>Já há texto no campo Transcrição. Clique de novo para substituir.</p>}

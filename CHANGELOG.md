@@ -4,12 +4,18 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.10.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.11.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.11.0 · 03/11/2026 · Chave de IA própria nas figuras e legendas
+
+- Em **Inserir imagem → Criar com IA** e em **Buscar legendas do YouTube** há um campo novo, opcional: «Sem o código? Use a sua chave de IA (Anthropic ou OpenAI)». Quem não tem o código de acesso do ClassAuthor usa a própria chave; o servidor do ClassAuthor a usa na hora, sem guardar nem registrar, e nunca usa as chaves do dono sem o código.
+- A chave fica só na sessão da aba (nunca em `localStorage`) e segue em cabeçalhos `x-aula-ai-key` e `x-aula-ai-provider`.
+- Exige o ClassAuthor 1.12.0 ou mais novo.
 
 ### 1.10.1 · 03/11/2026 · Manual Class atualizado
 
