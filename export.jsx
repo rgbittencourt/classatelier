@@ -277,6 +277,8 @@ function ExportCore({ block }) {
   const html = (s) => h("div", { dangerouslySetInnerHTML: { __html: s || "" } });
   const htmlSpan = (s) => h("span", { dangerouslySetInnerHTML: { __html: s || "" } });
   const nested = (kids) => (kids||[]).length ? h("div", { className: "aula-embedded-blocks" }, (kids||[]).map((child)=>h("div", { key: child.id, className: "aula-embedded-block", "data-type": child.type }, h(ExportCore, { block: child })))) : null;
+  // Alinhamento do texto do Parágrafo (a página exportada não carrega o registry, por isso a função é local).
+  const proseAlign = (a) => a === "center" || a === "right" ? { textAlign: a } : a === "justify" ? { textAlign: "justify", hyphens: "auto", WebkitHyphens: "auto" } : undefined;
   const dropcapClass = (pp) => pp.dropcap ? ("dropcap" + (pp.dropcapTone && pp.dropcapTone !== "terracotta" ? " dropcap-" + pp.dropcapTone : "")) : undefined;
   switch (block.type) {
     case "hero": return h(R.LessonHero, { eyebrow: htmlSpan(p.eyebrow), title: htmlSpan(p.title), lead: htmlSpan(p.lead), author: p.author, authorImage: p.authorImage, readTime: p.readTime, date: p.date });
@@ -288,8 +290,8 @@ function ExportCore({ block }) {
     case "referencias": return h(R.ReferenciasABNT, { title: p.title, items: p.items });
     case "prose": {
       const inlineVideo = p.inlineVideo && p.inlineVideo.id ? h("div", { className: "aula-prose-inline-video" }, h(R.VideoYouTube, { id: p.inlineVideo.id, title: p.inlineVideo.title, caption: p.inlineVideo.caption, credit: p.inlineVideo.credit, start: p.inlineVideo.start })) : null;
-      if (!inlineVideo) return h("div", { className: dropcapClass(p), dangerouslySetInnerHTML: { __html: p.body || "" } });
-      return h("div", null, h("div", { className: dropcapClass(p), dangerouslySetInnerHTML: { __html: p.body || "" } }), inlineVideo);
+      if (!inlineVideo) return h("div", { className: dropcapClass(p), style: proseAlign(p.align), dangerouslySetInnerHTML: { __html: p.body || "" } });
+      return h("div", null, h("div", { className: dropcapClass(p), style: proseAlign(p.align), dangerouslySetInnerHTML: { __html: p.body || "" } }), inlineVideo);
     }
     case "eyebrow": return h(R.Eyebrow, { icon: p.icon }, htmlSpan(p.text));
     case "forum": return h(R.Forum, { storageKey: p.slotId || block.id, title: htmlSpan(p.title), prompt: html(p.prompt), dueInitial: (p.dueInitial || "").replace(/<[^>]*>/g, "").trim() ? htmlSpan(p.dueInitial) : null, dueReplies: (p.dueReplies || "").replace(/<[^>]*>/g, "").trim() ? htmlSpan(p.dueReplies) : null, rules: p.rules, showCriteria: !!p.showCriteria, criteria: html(p.criteria), href: p.href, buttonLabel: p.buttonLabel, showDraft: p.showDraft !== false });

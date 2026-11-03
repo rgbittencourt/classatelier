@@ -154,6 +154,7 @@
         case "prose": {
           const t = plain(p.body);
           if (!t) add("warn", "text-empty", b, "Parágrafo vazio", "Preencha ou remova o bloco.", WCAG.content);
+          else if (p.align === "justify" && t.length > 300) add("tip", "text-justify", b, "Texto justificado", "Os espaços irregulares entre as palavras dificultam a leitura de quem tem dislexia ou baixa visão (WCAG 1.4.8). Prefira alinhar à esquerda, sobretudo em textos longos.", WCAG.content);
           else if (t.length > 1400) add("tip", "text-long", b, "Parágrafo muito longo", `${t.length} caracteres seguidos. Quebre em parágrafos menores ou use um título; ajuda a todos, e muito quem tem dislexia ou baixa visão.`, WCAG.content);
           break;
         }

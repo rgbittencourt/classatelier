@@ -119,11 +119,11 @@ function BlockCore({ block, mode, renderNestedList }) {
       const dc = p.dropcap ? ("dropcap" + (p.dropcapTone && p.dropcapTone !== "terracotta" ? " dropcap-" + p.dropcapTone : "")) : undefined;
       const video = p.inlineVideo && p.inlineVideo.id ? p.inlineVideo : null;
       const setInlineVideo = (key, value) => set("inlineVideo", { ...(p.inlineVideo || {}), [key]: value });
-      if (!video) return E("body", { placeholder: "Escreva o corpo do texto…", className: dc });
+      if (!video) return E("body", { placeholder: "Escreva o corpo do texto…", className: dc, style: window.proseAlignStyle(p.align) });
       const inlineVideo = video ? (isEdit
         ? <figure className="aula-video aula-video--inline"><div className="aula-video__frame"><div className="aula-video__poster" style={{ pointerEvents: "none" }}><span className="aula-video__scrim"/><span className="aula-video__play"><i className="fa-solid fa-play"/></span><span className="aula-video__poster-title" style={{ pointerEvents: "auto" }}>{React.createElement(window.Editable, { mode, tag: "span", single: true, html: video.title || "", placeholder: "Título do vídeo", onChange: (value) => setInlineVideo("title", value) })}</span></div></div><figcaption className="aula-media-cap">{React.createElement(window.Editable, { mode, tag: "span", single: true, html: video.caption || "", placeholder: "Legenda do vídeo", onChange: (value) => setInlineVideo("caption", value) })}<span className="aula-media-credit"> — {React.createElement(window.Editable, { mode, tag: "span", single: true, html: video.credit || "", placeholder: "Crédito / fonte", onChange: (value) => setInlineVideo("credit", value) })}</span></figcaption></figure>
         : <VideoYouTube id={video.id} title={video.title} caption={video.caption} credit={video.credit} start={video.start} />) : null;
-      return <><div className={dc}>{E("body", { placeholder: "Escreva o corpo do texto…" })}</div><div className="aula-prose-inline-video">{inlineVideo}</div></>;
+      return <><div className={dc} style={window.proseAlignStyle(p.align)}>{E("body", { placeholder: "Escreva o corpo do texto…" })}</div><div className="aula-prose-inline-video">{inlineVideo}</div></>;
     }
     case "eyebrow":
       return <Eyebrow icon={p.icon}>{E("text", { single: true, placeholder: "Sobrelinha" })}</Eyebrow>;

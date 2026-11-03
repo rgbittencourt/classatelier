@@ -399,7 +399,7 @@ function ClassAtelierApp() {
       const keepBefore = !emptyHtml(sp.before), keepAfter = !emptyHtml(sp.after);
       if (keepBefore || !keepAfter) parts.push({ ...prose, props: { ...prose.props, body: keepBefore ? sp.before : "<p></p>" } });
       parts.push(child);
-      if (keepAfter) { const n = window.newChildBlock("prose"); n.props = { ...n.props, body: sp.after, dropcap: false }; if (prose.slide != null) n.slide = prose.slide; parts.push(n); }
+      if (keepAfter) { const n = window.newChildBlock("prose"); n.props = { ...n.props, body: sp.after, dropcap: false, align: prose.props && prose.props.align }; if (prose.slide != null) n.slide = prose.slide; parts.push(n); }
     }
     src.list.splice(i, 1, ...parts);
     commit(next);
@@ -477,7 +477,7 @@ function ClassAtelierApp() {
     const i = src.list.findIndex((b) => b.id === blockId);
     const prose = src.list[i];
     const n = window.newChildBlock("prose");
-    n.props = { ...n.props, body: sp.after, dropcap: false };
+    n.props = { ...n.props, body: sp.after, dropcap: false, align: prose.props && prose.props.align };
     if (prose.slide != null) n.slide = prose.slide;
     src.list.splice(i, 1, { ...prose, props: { ...prose.props, body: sp.before } }, n);
     commit(next);
@@ -508,7 +508,7 @@ function ClassAtelierApp() {
       const keepBefore = !emptyHtml(sp.before), keepAfter = !emptyHtml(sp.after);
       before = kids.slice(0, ci); after = kids.slice(ci + 1);
       if (keepBefore) before.push({ ...hit, props: { ...hit.props, body: sp.before } });
-      if (keepAfter) { const n = window.newChildBlock("prose"); n.props = { ...n.props, body: sp.after, dropcap: false }; after.unshift(n); }
+      if (keepAfter) { const n = window.newChildBlock("prose"); n.props = { ...n.props, body: sp.after, dropcap: false, align: hit.props && hit.props.align }; after.unshift(n); }
     } else {
       before = kids.slice(0, ci + 1); after = kids.slice(ci + 1);   // cursor dentro de coluna/acordeão: quebra logo depois dele
       note = " O cursor estava dentro de uma estrutura (coluna, acordeão…); a quebra foi feita logo depois dela.";

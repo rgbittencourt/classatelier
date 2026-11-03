@@ -768,6 +768,8 @@ function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquati
       return (<>
         <p style={hint}>O corpo é editado direto na página: clique e digite. Selecione um trecho para marca-texto, rabisco, ênfase ou para marcar um <strong>termo de glossário</strong>.</p>
         <div style={{ height: 14 }} />
+        <Field label="Alinhamento do texto"><Segmented value={p.align || "left"} onChange={(v) => setP({ align: v })} options={[{ id: "left", label: "Esquerda" }, { id: "center", label: "Centro" }, { id: "right", label: "Direita" }, { id: "justify", label: "Justificado" }]} /></Field>
+        {p.align === "justify" && <p style={hint}>Justificado deixa a mancha do texto regular, mas cria espaços irregulares entre as palavras, o que pode atrapalhar quem tem dislexia ou baixa visão. Prefira «Esquerda» em textos longos.</p>}
         <Field><Toggle value={!!p.dropcap} onChange={(v) => setP({ dropcap: v })} label="Capitular (letra inicial)" /></Field>
         {p.dropcap && (
           <Field label="Cor da capitular"><DropcapTones value={p.dropcapTone || "terracotta"} onChange={(v) => setP({ dropcapTone: v })} /></Field>

@@ -113,7 +113,7 @@ const BLOCKS = [
     type: "prose", label: "Parágrafo", icon: "type", cat: "Texto",
     kind: "text", bg: "neutral-default", pad: "normal",
     fields: [{ key: "body", placeholder: "Escreva o corpo do texto. Selecione palavras para aplicar marca-texto ou rabisco." }],
-    props: { body: "<p>Escreva aqui. Selecione um trecho para aplicar marca-texto, rabisco ou ênfase.</p>", dropcap: false, dropcapTone: "terracotta" },
+    props: { body: "<p>Escreva aqui. Selecione um trecho para aplicar marca-texto, rabisco ou ênfase.</p>", dropcap: false, dropcapTone: "terracotta", align: "left" },
     rich: true,
   },
   {
@@ -511,4 +511,12 @@ function TIcon({ name, size = 16, color = "currentColor", stroke = 1.9 }) {
   );
 }
 
-Object.assign(window, { BLOCKS, BLOCK_BY_TYPE, BLOCK_CATS, CHILD_TYPES, CHILD_PICKER_TYPES, ROOT_STRUCTURE_TYPES, NESTED_CHILD_TYPES, STRUCTURAL_TYPES, CONTAINER_TYPES, BG_TONES, TONE_BG, PAD_PRESETS, PAD_BY_ID, newBlock, newChildBlock, TIcon });
+// Alinhamento do texto do bloco Parágrafo: "left" (padrão, sem estilo), "center", "right" ou "justify".
+// Justificado liga a hifenização automática, para os espaços entre as palavras não ficarem largos demais.
+function proseAlignStyle(align) {
+  if (align === "center" || align === "right") return { textAlign: align };
+  if (align === "justify") return { textAlign: "justify", hyphens: "auto", WebkitHyphens: "auto" };
+  return undefined;
+}
+
+Object.assign(window, { proseAlignStyle, BLOCKS, BLOCK_BY_TYPE, BLOCK_CATS, CHILD_TYPES, CHILD_PICKER_TYPES, ROOT_STRUCTURE_TYPES, NESTED_CHILD_TYPES, STRUCTURAL_TYPES, CONTAINER_TYPES, BG_TONES, TONE_BG, PAD_PRESETS, PAD_BY_ID, newBlock, newChildBlock, TIcon });

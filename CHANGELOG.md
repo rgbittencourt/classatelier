@@ -4,12 +4,19 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.11.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.12.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.12.0 · 03/11/2026 · Alinhamento do texto do Parágrafo
+
+- O bloco **Parágrafo** ganhou **Alinhamento do texto** no painel: **Esquerda** (padrão), **Centro**, **Direita** e **Justificado**. Vale para o bloco inteiro e sai igual na aula exportada (HTML, pacote HTML, SCORM e curso).
+- O justificado liga a hifenização automática. Como os espaços irregulares entre as palavras podem atrapalhar quem tem dislexia ou baixa visão, o painel avisa e o verificador de acessibilidade dá uma **dica** em parágrafos justificados com mais de 300 caracteres (WCAG 1.4.8).
+- Ao quebrar um parágrafo (Quebrar parágrafo aqui, inserir bloco no cursor), a parte nova herda o alinhamento. Aulas antigas continuam à esquerda.
+- Campo `align` nas propriedades do bloco (`left`, `center`, `right`, `justify`); o JSON da aula continua abrindo em versões anteriores, que ignoram o campo.
 
 ### 1.11.0 · 03/11/2026 · Chave de IA própria nas figuras e legendas
 
