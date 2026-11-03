@@ -4,12 +4,18 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.5.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.6.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.6.0 · 03/11/2026 · Pacote de entrega
+
+- Novo item **Exportar → Pacote de entrega (.zip)**: reúne em um único ZIP a aula em HTML (`aula/`), o pacote SCORM 1.2 (`scorm/`), o projeto editável (`projeto/`), o texto da aula (`texto/`) e o relatório de acessibilidade (`acessibilidade/`).
+- **LEIA-ME.txt** na raiz: diz o que há em cada pasta e **o que ainda está pendente** (barreiras e avisos de acessibilidade que você não marcou como OK, resultado da conferência do SCORM, mais de uma avaliação final).
+- Na pasta do projeto, o pacote vai para a subpasta nova **entrega/**.
 
 ### 1.5.1 · 03/11/2026 · Manual Class dentro do app
 

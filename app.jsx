@@ -732,6 +732,9 @@ function ClassAtelierApp() {
   const exportStandaloneHTML = async () => {
     try { await window.downloadStandaloneHTML(lesson); } catch (e) { alert("Erro ao exportar HTML: " + e.message); }
   };
+  const exportDelivery = async () => {
+    try { await window.downloadDelivery(lesson); } catch (e) { alert("Erro ao montar o pacote de entrega: " + e.message); }
+  };
   const printPDF = async () => {
     try { await window.openPrintPreview(lesson); } catch (e) { alert("Erro ao preparar PDF: " + e.message); }
   };
@@ -778,7 +781,7 @@ function ClassAtelierApp() {
         <Topbar
           lesson={lesson} setLesson={commit} mode={mode} setMode={setMode}
           onUndo={undo} canUndo={history.current.length > 0} onInsertCode={mode === "edit" ? () => insertCodeBlock(null) : null}
-          onExportHTML={exportHTML} onExportStandaloneHTML={exportStandaloneHTML} onExportSCORM={() => setScormOpen(true)} onPrintPDF={printPDF}
+          onExportHTML={exportHTML} onExportStandaloneHTML={exportStandaloneHTML} onExportDelivery={exportDelivery} onExportSCORM={() => setScormOpen(true)} onPrintPDF={printPDF}
           onOpenProject={openProjectClick} onDownloadProject={downloadProject}
           onRichNotes={() => setRichOpen(true)} onA11y={() => setA11yOpen((v) => !v)} a11yOpen={a11yOpen} a11yCount={a11yCount} onLibrary={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(false); setLibOpen(true); }} onCourse={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(true); setLibOpen(true); }}
           onClear={() => setClearOpen(true)} canClear={hasLessonContent} onVersions={() => setVersionsOpen(true)} onRepublish={() => setRepublishOpen(true)} onMoodle={() => setMoodle({ links: [] })} onCopyText={copyLessonText} onDownloadText={downloadLessonText} onToAuthor={sendToAuthor} authorLinked={!!authorOrigin && !!window.opener}
@@ -1153,7 +1156,7 @@ function RichNotesDialog({ lesson, onClose, onUpdate }) {
 const emptyNote={padding:18,border:"1px dashed var(--tool-line-2)",borderRadius:9,color:"var(--tool-ink-3)",fontSize:12};
 
 // ── Top bar ──
-function Topbar({ onInsertCode, onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear, onVersions, onRepublish, onMoodle, onCopyText, onDownloadText, onToAuthor, authorLinked }) {
+function Topbar({ onInsertCode, onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportDelivery, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear, onVersions, onRepublish, onMoodle, onCopyText, onDownloadText, onToAuthor, authorLinked }) {
   const [busy, setBusy] = useStateA(false);
   const [menu, setMenu] = useStateA(false);
   const [more, setMore] = useStateA(false);
@@ -1203,7 +1206,11 @@ function Topbar({ onInsertCode, onLibrary, onCourse, lesson, mode, setMode, onUn
             <>
               <div onClick={() => setMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 41 }} />
               <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 42, background: "#fff", border: "1px solid var(--tool-line)", borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.16)", width: 248, overflowX: "hidden", overflowY: "auto", maxHeight: "calc(100vh - 80px)" }}>
-                <button onClick={() => { setMenu(false); onDownloadProject(); }} style={menuItem}>
+                <button onClick={() => wrap(onExportDelivery)} style={menuItem}>
+                  <span style={{ fontWeight: 600 }}>Pacote de entrega (.zip)</span>
+                  <span style={menuSub}>Tudo da aula junto: HTML, SCORM, projeto, texto e relatório de acessibilidade, com um LEIA-ME que diz o que ainda falta.</span>
+                </button>
+                <button onClick={() => { setMenu(false); onDownloadProject(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
                   <span style={{ fontWeight: 600 }}>Projeto JSON (…-ClassAtelier.json)</span>
                   <span style={menuSub}>Editável e próprio para reabrir no ClassAtelier.</span>
                 </button>

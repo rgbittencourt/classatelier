@@ -12,6 +12,7 @@
     ["projetos", "Projetos salvos e editados no ClassAtelier (…-ClassAtelier.json), gravados também automaticamente a cada alteração"],
     ["html", "Aulas em HTML: arquivo único (.html) e pacote HTML (…-html.zip)"],
     ["scorm", "Pacotes SCORM para o Moodle ou outro AVA (…-scorm.zip)"],
+    ["entrega", "Pacotes de entrega: aula, SCORM, projeto, texto e relatório de acessibilidade num só ZIP (…-entrega.zip)"],
     ["site", "Site do curso inteiro (…-site.zip)"],
     ["pdf", "PDFs: na janela de impressão, escolha “Salvar como PDF” e salve aqui"],
     ["textos", "Texto da aula (…-texto.txt)"],
@@ -48,6 +49,7 @@
 
   function subfolderFor(filename) {
     var n = String(filename || "").toLowerCase();
+    if (/-entrega\.zip$/.test(n)) return "entrega";
     if (/-scorm\.zip$/.test(n)) return "scorm";
     if (/-site\.zip$/.test(n)) return "site";
     if (/-html\.zip$|\.html?$/.test(n)) return "html";

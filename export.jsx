@@ -917,4 +917,88 @@ async function publishCourseToGitHub(lessons, opts, onProgress) {
   return { sent, total: files.length, commitUrl, pages, links, repoUrl: `https://github.com/${owner}/${repo}`, branch };
 }
 
-Object.assign(window, { buildSCORMBlob, buildCourseSCORMBlob, projectFileName, downloadExport, downloadStandaloneHTML, buildExportHTML, downloadSCORM, downloadCourseSCORM, downloadCourseSite, publishCourseToGitHub, openPrintPreview });
+// ── Pacote de entrega: tudo da aula em um único ZIP, com LEIA-ME que diz o que falta ──
+const DELIVERY_FOLDERS = [
+  ["aula", "A aula pronta para abrir no navegador, em arquivo único (.html)"],
+  ["scorm", "Pacote SCORM 1.2 para subir no Moodle ou em outro ambiente virtual"],
+  ["projeto", "Projeto editável, para reabrir no ClassAtelier (…-ClassAtelier.json)"],
+  ["texto", "Só as palavras da aula, em ordem (.txt), para revisão ou envio"],
+  ["acessibilidade", "Relatório de acessibilidade com o que ainda pede atenção"]
+];
+
+function deliveryReadme({ title, version, date, files, pending }) {
+  const day = (date || new Date()).toLocaleDateString("pt-BR");
+  const bullets = (items) => items.map((i) => "  - " + i).join("\n");
+  const out = ["PACOTE DE ENTREGA — " + (title || "Aula"), "Montado em " + day + " pelo ClassAtelier" + (version ? " " + version : "") + ".", "", "O QUE HÁ EM CADA PASTA"];
+  DELIVERY_FOLDERS.forEach(([name, desc]) => {
+    const n = files.filter((f) => f.indexOf(name + "/") === 0).length;
+    if (n) out.push("  " + name + "/  (" + n + " arquivo" + (n === 1 ? "" : "s") + ")", "      " + desc);
+  });
+  out.push("", "O QUE AINDA ESTÁ PENDENTE");
+  const todo = [];
+  if (pending.a11yErrors) todo.push(pending.a11yErrors + " problema(s) de acessibilidade que bloqueiam leitores de tela ou teclado (barreiras reais). Veja acessibilidade/relatorio.txt.");
+  if (pending.a11yWarns) todo.push(pending.a11yWarns + " aviso(s) de acessibilidade a conferir. Veja acessibilidade/relatorio.txt.");
+  if (pending.scorm === "falhou") todo.push("O pacote SCORM não pôde ser montado: " + (pending.scormError || "erro desconhecido") + ".");
+  else if (pending.scormErrors) todo.push("A conferência do SCORM apontou " + pending.scormErrors + " erro(s). Abra «Exportar → Pacote SCORM → Conferir» para ver os detalhes.");
+  else if (pending.scormWarns) todo.push("A conferência do SCORM tem " + pending.scormWarns + " aviso(s) (o pacote abre, mas vale conferir).");
+  if (pending.manyFinal) todo.push("Há mais de um quiz marcado como avaliação final; só um deve valer nota.");
+  out.push(todo.length ? bullets(todo) : "  Nada pendente conhecido.", "", "Aula feita no ClassAtelier, parte da família ClassAuthor · ClassAtelier · ClassAcervo (Rogério Bittencourt, INOVALAB - IFSC).", "Teste a aula como aluno antes de publicar: abra o arquivo .html e, no Moodle, faça um envio de teste do SCORM.");
+  return out.join("\n");
+}
+
+function a11yReportText(items, title) {
+  const label = { error: "BARREIRA", warn: "AVISO" };
+  const lines = ["RELATÓRIO DE ACESSIBILIDADE — " + (title || "Aula"), ""];
+  if (!items.length) lines.push("Nenhum problema encontrado pelas verificações automáticas.");
+  items.forEach((i, n) => { lines.push((n + 1) + ". [" + (label[i.sev] || i.sev) + "] " + i.title, "   " + String(i.detail || "").replace(/\s+/g, " ").trim() + (i.wcag ? " (" + (/^WCAG/.test(i.wcag) ? "" : "WCAG ") + i.wcag + ")" : ""), ""); });
+  lines.push("As verificações automáticas não substituem o teste com leitor de tela e teclado.");
+  return lines.join("\n");
+}
+
+async function buildDeliveryBlob(lesson, opts) {
+  if (typeof JSZip === "undefined") throw new Error("Biblioteca de compactação (JSZip) não carregou.");
+  const title = (lesson.meta && lesson.meta.title) || "Aula";
+  const slug = lessonSlug(title);
+  const zip = new JSZip();
+  const files = [];
+  const put = (path, data, o) => { zip.file(path, data, o); files.push(path); };
+  const pending = {};
+
+  put("aula/" + slug + ".html", await buildExportHTML(JSON.parse(JSON.stringify(lesson)), { fonts: "embed", assets: "embed" }));
+  put("projeto/" + projectFileName(lesson), JSON.stringify(lesson, null, 2));
+  if (window.lessonToText) put("texto/" + projectFileName(lesson).replace(/(-ClassAtelier)?\.json$/i, "") + "-texto.txt", window.lessonToText(lesson));
+
+  const flat = (lesson.blocks || []).flatMap((b) => ["topic", "topic-collapsible", "topic-slider"].indexOf(b.type) !== -1 ? [b].concat((b.props && b.props.children) || []) : [b]);
+  const finals = flat.filter((b) => b.type === "quiz" && b.props && b.props.avaliativo);
+  if (finals.length > 1) pending.manyFinal = true;
+  else {
+    try {
+      const passMark = finals[0] ? (finals[0].props.passMark || 6) : 6;
+      const { blob } = await buildSCORMBlob(lesson, { title, version: "1.2", avaliativo: finals.length > 0, passMark: Number(passMark) || 0 });
+      put("scorm/" + slug + "-scorm.zip", blob);
+      if (window.ScormCheck) {
+        try { const res = window.ScormCheck.validate(await window.ScormCheck.readZip(blob)); pending.scormErrors = res.counts.error; pending.scormWarns = res.counts.warn; } catch (e) {}
+      }
+    } catch (e) { pending.scorm = "falhou"; pending.scormError = e.message; }
+  }
+
+  if (window.A11y) {
+    try {
+      const ignored = new Set((lesson.meta && lesson.meta.a11yIgnored) || []);
+      const items = window.A11y.audit(lesson).filter((i) => i.sev !== "tip" && !window.A11y.isIgnored(i, ignored));
+      pending.a11yErrors = items.filter((i) => i.sev === "error").length;
+      pending.a11yWarns = items.filter((i) => i.sev === "warn").length;
+      put("acessibilidade/relatorio.txt", a11yReportText(items, title));
+    } catch (e) {}
+  }
+
+  zip.file("LEIA-ME.txt", deliveryReadme({ title, version: (opts && opts.version) || window.CLASSATELIER_VERSION || "", date: new Date(), files, pending }));
+  const blob = await zip.generateAsync({ type: "blob" });
+  return { blob, name: slug, files: files.concat(["LEIA-ME.txt"]), pending };
+}
+async function downloadDelivery(lesson) {
+  const { blob, name } = await buildDeliveryBlob(lesson);
+  saveBlob(blob, name + "-entrega.zip");
+}
+
+Object.assign(window, { buildDeliveryBlob, downloadDelivery, deliveryReadme, buildSCORMBlob, buildCourseSCORMBlob, projectFileName, downloadExport, downloadStandaloneHTML, buildExportHTML, downloadSCORM, downloadCourseSCORM, downloadCourseSite, publishCourseToGitHub, openPrintPreview });
