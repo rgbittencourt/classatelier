@@ -4,12 +4,20 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.5.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
-| ClassAcervo | **1.2.0** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
+| ClassAtelier | **1.5.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.5.1 · 03/11/2026 · Manual Class dentro do app
+
+**Acrescentado**
+- Botão **Manual ↗** no topo da paleta de blocos (ao lado de «Acervo»): abre o Manual Class numa aba nova, direto no capítulo do ClassAtelier. O manual fica na pasta `manual/` do repositório.
+
+**Mudou**
+- O título da aba do navegador segue o padrão dos três apps: «ClassAtelier - Editor de aulas interativas».
 
 ### 1.5.0 · 30/10/2026 · pasta do projeto
 
