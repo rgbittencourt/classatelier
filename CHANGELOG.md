@@ -4,12 +4,20 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.7.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.8.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.8.0 · 03/11/2026 · Buscar legendas do YouTube
+
+**Acrescentado**
+- No bloco **Vídeo (YouTube)**, o botão **Buscar legendas do YouTube** traz para o campo Transcrição o texto das legendas que o próprio YouTube publica para o vídeo (feitas por pessoa ou automáticas), já em parágrafos. Não usa IA e não gera custo. Se o vídeo não tem legenda, ou o YouTube não responde, o botão diz o motivo e o campo continua para colar à mão.
+- Se o campo já tinha texto, o app pede um segundo clique antes de substituir.
+- Legenda automática vem marcada como rascunho: aparece a opção **Revisei a transcrição automática** e o verificador mostra a dica «Transcrição automática sem revisão» até você marcá-la.
+- Usa o mesmo endereço e o mesmo código de acesso do ClassAuthor das figuras (o serviço de legendas está no ClassAuthor 1.10.0).
 
 ### 1.7.0 · 03/11/2026 · Transcrição de vídeo e áudio
 

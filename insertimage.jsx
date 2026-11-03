@@ -148,5 +148,60 @@
       </div>
     );
   }
-  Object.assign(window, { InsertImageDialog });
+
+  // ── Legendas do YouTube → campo Transcrição (painel do bloco Vídeo) ──
+  async function askCaptions({ base, code, video }) {
+    const url = String(base || DEFAULT_BASE).trim().replace(/\/+$/, "") + "/api/captions";
+    const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 40000);
+    let res;
+    try {
+      res = await fetch(url, { method: "POST", signal: ctl.signal, headers: { "Content-Type": "application/json", ...(code ? { "x-aula-access-code": code } : {}) }, body: JSON.stringify({ action: "captions", video, language: "pt" }) });
+    } catch (e) {
+      throw new Error(e && e.name === "AbortError" ? "O YouTube demorou demais. Tente de novo." : "Não consegui falar com o ClassAuthor em " + url.replace(/\/api\/captions$/, "") + ". Confira o endereço e a conexão.");
+    } finally { clearTimeout(timer); }
+    let data = null; try { data = await res.json(); } catch (e) { /* sem JSON */ }
+    if (!res.ok || !data || !data.ok) {
+      if (res.status === 401) throw new Error("O código de acesso do ClassAuthor não foi aceito. É o mesmo que você digita na entrada do ClassAuthor.");
+      throw new Error((data && data.error) || "O ClassAuthor respondeu com erro " + res.status + ".");
+    }
+    return data;
+  }
+
+  function CaptionsFetcher({ video, hasText, onFill }) {
+    const [base, setBase] = useState(safeGet("localStorage", LS_BASE) || DEFAULT_BASE);
+    const [code, setCode] = useState(safeGet("localStorage", LS_CODE) || safeGet("sessionStorage", LS_CODE));
+    const [remember, setRemember] = useState(!!safeGet("localStorage", LS_CODE));
+    const [busy, setBusy] = useState(false);
+    const [err, setErr] = useState("");
+    const [note, setNote] = useState("");
+    const [confirm, setConfirm] = useState(false);
+    const inp = { width: "100%", boxSizing: "border-box", padding: "7px 9px", border: "1px solid var(--tool-line-2)", borderRadius: 7, fontSize: 12.5, fontFamily: "inherit", background: "#fff" };
+    const go = async () => {
+      setErr(""); setNote("");
+      if (hasText && !confirm) { setConfirm(true); return; }
+      setConfirm(false); setBusy(true);
+      try {
+        const r = await askCaptions({ base, code: code.trim(), video });
+        safeSet("localStorage", LS_BASE, base.trim() === DEFAULT_BASE ? "" : base.trim());
+        safeSet("sessionStorage", LS_CODE, code.trim()); safeSet("localStorage", LS_CODE, remember ? code.trim() : "");
+        onFill(r);
+        setNote((r.auto ? "Legenda automática do YouTube" : "Legenda do YouTube") + " (" + (r.languageName || r.language) + ", " + r.paragraphs + " parágrafos) colocada no campo. Leia e corrija antes de publicar.");
+      } catch (e) { setErr(e.message); }
+      finally { setBusy(false); }
+    };
+    return (
+      <div data-cf="box" style={{ margin: "8px 0 10px", padding: "10px 12px", border: "1px solid var(--tool-line)", borderRadius: 9, background: "var(--tool-surface)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div><label style={{ display: "block", fontSize: 11.5, fontWeight: 600, margin: "0 0 3px" }}>Código de acesso do ClassAuthor</label><input type="password" value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" spellCheck={false} style={inp} data-cf="code" /></div>
+          <button type="button" onClick={go} disabled={busy || !video} data-cf="go" style={{ padding: "7px 12px", border: "1px solid var(--tool-accent)", borderRadius: 7, background: confirm ? "var(--tool-accent)" : "#fff", color: confirm ? "#fff" : "var(--tool-accent)", fontWeight: 600, fontSize: 12.5, cursor: busy || !video ? "not-allowed" : "pointer", whiteSpace: "nowrap" }}>{busy ? "Buscando…" : confirm ? "Substituir o texto" : "Buscar legendas do YouTube"}</button>
+        </div>
+        {confirm && <p role="status" style={{ fontSize: 12, margin: "6px 0 0", color: "var(--tool-ink-2)" }}>Já há texto no campo Transcrição. Clique de novo para substituir.</p>}
+        <label style={{ display: "flex", gap: 7, fontSize: 11.5, color: "var(--tool-ink-3)", margin: "6px 0 0" }}><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> Lembrar o código neste navegador</label>
+        <details style={{ marginTop: 6 }}><summary style={{ fontSize: 11.5, color: "var(--tool-ink-3)", cursor: "pointer" }}>Endereço do ClassAuthor</summary><input value={base} onChange={(e) => setBase(e.target.value)} autoComplete="off" spellCheck={false} style={{ ...inp, marginTop: 4 }} data-cf="base" /></details>
+        {note && <p role="status" data-cf="note" style={{ fontSize: 12, margin: "8px 0 0", color: "var(--tool-ink-2)", lineHeight: 1.45 }}>{note}</p>}
+        {err && <p role="alert" data-cf="err" style={{ fontSize: 12, margin: "8px 0 0", padding: "8px 10px", borderRadius: 8, background: "#fdecea", color: "#8a2f18", lineHeight: 1.45 }}>{err}</p>}
+      </div>
+    );
+  }
+  Object.assign(window, { InsertImageDialog, CaptionsFetcher, askCaptions });
 })();

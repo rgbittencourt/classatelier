@@ -863,7 +863,9 @@ function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquati
         <Field label="Crédito"><TextInput value={p.credit} onChange={(v) => setP({ credit: v })} /></Field>
         <Field label="Início (segundos)"><TextInput value={p.start} onChange={(v) => setP({ start: v })} /></Field>
         <Toggle value={!!p.captionsOk} onChange={(v) => setP({ captionsOk: v })} label="Conferi: o vídeo tem legendas" />
+        {window.CaptionsFetcher && <window.CaptionsFetcher video={p.id} hasText={String(p.transcript || "").trim().length > 0} onFill={(r) => setP({ transcript: r.text, transcriptAuto: !!r.auto, transcriptReviewed: false })} />}
         <Field label="Transcrição (texto do vídeo)"><TextArea value={p.transcript} onChange={(v) => setP({ transcript: v })} placeholder="Cole aqui a transcrição. Separe parágrafos com uma linha em branco." /></Field>
+        {p.transcriptAuto && <Toggle value={!!p.transcriptReviewed} onChange={(v) => setP({ transcriptReviewed: v })} label="Revisei a transcrição automática" />}
         <Field label="Ou link da transcrição"><TextInput value={p.transcriptUrl} onChange={(v) => setP({ transcriptUrl: v })} placeholder="https://…" /></Field>
         <p style={hint}>A transcrição aparece na aula como “Transcrição”, recolhida. Quem não ouve ou não vê o vídeo lê o texto no lugar.</p>
       </>);
