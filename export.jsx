@@ -923,6 +923,7 @@ const DELIVERY_FOLDERS = [
   ["scorm", "Pacote SCORM 1.2 para subir no Moodle ou em outro ambiente virtual"],
   ["projeto", "Projeto editável, para reabrir no ClassAtelier (…-ClassAtelier.json)"],
   ["texto", "Só as palavras da aula, em ordem (.txt), para revisão ou envio"],
+  ["moodle", "Lista dos fóruns para criar no Moodle (nome, descrição e prazos de cada um)"],
   ["acessibilidade", "Relatório de acessibilidade com o que ainda pede atenção"]
 ];
 
@@ -941,6 +942,7 @@ function deliveryReadme({ title, version, date, files, pending }) {
   if (pending.scorm === "falhou") todo.push("O pacote SCORM não pôde ser montado: " + (pending.scormError || "erro desconhecido") + ".");
   else if (pending.scormErrors) todo.push("A conferência do SCORM apontou " + pending.scormErrors + " erro(s). Abra «Exportar → Pacote SCORM → Conferir» para ver os detalhes.");
   else if (pending.scormWarns) todo.push("A conferência do SCORM tem " + pending.scormWarns + " aviso(s) (o pacote abre, mas vale conferir).");
+  if (pending.forumsToCreate) todo.push(pending.forumsToCreate + " fórum(ns) ainda sem endereço: crie no Moodle (moodle/foruns-para-criar.txt) e cole o endereço no bloco de fórum.");
   if (pending.manyFinal) todo.push("Há mais de um quiz marcado como avaliação final; só um deve valer nota.");
   out.push(todo.length ? bullets(todo) : "  Nada pendente conhecido.", "", "Aula feita no ClassAtelier, parte da família ClassAuthor · ClassAtelier · ClassAcervo (Rogério Bittencourt, INOVALAB - IFSC).", "Teste a aula como aluno antes de publicar: abra o arquivo .html e, no Moodle, faça um envio de teste do SCORM.");
   return out.join("\n");
@@ -968,6 +970,10 @@ async function buildDeliveryBlob(lesson, opts) {
   put("projeto/" + projectFileName(lesson), JSON.stringify(lesson, null, 2));
   if (window.lessonToText) put("texto/" + projectFileName(lesson).replace(/(-ClassAtelier)?\.json$/i, "") + "-texto.txt", window.lessonToText(lesson));
 
+  if (window.collectForums) {
+    const forums = window.collectForums(lesson);
+    if (forums.length) { put("moodle/foruns-para-criar.txt", window.forumsText(forums, title)); pending.forumsToCreate = forums.filter((f) => !f.hasLink).length; }
+  }
   const flat = (lesson.blocks || []).flatMap((b) => ["topic", "topic-collapsible", "topic-slider"].indexOf(b.type) !== -1 ? [b].concat((b.props && b.props.children) || []) : [b]);
   const finals = flat.filter((b) => b.type === "quiz" && b.props && b.props.avaliativo);
   if (finals.length > 1) pending.manyFinal = true;

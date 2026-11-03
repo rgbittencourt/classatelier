@@ -9,7 +9,8 @@ window.moodleIframeCode = function (url, title, height) {
   return '<iframe src="' + String(url).replace(/"/g, "%22") + '" title="' + t + '" width="100%" height="' + h + '" style="border:0;width:100%;height:' + h + 'px" loading="lazy" allowfullscreen></iframe>';
 };
 
-function MoodleDialog({ links, onClose }) {
+function MoodleDialog({ links, lesson, onClose }) {
+  const forums = React.useMemo(() => (lesson && window.collectForums ? window.collectForums(lesson) : []), [lesson]);
   const [own, setOwn] = React.useState("");
   const [height, setHeight] = React.useState(900);
   const [msg, setMsg] = React.useState("");
@@ -21,6 +22,21 @@ function MoodleDialog({ links, onClose }) {
     }
     setMsg(ok ? what + " copiado." : "Não consegui copiar sozinho: selecione o texto e use Ctrl+C.");
     setTimeout(() => setMsg(""), 3500);
+  };
+  // Copia como texto formatado (o editor do Moodle aceita colar com negrito e listas); sem isso, texto simples.
+  const copyRich = async (html, text, what) => {
+    try {
+      if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+        await navigator.clipboard.write([new ClipboardItem({ "text/html": new Blob([html], { type: "text/html" }), "text/plain": new Blob([text], { type: "text/plain" }) })]);
+        setMsg(what + " copiado, com formatação."); setTimeout(() => setMsg(""), 3500); return;
+      }
+    } catch (e) { /* cai para texto simples */ }
+    copy(text, what);
+  };
+  const downloadForums = () => {
+    const blob = new Blob([window.forumsText(forums, (lesson.meta && lesson.meta.title) || "Aula")], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "foruns-para-criar-no-moodle.txt";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   };
   const btn = { border: "1px solid var(--tool-line-2)", background: "#fff", borderRadius: 8, padding: "6px 11px", fontSize: 12, fontWeight: 650, cursor: "pointer", fontFamily: "inherit", flex: "none" };
   const h3 = { margin: "0 0 6px", fontSize: 14.5 };
@@ -34,6 +50,26 @@ function MoodleDialog({ links, onClose }) {
           <button onClick={onClose} aria-label="Fechar" style={{ border: 0, background: "none", fontSize: 24, lineHeight: 1, cursor: "pointer", color: "var(--tool-ink-2)" }}>×</button>
         </header>
         <div className="tool-scroll" style={{ padding: 20, overflow: "auto" }}>
+          {forums.length > 0 && (
+            <div data-mo="forums" style={{ marginBottom: 22, paddingBottom: 18, borderBottom: "1px solid var(--tool-line)" }}>
+              <h3 style={h3}>Fóruns desta aula para criar no Moodle</h3>
+              <p style={p}>O fórum de verdade é uma atividade do Moodle: <b>Ativar edição → Adicionar uma atividade ou recurso → Fórum</b>. Copie o nome e a descrição abaixo, ajuste as datas em <b>Disponibilidade</b> e salve. Depois copie o endereço do fórum e cole no bloco de fórum da aula (campo «Endereço do fórum»); publique a aula de novo.</p>
+              {forums.map((f, n) => (
+                <div key={f.id} data-mo="forum-row" style={{ border: "1px solid var(--tool-line)", borderRadius: 10, padding: "10px 12px", marginBottom: 8 }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                    <b style={{ fontSize: 13 }}>{n + 1}. {f.title}</b>
+                    <span style={{ fontSize: 11, fontWeight: 800, borderRadius: 5, padding: "2px 6px", background: f.hasLink ? "#e3f1e7" : "#f8edcf", color: f.hasLink ? "#2f7d4f" : "#9a6a12" }}>{f.hasLink ? "JÁ TEM ENDEREÇO" : "A CRIAR"}</span>
+                    {f.section && <span style={{ fontSize: 11.5, color: "var(--tool-ink-3)" }}>em «{f.section}»</span>}
+                  </div>
+                  <div style={{ fontSize: 12, color: "var(--tool-ink-3)", margin: "4px 0 8px" }}>{[f.dueInitial && "Inicial: " + f.dueInitial, f.dueReplies && "Respostas: " + f.dueReplies].filter(Boolean).join(" · ") || "Sem prazos informados no bloco."}</div>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <button onClick={() => copy(f.title, "Nome do fórum")} style={btn} data-mo="forum-name">Copiar nome</button>
+                    <button onClick={() => copyRich(window.forumDescriptionHtml(f), window.forumDescriptionText(f), "Descrição")} style={btn} data-mo="forum-desc">Copiar descrição</button>
+                  </div>
+                </div>))}
+              <button onClick={downloadForums} style={btn} data-mo="forums-download">Baixar a lista (.txt)</button>
+            </div>
+          )}
           {!(links && links.length) && (
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: "block", fontSize: 12, fontWeight: 650, marginBottom: 4 }}>Endereço da aula publicada</label>

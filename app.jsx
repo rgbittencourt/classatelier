@@ -827,7 +827,7 @@ function ClassAtelierApp() {
       <window.MarkToolbar />
       <input ref={fileInputRef} type="file" accept=".json,application/json" onChange={onProjectFile} style={{ display: "none" }} />
       {scormOpen && <ScormDialog lesson={lesson} onClose={() => setScormOpen(false)} onConfirm={exportSCORM} onCheck={(title, load) => setScormCheck({ title, load })} />}
-      {moodle && <window.MoodleDialog links={moodle.links} onClose={() => setMoodle(null)} />}
+      {moodle && <window.MoodleDialog links={moodle.links} lesson={moodle.links && moodle.links.length ? null : lesson} onClose={() => setMoodle(null)} />}
       {imageDlg && <window.InsertImageDialog title={lesson.meta && lesson.meta.title} context={imageDlg.context} onInsert={confirmImage} onClose={() => setImageDlg(null)} />}
       {republishOpen && <window.RepublishDialog lesson={lesson} onClose={() => setRepublishOpen(false)} />}
       {versionsOpen && <window.VersionsDialog lessonId={curRef.current.id} lesson={lesson} onClose={() => setVersionsOpen(false)} onRestore={restoreVersion} onApplyBlock={applyVersionBlock} />}
@@ -1235,7 +1235,7 @@ function Topbar({ onPresent, onInsertCode, onLibrary, onCourse, lesson, mode, se
                 </button>
                 <button onClick={() => { setMenu(false); onMoodle && onMoodle(); }} data-act="moodle-menu" style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
                   <span style={{ fontWeight: 600 }}>Colocar no Moodle…</span>
-                  <span style={menuSub}>Gera o link (Recurso URL) e o código iframe de uma aula publicada.</span>
+                  <span style={menuSub}>Gera o link (Recurso URL) e o código iframe de uma aula publicada; lista os fóruns da aula para criar no Moodle.</span>
                 </button>
                 <a data-act="acervo-menu" href={window.CLASSACERVO_URL || "https://rgbittencourt.github.io/classacervo/"} target="_blank" rel="noopener" onClick={() => setMenu(false)} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)", textDecoration: "none", color: "inherit", display: "flex", flexDirection: "column" }}>
                   <span style={{ fontWeight: 600 }}>Abrir o ClassAcervo ↗</span>

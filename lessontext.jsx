@@ -93,4 +93,59 @@
     return ((title && !hasH1 ? "# " + title + "\n\n" : "") + parts.join("\n\n")).replace(/\n{3,}/g, "\n\n").trim() + "\n";
   }
   window.lessonToText = lessonToText;
+
+  // ── Fóruns da aula: o que é preciso para criar cada um no Moodle ──
+  const realUrl = (u) => /^https?:\/\/[^\s/$.?#]+\.[^\s]*$/i.test(String(u || "").trim());
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  function collectForums(lesson) {
+    const found = [];
+    const walk = (blocks, section) => (blocks || []).forEach((b) => {
+      const p = b.props || {};
+      const kids = Array.isArray(p.children) ? p.children : [];
+      if (b.type === "forum") {
+        found.push({
+          id: b.id, section: section || "",
+          title: plain(p.title) || "Fórum de discussão",
+          promptHtml: String(p.prompt || ""), prompt: plain(p.prompt),
+          dueInitial: plain(p.dueInitial), dueReplies: plain(p.dueReplies),
+          rules: (p.rules || []).map((r) => plain(r)).filter(Boolean),
+          criteriaHtml: p.showCriteria ? String(p.criteria || "") : "", criteria: p.showCriteria ? plain(p.criteria) : "",
+          href: String(p.href || "").trim(), hasLink: realUrl(p.href)
+        });
+      }
+      if (kids.length) { const t = kids.find((k) => k.type === "titulo"); walk(kids, section || (t ? plain((t.props || {}).text) : "") || plain(p.title)); }
+    });
+    walk((lesson && lesson.blocks) || [], "");
+    return found;
+  }
+  // Descrição do fórum no formato do editor do Moodle (HTML simples).
+  function forumDescriptionHtml(f) {
+    const out = [];
+    if (f.promptHtml) out.push(f.promptHtml);
+    if (f.dueInitial || f.dueReplies) out.push("<p>" + [f.dueInitial ? "<strong>Contribuição inicial:</strong> " + esc(f.dueInitial) : "", f.dueReplies ? "<strong>Respostas aos colegas:</strong> " + esc(f.dueReplies) : ""].filter(Boolean).join("<br>") + "</p>");
+    if (f.rules.length) out.push("<p><strong>Como participar</strong></p><ul>" + f.rules.map((r) => "<li>" + esc(r) + "</li>").join("") + "</ul>");
+    if (f.criteriaHtml) out.push("<p><strong>Como será avaliado</strong></p>" + f.criteriaHtml);
+    return out.join("\n");
+  }
+  function forumDescriptionText(f) {
+    const out = [];
+    if (f.prompt) out.push(f.prompt);
+    if (f.dueInitial) out.push("Contribuição inicial: " + f.dueInitial);
+    if (f.dueReplies) out.push("Respostas aos colegas: " + f.dueReplies);
+    if (f.rules.length) out.push("Como participar:\n" + f.rules.map((r) => "- " + r).join("\n"));
+    if (f.criteria) out.push("Como será avaliado:\n" + f.criteria);
+    return out.join("\n\n");
+  }
+  function forumsText(forums, title) {
+    const L = ["FÓRUNS PARA CRIAR NO MOODLE — " + (title || "Aula"), "",
+      "Para cada fórum: no curso do Moodle, Ativar edição → Adicionar uma atividade ou recurso → Fórum. Copie o Nome e a Descrição abaixo,",
+      "ajuste as datas em «Disponibilidade» (e a nota, se o fórum for avaliativo) e salve. Depois abra o fórum, copie o endereço da barra do",
+      "navegador e cole no campo «Endereço do fórum» do bloco no ClassAtelier. Publique a aula de novo para o botão levar ao fórum.", ""];
+    if (!forums.length) L.push("Esta aula não tem bloco de fórum.");
+    forums.forEach((f, n) => {
+      L.push("── Fórum " + (n + 1) + " ──────────────────────────", "Nome: " + f.title, f.section ? "Seção da aula: " + f.section : "", "Situação: " + (f.hasLink ? "já tem endereço (" + f.href + ")" : "A CRIAR — o bloco ainda não tem o endereço do fórum"), "", "Descrição:", forumDescriptionText(f), "");
+    });
+    return L.filter((x, i, a) => !(x === "" && a[i - 1] === "")).join("\n").trim() + "\n";
+  }
+  Object.assign(window, { collectForums, forumDescriptionHtml, forumDescriptionText, forumsText });
 })();

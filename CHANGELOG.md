@@ -4,12 +4,21 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.9.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.10.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.10.0 · 03/11/2026 · Fóruns para criar no Moodle
+
+**Acrescentado**
+- Em **Exportar → Colocar no Moodle…**, nova seção **Fóruns desta aula para criar no Moodle**: lista cada bloco de fórum da aula com a situação («A CRIAR» ou «JÁ TEM ENDEREÇO»), a seção da aula e os prazos, com os botões **Copiar nome** e **Copiar descrição** (a descrição junta a pergunta, os prazos, as regras e os critérios, e vai formatada para colar no editor do Moodle) e **Baixar a lista (.txt)**.
+- O **Pacote de entrega** ganhou a pasta **moodle/** com `foruns-para-criar.txt`, e o LEIA-ME avisa quantos fóruns ainda estão sem endereço.
+
+**Por quê**
+- O fórum de verdade é uma atividade do Moodle (o bloco da aula só apresenta e leva até ele). Agora a lista do que criar sai pronta; depois de criar, é só colar o endereço do fórum no bloco e publicar de novo.
 
 ### 1.9.0 · 03/11/2026 · Modo apresentação
 
