@@ -8,7 +8,7 @@
 //   · Montar por campos: autor, título, edição, local, editora, ano... e o motor escreve a referência.
 // ════════════════════════════════════════════════════════════
 (function () {
-  const { useState, useMemo, useEffect } = React;
+  const { useState, useMemo } = React;
   const A = () => window.ABNT;
   const box = { margin: "10px 0", padding: "10px 12px", border: "1px solid var(--tool-line)", borderRadius: 9, background: "var(--tool-surface)" };
   const lab = { display: "block", fontSize: 11.5, fontWeight: 600, margin: "0 0 3px" };
@@ -28,7 +28,6 @@
   function ReferencesTool({ items, onChange }) {
     const [msg, setMsg] = useState("");
     const [f, setF] = useState(BLANK);
-    const [tick, setTick] = useState(0);
     const set = (patch) => setF((old) => ({ ...old, ...patch }));
     const list = Array.isArray(items) ? items : [];
     const abnt = A();
@@ -37,24 +36,14 @@
     // A conferência olha o texto já corrigido: o que dá para resolver sozinho não aparece, só o que falta de informação.
     const problems = useMemo(() => list.map((html, index) => ({ index, issues: abnt.abntIssues(abnt.citationFromHtml(abnt.fixHtmlReference(html))) })).filter((entry) => String(list[entry.index] || "").trim() && entry.issues.length), [list]);
 
-    // Correção automática: assim que a pessoa sai do campo (ou abre o bloco), o que a norma resolve sem dúvida já é corrigido.
-    useEffect(() => {
-      const onOut = () => setTick((n) => n + 1);
-      document.addEventListener("focusout", onOut);
-      return () => document.removeEventListener("focusout", onOut);
-    }, []);
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        const active = document.activeElement;
-        if (active && active.tagName === "TEXTAREA") return; // não mexe enquanto a pessoa digita
-        const fixed = list.map((html) => abnt.fixHtmlReference(html));
-        const count = fixed.filter((html, i) => html !== list[i]).length;
-        if (!count) return;
-        onChange(fixed);
-        setMsg(`Corrigi sozinho ${count} referência(s): negrito no título, autor no formato, data de acesso e o que mais a norma resolve sem dúvida.`);
-      }, 600);
-      return () => clearTimeout(timer);
-    }, [list, tick]);
+    // Nada é corrigido nem reordenado sozinho: a pessoa decide e aperta «Organizar lista». Aqui só se conta o que o botão vai mexer.
+    const pending = useMemo(() => {
+      const filled = list.filter((html) => String(html || "").trim());
+      const fixed = filled.map((html) => abnt.fixHtmlReference(html));
+      const changed = fixed.filter((html, i) => html !== filled[i]).length;
+      const moved = abnt.sortHtmlReferences(fixed).some((html, i) => html !== fixed[i]);
+      return { changed, moved };
+    }, [list]);
 
     const organize = () => {
       const filled = list.filter((html) => String(html || "").trim());
@@ -73,20 +62,21 @@
 
     const add = () => {
       if (!built) return;
-      onChange(abnt.sortHtmlReferences(list.filter((html) => String(html || "").trim()).concat(abnt.citationToHtml(built))));
-      setMsg("Referência adicionada e lista em ordem alfabética.");
+      onChange(list.filter((html) => String(html || "").trim()).concat(abnt.citationToHtml(built)));
+      setMsg("Referência adicionada no fim da lista. Para pôr em ordem alfabética, use «Organizar lista».");
       setF({ ...BLANK, tipo: f.tipo });
     };
 
     return (
       <div data-rf="box" style={box}>
         <div style={{ fontSize: 11.5, fontWeight: 600, margin: "0 0 2px" }}>ABNT NBR 6023: organizar e conferir</div>
-        <p style={{ ...note, margin: "0 0 8px" }}>O que a norma resolve sem dúvida (negrito no título, autor em SOBRENOME, Nome, et al., edição, data de acesso) é corrigido sozinho. Na aula, as referências saem sempre em ordem alfabética, alinhadas à esquerda, sem marcadores e com uma linha em branco entre elas.</p>
+        <p style={{ ...note, margin: "0 0 8px" }}>Nada muda até você clicar no botão. Ao clicar, o app corrige o que a norma resolve sem dúvida (negrito só no título, autor em SOBRENOME, Nome, et al., edição, data de acesso), marca entre colchetes o que falta ([ano], [título], Acesso em: [dia mês ano]) e põe a lista em ordem alfabética. Na aula, as referências saem alinhadas à esquerda, sem marcadores e com uma linha em branco entre elas.</p>
         <button type="button" data-rf="organize" onClick={organize} style={btnPrimary}>Organizar lista (corrigir e ordenar)</button>
+        {!msg && (pending.changed > 0 || pending.moved) && <p data-rf="pending" style={{ ...note, color: "var(--tool-ink-2)" }}>{pending.changed ? `${pending.changed} referência(s) podem ser corrigidas` : "A lista pode ser ordenada"}{pending.changed && pending.moved ? " e ordenadas" : ""}: clique em «Organizar lista».</p>}
         {msg && <p data-rf="msg" style={{ ...note, color: "var(--tool-ink-2)" }}>{msg}</p>}
         {problems.length > 0 && (
           <div data-rf="issues" style={{ marginTop: 8 }}>
-            <div style={{ fontSize: 11.5, fontWeight: 600, marginBottom: 3 }}>A conferir ({problems.length}): falta informação que não dá para deduzir</div>
+            <div style={{ fontSize: 11.5, fontWeight: 600, marginBottom: 3 }}>A conferir ({problems.length}): o que o botão não resolve, por faltar informação</div>
             <ul style={{ margin: 0, paddingLeft: 16, fontSize: 11.5, lineHeight: 1.45, color: "var(--tool-ink-2)" }}>
               {problems.slice(0, 8).map((entry) => <li key={entry.index}>Nº {entry.index + 1}: {entry.issues.join("; ")}.</li>)}
               {problems.length > 8 && <li>…e mais {problems.length - 8}.</li>}

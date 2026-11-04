@@ -4,12 +4,17 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.17.5** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.17.6** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.17.6 · 04/11/2026 · Referências: só o botão corrige, conforme a NBR 6023:2025
+
+- **Nada muda sozinho**: a correção e a ordenação só acontecem quando você clica em **«Organizar lista (corrigir e ordenar)»**. Colar, digitar ou adicionar uma referência não altera nada; o botão corrige tudo de uma vez e a lista «A conferir» mostra só o que não dá para resolver por falta de informação.
+- O motor segue a **ABNT NBR 6023:2025**: endereço sem « < > »; obra sem autor entra pelo título (primeira palavra em maiúsculas, sem negrito); lei com a data no negrito; matéria de portal ou jornal com o negrito no nome do veículo; «[ano]» no lugar do antigo «[s. d.]» e «[S. l.: s. n.]» quando faltam local e editora.
 
 ### 1.17.5 · 04/11/2026 · Referências: título sempre em negrito
 

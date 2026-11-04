@@ -112,7 +112,7 @@ function BlockCore({ block, mode, renderNestedList }) {
 
     case "referencias":
       if (isEdit) return <section className="aula-refs is-open"><div className="aula-refs__head"><span className="aula-refs__head-left"><i className="fa-solid fa-book"/><span className="aula-refs__title">{E("title",{single:true,placeholder:"Referências"})}</span><span className="aula-refs__count">{(p.items||[]).length}</span></span></div><div className="aula-refs__bodywrap"><div className="aula-refs__clip"><ol className="aula-refs__list">{(p.items||[]).map((r,i)=><li className="aula-refs__ref" key={i}>{React.createElement(window.Editable,{mode,tag:"div",html:r,placeholder:"Referência",onChange:(v)=>set("items",p.items.map((x,j)=>j===i?v:x))})}</li>)}</ol></div></div></section>;
-      return <ReferenciasABNT title={p.title} items={window.ABNT ? window.ABNT.prepareHtmlReferences(p.items) : p.items} defaultOpen={true} />;
+      return <ReferenciasABNT title={p.title} items={p.items} defaultOpen={true} />;
 
     // ───── Texto ─────
     case "prose": {

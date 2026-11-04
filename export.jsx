@@ -164,8 +164,7 @@ async function buildExportHTML(lesson, opts = {}) {
     Object.keys(node).forEach((key) => { copy[key] = withSummaries(node[key]); });
     if (copy.type === "video" && copy.props && typeof copy.props.summaryMd === "string" && window.parseSummary) copy.props = { ...copy.props, summary: window.parseSummary(copy.props.summaryMd) };
     // Referências corrigidas e sempre em ordem alfabética (ABNT NBR 6023); a aula exportada não tem o motor, então já vão prontas.
-    if (copy.type === "referencias" && copy.props && Array.isArray(copy.props.items) && window.ABNT) copy.props = { ...copy.props, items: window.ABNT.prepareHtmlReferences(copy.props.items) };
-    return copy;
+        return copy;
   };
   const data = JSON.stringify(withSummaries(lesson));
   const usesFontAwesome = !!(theme && theme.usesFontAwesome);
