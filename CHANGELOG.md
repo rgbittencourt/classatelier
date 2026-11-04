@@ -4,12 +4,21 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.12.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.13.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.13.0 · 04/11/2026 · Legenda sincronizada no bloco Vídeo
+
+- No painel do bloco **Vídeo** há **Legenda sincronizada (arquivo .srt ou .vtt)**: o professor escolhe o arquivo de legenda do vídeo e a fala aparece **sob o vídeo, em letras amarelas sobre fundo escuro** (como legenda de cinema), acompanhando o que está sendo dito. Não mexe no player do YouTube.
+- Abaixo fica a **Transcrição** recolhida: ao abrir, o aluno vê todas as falas com o tempo de cada uma, a fala atual destacada e a lista rolando sozinha; **clicar numa fala leva o vídeo àquele ponto** (se o vídeo ainda não começou, ele começa dali).
+- O texto do arquivo também vai para o campo **Transcrição** (em parágrafos), que continua sendo o que sai no PDF, o que o leitor de tela lê e o que conta no verificador de acessibilidade. A faixa em si é escondida do leitor de tela (para não anunciar cada frase) e do PDF.
+- Aceita as legendas automáticas do YouTube, que trazem falas sobrepostas e algumas com tempo fora de ordem; essas últimas são reposicionadas entre as vizinhas. O botão **Remover sincronia** apaga só as falas com tempo e mantém o texto.
+- A sincronia usa a API oficial de controle do player do YouTube. Se a página bloquear `youtube.com/iframe_api` (algumas redes e plataformas) ou a aula for aberta direto do computador, a faixa avisa e a transcrição completa continua funcionando, sem sincronia.
+- Aulas já feitas continuam iguais: sem arquivo de legenda, o bloco se comporta como antes.
 
 ### 1.12.0 · 03/11/2026 · Alinhamento do texto do Parágrafo
 

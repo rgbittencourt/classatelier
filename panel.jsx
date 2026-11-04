@@ -866,10 +866,11 @@ function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquati
         <Field label="Início (segundos)"><TextInput value={p.start} onChange={(v) => setP({ start: v })} /></Field>
         <Toggle value={!!p.captionsOk} onChange={(v) => setP({ captionsOk: v })} label="Conferi: o vídeo tem legendas" />
         {window.CaptionsFetcher && <window.CaptionsFetcher video={p.id} hasText={String(p.transcript || "").trim().length > 0} onFill={(r) => setP({ transcript: r.text, transcriptAuto: !!r.auto, transcriptReviewed: false })} />}
+        {window.SubtitleFile && <window.SubtitleFile cues={p.transcriptCues} hasText={String(p.transcript || "").trim().length > 0} onLoad={(r) => setP({ transcriptCues: r.cues, transcript: r.text, transcriptAuto: false, transcriptReviewed: false })} onClear={() => setP({ transcriptCues: [] })} />}
         <Field label="Transcrição (texto do vídeo)"><TextArea value={p.transcript} onChange={(v) => setP({ transcript: v })} placeholder="Cole aqui a transcrição. Separe parágrafos com uma linha em branco." /></Field>
         {p.transcriptAuto && <Toggle value={!!p.transcriptReviewed} onChange={(v) => setP({ transcriptReviewed: v })} label="Revisei a transcrição automática" />}
         <Field label="Ou link da transcrição"><TextInput value={p.transcriptUrl} onChange={(v) => setP({ transcriptUrl: v })} placeholder="https://…" /></Field>
-        <p style={hint}>A transcrição aparece na aula como “Transcrição”, recolhida. Quem não ouve ou não vê o vídeo lê o texto no lugar.</p>
+        <p style={hint}>A transcrição aparece na aula como “Transcrição”, recolhida. Quem não ouve ou não vê o vídeo lê o texto no lugar. Com um arquivo de legenda (.srt ou .vtt), ela também acompanha o vídeo, em uma faixa de letras amarelas sobre fundo escuro; o texto do campo Transcrição é o que vai para o PDF e para o leitor de tela.</p>
       </>);
     case "audio":
       return (<>

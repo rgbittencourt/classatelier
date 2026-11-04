@@ -215,5 +215,44 @@
       </div>
     );
   }
-  Object.assign(window, { InsertImageDialog, CaptionsFetcher, askCaptions });
+  // ── Legenda sincronizada: escolhe um arquivo .srt/.vtt do computador ──
+  function SubtitleFile({ cues, hasText, onLoad, onClear }) {
+    const [err, setErr] = useState("");
+    const [note, setNote] = useState("");
+    const [pending, setPending] = useState(null);
+    const inputRef = useRef(null);
+    const count = Array.isArray(cues) ? cues.length : 0;
+    const apply = (r) => { onLoad(r); setPending(null); setNote(r.cues.length + " falas (" + Math.floor(r.duration / 60) + " min) carregadas" + (r.fixed ? "; " + r.fixed + " com tempo fora de ordem foram reposicionadas" : "") + ". O texto também foi para o campo Transcrição."); };
+    const read = (file) => {
+      setErr(""); setNote("");
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) { setErr("O arquivo passa de 5 MB. Confira se é mesmo uma legenda (.srt ou .vtt)."); return; }
+      const reader = new FileReader();
+      reader.onerror = () => setErr("Não consegui ler o arquivo.");
+      reader.onload = () => {
+        const r = window.parseSubtitles ? window.parseSubtitles(String(reader.result || "")) : { cues: [] };
+        if (!r.cues.length) { setErr("Não encontrei falas nesse arquivo. Ele precisa ser uma legenda .srt ou .vtt (linhas como 00:00:05,000 --> 00:00:08,000)."); return; }
+        if (hasText && !count) { setPending(r); return; }
+        apply(r);
+      };
+      reader.readAsText(file, "utf-8");
+    };
+    const btn = { padding: "7px 12px", border: "1px solid var(--tool-accent)", borderRadius: 7, background: "#fff", color: "var(--tool-accent)", fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" };
+    return (
+      <div data-sf="box" style={{ margin: "8px 0 10px", padding: "10px 12px", border: "1px solid var(--tool-line)", borderRadius: 9, background: "var(--tool-surface)" }}>
+        <div style={{ fontSize: 11.5, fontWeight: 600, margin: "0 0 4px" }}>Legenda sincronizada (arquivo .srt ou .vtt)</div>
+        <p style={{ fontSize: 11.5, margin: "0 0 8px", color: "var(--tool-ink-3)", lineHeight: 1.45 }}>A fala aparece sob o vídeo, em letras amarelas sobre fundo escuro, acompanhando o vídeo. A transcrição completa fica recolhida e o aluno pode clicar numa fala para ir até ela.</p>
+        <input ref={inputRef} type="file" accept=".srt,.vtt,text/vtt,application/x-subrip,text/plain" data-sf="file" style={{ display: "none" }} onChange={(e) => { read(e.target.files && e.target.files[0]); e.target.value = ""; }} />
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button type="button" data-sf="pick" style={btn} onClick={() => inputRef.current && inputRef.current.click()}>{count ? "Trocar arquivo de legenda" : "Escolher arquivo de legenda"}</button>
+          {count > 0 && <button type="button" data-sf="clear" style={{ ...btn, color: "#8a2f18", borderColor: "#d9b3a8" }} onClick={() => { onClear(); setNote("Legenda sincronizada removida. O texto da transcrição continua no campo."); }}>Remover sincronia</button>}
+        </div>
+        {count > 0 && !note && <p role="status" data-sf="state" style={{ fontSize: 12, margin: "8px 0 0", color: "var(--tool-ink-2)" }}>Legenda sincronizada ativa: {count} falas.</p>}
+        {pending && <div role="status" style={{ fontSize: 12, margin: "8px 0 0", lineHeight: 1.45 }}>Já há texto no campo Transcrição; ele será substituído pelo texto do arquivo. <button type="button" data-sf="confirm" style={{ ...btn, marginLeft: 6, padding: "4px 9px" }} onClick={() => apply(pending)}>Substituir</button> <button type="button" style={{ ...btn, padding: "4px 9px", color: "var(--tool-ink-3)", borderColor: "var(--tool-line)" }} onClick={() => setPending(null)}>Cancelar</button></div>}
+        {note && <p role="status" data-sf="note" style={{ fontSize: 12, margin: "8px 0 0", color: "var(--tool-ink-2)", lineHeight: 1.45 }}>{note}</p>}
+        {err && <p role="alert" data-sf="err" style={{ fontSize: 12, margin: "8px 0 0", padding: "8px 10px", borderRadius: 8, background: "#fdecea", color: "#8a2f18", lineHeight: 1.45 }}>{err}</p>}
+      </div>
+    );
+  }
+  Object.assign(window, { InsertImageDialog, CaptionsFetcher, askCaptions, SubtitleFile });
 })();

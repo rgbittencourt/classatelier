@@ -208,7 +208,7 @@ const BLOCKS = [
   {
     type: "video", label: "Vídeo (YouTube)", icon: "play-circle", cat: "Mídia",
     kind: "list", bg: "neutral-default", pad: "normal",
-    props: { id: "dQw4w9WgXcQ", title: "Vídeo", caption: "Legenda do vídeo.", credit: "", start: "", captionsOk: false, transcript: "", transcriptUrl: "" },
+    props: { id: "dQw4w9WgXcQ", title: "Vídeo", caption: "Legenda do vídeo.", credit: "", start: "", captionsOk: false, transcript: "", transcriptUrl: "", transcriptCues: [] },
   },
   {
     type: "audio", label: "Áudio / Podcast", icon: "headphones", cat: "Mídia",

@@ -756,6 +756,56 @@ function ExternalEmbed({ embed, title = "Conteúdo incorporado", responsive = tr
 }
 
 // TRANSCRIÇÃO — alternativa em texto para vídeo e áudio (WCAG 1.2.1/1.2.3). Texto puro: parágrafos separados por linha em branco.
+// ── Legenda sincronizada (arquivo .srt/.vtt carregado no ClassAtelier) ──
+// As falas chegam prontas: [[inicio, fim, "texto"], ...] em segundos, em ordem crescente.
+let ytApiPromise = null;
+function loadYTApi() {
+  if (typeof window === "undefined") return Promise.reject(new Error("sem janela"));
+  if (window.YT && window.YT.Player) return Promise.resolve(window.YT);
+  if (!ytApiPromise) {
+    ytApiPromise = new Promise((resolve, reject) => {
+      const previous = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => { try { if (previous) previous(); } catch (e) { /* ignora */ } resolve(window.YT); };
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api"; tag.async = true;
+      tag.onerror = () => { ytApiPromise = null; reject(new Error("api")); };
+      document.head.appendChild(tag);
+      setTimeout(() => { if (!(window.YT && window.YT.Player)) { ytApiPromise = null; reject(new Error("tempo")); } }, 12000);
+    });
+  }
+  return ytApiPromise;
+}
+// Fala em andamento em t segundos: a última que já começou (-1 antes da primeira; -2 em silêncio longo).
+function subtitleIndexAt(cues, t) {
+  let lo = 0, hi = cues.length - 1, ans = -1;
+  while (lo <= hi) { const mid = (lo + hi) >> 1; if (cues[mid][0] <= t) { ans = mid; lo = mid + 1; } else hi = mid - 1; }
+  if (ans >= 0 && t > cues[ans][1] + 0.4) return -2;
+  return ans;
+}
+function formatSubtitleTime(sec) {
+  const s = Math.max(0, Math.floor(sec)), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
+  return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(r).padStart(2, "0");
+}
+function SubtitleList({ cues, idx, onSeek }) {
+  const listRef = useRef(null);
+  const hovering = useRef(false);
+  useEffect(() => {
+    const box = listRef.current;
+    if (!box || hovering.current || idx < 0) return;
+    const el = box.querySelector(".is-on");
+    if (el) box.scrollTop = Math.max(0, el.offsetTop - box.clientHeight / 2 + el.offsetHeight / 2);
+  }, [idx]);
+  return (
+    <div className="aula-sub-list" ref={listRef} onMouseEnter={() => { hovering.current = true; }} onMouseLeave={() => { hovering.current = false; }}>
+      {cues.map((c, i) => (
+        <button type="button" key={i} className={"aula-sub-cue" + (i === idx ? " is-on" : "")} aria-current={i === idx ? "true" : undefined} onClick={() => onSeek(c[0])}>
+          <span className="aula-sub-cue__t">{formatSubtitleTime(c[0])}</span><span className="aula-sub-cue__x">{c[2]}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function MediaTranscript({ text, url, label = "Transcrição" }) {
   const paras = String(text || "").split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean);
   if (!paras.length && !url) return null;
@@ -770,7 +820,7 @@ function MediaTranscript({ text, url, label = "Transcrição" }) {
 }
 
 // VIDEO YOUTUBE — responsive 16:9 embed with caption
-function VideoYouTube({ id, title = "Vídeo", caption, credit, start, transcript, transcriptUrl }) {
+function VideoYouTube({ id, title = "Vídeo", caption, credit, start, transcript, transcriptUrl, cues }) {
   const titleText = richPlain(title) || "Vídeo";
   if (usePDF()) {
     // PDF: static poster + the public YouTube URL underneath.
@@ -792,14 +842,46 @@ function VideoYouTube({ id, title = "Vídeo", caption, credit, start, transcript
       </figure>
     );
   }
+  const hasCues = Array.isArray(cues) && cues.length > 0;
   const [playing, setPlaying] = useState(false);
-  const src = `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&autoplay=1${start ? `&start=${start}` : ""}`;
+  const [from, setFrom] = useState(null);       // início pedido ao clicar numa fala antes de o vídeo rodar
+  const [idx, setIdx] = useState(-1);           // fala em andamento
+  const [sync, setSync] = useState("idle");     // idle | ready | failed
+  const [open, setOpen] = useState(false);      // transcrição completa aberta?
+  const iframeRef = useRef(null);
+  const playerRef = useRef(null);
+  const startAt = from != null ? from : start;
+  const origin = hasCues && typeof location !== "undefined" && /^https?:/.test(location.protocol) ? `&origin=${encodeURIComponent(location.origin)}` : "";
+  const src = `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&autoplay=1${startAt ? `&start=${startAt}` : ""}${hasCues ? "&enablejsapi=1" + origin : ""}`;
   const thumb = `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
+
+  useEffect(() => {
+    if (!playing || !hasCues || !iframeRef.current) return undefined;
+    let dead = false, timer = null;
+    setSync("idle");
+    loadYTApi().then((YT) => {
+      if (dead || !iframeRef.current) return;
+      const player = new YT.Player(iframeRef.current, { events: { onReady: () => { if (!dead) { playerRef.current = player; setSync("ready"); } } } });
+      timer = setInterval(() => {
+        try { const t = player && player.getCurrentTime ? player.getCurrentTime() : null; if (typeof t === "number") { const i = subtitleIndexAt(cues, t); setIdx((prev) => (prev === i ? prev : i)); } } catch (e) { /* player ainda não pronto */ }
+      }, 250);
+    }).catch(() => { if (!dead) setSync("failed"); });
+    return () => { dead = true; if (timer) clearInterval(timer); playerRef.current = null; };
+  }, [playing, hasCues, from]);
+
+  const seek = (sec) => {
+    const player = playerRef.current;
+    if (playing && player && player.seekTo) { try { player.seekTo(sec, true); player.playVideo(); } catch (e) { /* ignora */ } return; }
+    setFrom(Math.floor(sec)); setPlaying(true);
+  };
+  const barText = hasCues && idx >= 0 ? cues[idx][2] : null;
   return (
     <figure className="aula-video">
       <div className="aula-video__frame">
         {playing ? (
           <iframe
+            key={"yt" + (from || 0)}
+            ref={iframeRef}
             className="aula-video__iframe"
             src={src}
             title={titleText}
@@ -818,12 +900,27 @@ function VideoYouTube({ id, title = "Vídeo", caption, credit, start, transcript
           </button>
         )}
       </div>
+      {hasCues && (
+        <div className="aula-sub" role="group" aria-label="Legenda sincronizada com o vídeo">
+          <p className={"aula-sub__line" + (barText ? "" : " is-idle")} aria-hidden="true">
+            {barText || (sync === "failed" ? "A legenda sincronizada não está disponível aqui. Leia a transcrição abaixo." : playing ? "\u00a0" : "A legenda aparece aqui quando o vídeo começar.")}
+          </p>
+        </div>
+      )}
       {caption && (
         <figcaption className="aula-media-cap">
           <RichInline value={caption}/>{credit && <span className="aula-media-credit"> — <RichInline value={credit}/></span>}
         </figcaption>
       )}
-      <MediaTranscript text={transcript} url={transcriptUrl} />
+      {hasCues ? (
+        <details className="aula-transcript aula-transcript--sync" onToggle={(e) => setOpen(e.currentTarget.open)}>
+          <summary><strong>Transcrição</strong><span className="aula-transcript__hint">clique numa fala para ir até ela</span><Icon name="chevron-down" size={18} stroke={1.7} /></summary>
+          {open && <SubtitleList cues={cues} idx={idx} onSeek={seek} />}
+          {transcriptUrl && <div className="aula-transcript__link"><RecursoLink rotulo="Transcrição completa em" href={transcriptUrl} /></div>}
+        </details>
+      ) : (
+        <MediaTranscript text={transcript} url={transcriptUrl} />
+      )}
     </figure>
   );
 }
