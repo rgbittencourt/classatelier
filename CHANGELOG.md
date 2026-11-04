@@ -4,12 +4,17 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.17.3** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.17.4** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.17.4 · 04/11/2026 · Referências: sem editora, entidade como autor e o que falta à vista
+
+- **Autor entidade** («Gartner.», «Google Cloud.») vai em MAIÚSCULAS; o negrito volta só ao título mesmo em referências **sem editora** («Autor. Título, ano.»), com **ano colado ao título**, com **aspas** no título (reportagem, o jornal fica em negrito) e com **data por extenso** («2 de fevereiro de 2025» vira «2 fev. 2025»; a data de leis fica por extenso).
+- O que a norma pede e não dá para deduzir **aparece na própria referência, no lugar certo**: «[ano]» e «Acesso em: [dia mês ano].». A conferência lista o que trocar.
 
 ### 1.17.3 · 04/11/2026 · Referências: desfaz negrito fora do título e arruma digitação
 
