@@ -1044,8 +1044,8 @@
 .aula-refs__bodywrap { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 320ms var(--ease-out); }
 .aula-refs.is-open .aula-refs__bodywrap { grid-template-rows: 1fr; }
 .aula-refs__clip { overflow: hidden; }
-.aula-refs__list { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
-.aula-refs__ref { font-family: var(--font-sans); font-size: 14.5px; line-height: 1.6; color: var(--ink-soft); padding-left: 2.2em; text-indent: -2.2em; }
+.aula-refs__list { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 1.4em; text-align: left; }
+.aula-refs__ref { font-family: var(--font-sans); font-size: 14.5px; line-height: 1.35; color: var(--ink-soft); padding: 0; text-indent: 0; text-align: left; }
 .aula-refs--dark { --refs-fg: var(--paper); border-top-color: rgba(251, 246, 238, 0.18); }
 .aula-refs--dark .aula-refs__count { color: rgba(251, 246, 238, 0.6); background: rgba(251, 246, 238, 0.12); }
 .aula-refs--dark .aula-refs__chev { color: rgba(251, 246, 238, 0.6); }
@@ -1055,7 +1055,7 @@
 .aula-refs-print { border-top: 1px solid var(--rule); margin: 16px 0; }
 .aula-refs-print__title { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; margin: 16px 0; color: var(--ink); }
 .aula-refs-print.aula-refs--dark .aula-refs-print__title { color: var(--paper); }
-.aula-refs-print__list { gap: 14px; }
+.aula-refs-print__list { gap: 1.4em; }
 .aula-refs-print .aula-refs__ref { font-size: 0.9rem; }
 .aula-refs-print.aula-refs--dark .aula-refs__ref { color: rgba(251, 246, 238, 0.78); }
 

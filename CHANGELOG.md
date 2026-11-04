@@ -4,12 +4,19 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.15.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.16.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.16.0 · 04/11/2026 · Referências na ABNT NBR 6023
+
+- **Quadro «ABNT NBR 6023: organizar e conferir»** no painel do bloco Referências. **Organizar lista** corrige o que a norma decide sem dúvida e põe a lista em ordem alfabética: 4 ou mais autores viram o primeiro com *et al.* (sem itálico), o negrito sai do subtítulo, «(org.)» vira «(Org.)», «2ª ed.» vira «2. ed.», a 1ª edição deixa de ser indicada, a URL fica entre `< >` e a data de acesso segue «5 mar. 2026» (maio por extenso). **A conferir** mostra, por referência, o que falta ou destoa (forma, não verdade da obra).
+- **Montar uma referência por campos** (livro, capítulo, artigo de periódico, site ou documento digital): o motor escreve o texto pelos modelos da norma. «Paulo Freire» vira «FREIRE, Paulo», instituição em maiúsculas, até 3 autores separados por «; », e faltando local, editora ou ano entram [S. l.], [s. n.] e [s. d.]. DOI vira URL e a data de acesso padrão é hoje.
+- **Na aula** (prévia, HTML, SCORM, pacote e PDF) as referências saem sempre em **ordem alfabética**, alinhadas à esquerda, **sem recuo deslocado nem marcadores** e com uma linha em branco entre elas; o espaçamento dentro de cada uma é simples. O texto da aula (Copiar texto) também sai assim, sem «- ».
+- O motor é o `abnt.js`, cópia do que o ClassAuthor 1.14.0 usa: os dois apps seguem as mesmas regras.
 
 ### 1.15.1 · 04/11/2026 · Um só quadro de acesso ao ClassAuthor
 

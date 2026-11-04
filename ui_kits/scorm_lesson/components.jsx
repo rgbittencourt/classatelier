@@ -2027,7 +2027,7 @@ function MateriaisExtras({ title = "Para ir além", items = [] }) {
   );
 }
 
-// REFERÊNCIAS ABNT — collapsed list, hanging indent, NBR 6023
+// REFERÊNCIAS ABNT (NBR 6023) — lista recolhível, à esquerda, sem marcadores; a ordem alfabética vem pronta (prévia e exportação)
 function ReferenciasABNT({ title = "Referências", items = [], defaultOpen = false, dark = false }) {
   if (usePDF()) {
     // PDF: always open, full list, optionally starting on a fresh page.

@@ -969,6 +969,7 @@ function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquati
     case "referencias":
       return (<>
         <Field label="Título"><TextInput value={p.title} onChange={(v) => setP({ title: v })} /></Field>
+        {window.ReferencesTool && <window.ReferencesTool items={p.items} onChange={(v) => setP({ items: v })} />}
         <StringList items={p.items} onChange={(v) => setP({ items: v })} label="Referência" placeholder="SOBRENOME, Nome. <strong>Título</strong>. Editora, ano." />
       </>);
     default:
