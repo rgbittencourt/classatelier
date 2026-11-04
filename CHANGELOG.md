@@ -4,12 +4,16 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.17.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.17.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.17.1 · 04/11/2026 · Manual Class: capa atualizada
+
+- A capa do **Manual Class** mostrava as versões da primeira edição, a data de 30/10/2026 e 105 capturas. Agora traz as versões atuais dos três aplicativos, a data e as 115 capturas de tela. O ClassAtelier em si não mudou.
 
 ### 1.17.0 · 04/11/2026 · Referências: correção automática do que a norma resolve sem dúvida
 
