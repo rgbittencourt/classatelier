@@ -856,8 +856,11 @@ function MediaTranscript({ text, url, label = "Transcrição" }) {
 }
 
 // VIDEO YOUTUBE — responsive 16:9 embed with caption
-function VideoYouTube({ id, title = "Vídeo", caption, credit, start, transcript, transcriptUrl, cues, summary }) {
-  const titleText = richPlain(title) || "Vídeo";
+function VideoYouTube({ id, title = "Vídeo", caption, credit, start, transcript, transcriptUrl, cues, summary, showSub = true, showSummary = true, showTranscript = true }) {
+  // Nome do vídeo para leitor de tela: o título; se for genérico ("Vídeo"), a Legenda.
+  const plainTitle = richPlain(title), plainCaption = richPlain(caption);
+  const genericName = (x) => !x || /^v[ií]deo$/i.test(x) || /^legenda do v[ií]deo\.?$/i.test(x);
+  const titleText = !genericName(plainTitle) ? plainTitle : !genericName(plainCaption) ? plainCaption : (plainTitle || "Vídeo");
   if (usePDF()) {
     // PDF: static poster + the public YouTube URL underneath.
     const url = `https://youtu.be/${id}${start ? `?t=${start}` : ""}`;
@@ -874,16 +877,19 @@ function VideoYouTube({ id, title = "Vídeo", caption, credit, start, transcript
         </div>
         {caption && <figcaption className="aula-media-cap"><RichInline value={caption}/>{credit && <span className="aula-media-credit"> — <RichInline value={credit}/></span>}</figcaption>}
         <RecursoLink rotulo="Assista em" href={url} />
-        {Array.isArray(summary) && summary.length > 0 && <section className="aula-transcript is-print aula-summary"><h4>Resumo do vídeo</h4><VideoSummary items={summary} print /></section>}
-        <MediaTranscript text={transcript} url={transcriptUrl} />
+        {showSummary !== false && Array.isArray(summary) && summary.length > 0 && <section className="aula-transcript is-print aula-summary"><h4>Resumo do vídeo</h4><VideoSummary items={summary} print /></section>}
+        {showTranscript !== false && <MediaTranscript text={transcript} url={transcriptUrl} />}
       </figure>
     );
   }
-  const hasCues = Array.isArray(cues) && cues.length > 0;
+  const cuesAll = Array.isArray(cues) && cues.length > 0;
+  const barOn = cuesAll && showSub !== false;            // faixa amarela sob o vídeo
+  const listOn = cuesAll && showTranscript !== false;    // transcrição sincronizada (recolhida)
+  const hasCues = barOn || listOn;                       // precisa acompanhar o tempo do vídeo
   const items = Array.isArray(summary) ? summary : [];
-  const hasSummary = items.some((it) => it.k === "p");
+  const hasSummary = showSummary !== false && items.some((it) => it.k === "p");
   const timed = items.map((it, i) => [it.s, i]).filter((r) => it0(r[0]) && items[r[1]].k === "p");
-  const needApi = hasCues || timed.length > 0;
+  const needApi = hasCues || (hasSummary && timed.length > 0);
   const [sumIdx, setSumIdx] = useState(-1);     // tópico do resumo em andamento
   const [playing, setPlaying] = useState(false);
   const [from, setFrom] = useState(null);       // início pedido ao clicar numa fala antes de o vídeo rodar
@@ -909,7 +915,7 @@ function VideoYouTube({ id, title = "Vídeo", caption, credit, start, transcript
           const t = player && player.getCurrentTime ? player.getCurrentTime() : null;
           if (typeof t !== "number") return;
           if (hasCues) { const i = subtitleIndexAt(cues, t); setIdx((prev) => (prev === i ? prev : i)); }
-          if (timed.length) { let k = -1; for (let n = 0; n < timed.length; n++) { if (timed[n][0] <= t + 0.3) k = timed[n][1]; } setSumIdx((prev) => (prev === k ? prev : k)); }
+          if (hasSummary && timed.length) { let k = -1; for (let n = 0; n < timed.length; n++) { if (timed[n][0] <= t + 0.3) k = timed[n][1]; } setSumIdx((prev) => (prev === k ? prev : k)); }
         } catch (e) { /* player ainda não pronto */ }
       }, 250);
     }).catch(() => { if (!dead) setSync("failed"); });
@@ -947,7 +953,7 @@ function VideoYouTube({ id, title = "Vídeo", caption, credit, start, transcript
           </button>
         )}
       </div>
-      {hasCues && (
+      {barOn && (
         <div className="aula-sub" role="group" aria-label="Legenda sincronizada com o vídeo">
           <p className={"aula-sub__line" + (barText ? "" : " is-idle")} aria-hidden="true">
             {barText || (sync === "failed" ? "A legenda sincronizada não está disponível aqui. Leia a transcrição abaixo." : playing ? "\u00a0" : "A legenda aparece aqui quando o vídeo começar.")}
@@ -965,7 +971,7 @@ function VideoYouTube({ id, title = "Vídeo", caption, credit, start, transcript
           <VideoSummary items={items} active={sumIdx} onSeek={timed.length ? seek : null} />
         </details>
       )}
-      {hasCues ? (
+      {showTranscript === false ? null : listOn ? (
         <details className="aula-transcript aula-transcript--sync" onToggle={(e) => setOpen(e.currentTarget.open)}>
           <summary><strong>Transcrição</strong><span className="aula-transcript__hint">clique numa fala para ir até ela</span><Icon name="chevron-down" size={18} stroke={1.7} /></summary>
           {open && <SubtitleList cues={cues} idx={idx} onSeek={seek} />}

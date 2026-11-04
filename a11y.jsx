@@ -23,7 +23,7 @@
 
   const entities = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'", "&nbsp;": " " };
   const plain = (h) => String(h == null ? "" : h).replace(/<[^>]*>/g, " ").replace(/&(amp|lt|gt|quot|#39|nbsp);/g, (m) => entities[m]).replace(/\s+/g, " ").trim();
-  const hasTranscript = (p) => String(p.transcript || "").trim().length >= 80 || /^https?:\/\//i.test(String(p.transcriptUrl || "").trim());
+  const hasTranscript = (p) => p.showTranscript !== false && (String(p.transcript || "").trim().length >= 80 || /^https?:\/\//i.test(String(p.transcriptUrl || "").trim()));
   const clip = (t, n = 60) => (t.length > n ? t.slice(0, n - 1) + "…" : t);
 
   const TOPICS = ["topic", "topic-collapsible", "topic-slider"];
@@ -117,8 +117,9 @@
           break;
         case "video": {
           if (!p.id || p.id === "dQw4w9WgXcQ") add("error", "video-placeholder", b, "Vídeo de exemplo ainda no lugar", "O endereço é o vídeo-modelo que vem com o bloco. Troque pelo seu vídeo.", WCAG.media);
-          const t = plain(p.title);
-          if (!t || /^v[ií]deo$/i.test(t)) add("warn", "video-title", b, "Vídeo sem título descritivo", "O título do vídeo é o nome que o leitor de tela anuncia no player. Use algo como “Entrevista com a coordenadora (8 min)”.", WCAG.frame);
+          // O nome do player vem do título sobre o vídeo; se ele for genérico, vale o campo Legenda (o mais perto de um título).
+          const generic = (x) => !x || /^v[ií]deo$/i.test(x) || /^legenda do v[ií]deo\.?$/i.test(x);
+          if (generic(plain(p.title)) && generic(plain(p.caption))) add("warn", "video-title", b, "Vídeo sem título descritivo", "O leitor de tela anuncia o nome do vídeo no player. Esse nome vem do título sobre o vídeo e, se ele estiver vazio ou genérico (“Vídeo”), do campo Legenda. Preencha um dos dois com algo como “Entrevista com a coordenadora (8 min)”.", WCAG.frame);
           if (p.transcriptAuto && !p.transcriptReviewed && hasTranscript(p)) add("tip", "video-transcript-review", b, "Transcrição automática sem revisão", "A legenda automática do YouTube erra nomes, termos técnicos e pontuação. Leia o texto, corrija e marque “Revisei a transcrição automática” no bloco.", WCAG.media);
           if (!p.captionsOk && !hasTranscript(p)) add("warn", "video-captions", b, "Vídeo sem legendas nem transcrição", "Surdos e ensurdecidos precisam de legendas ou de um texto equivalente. No YouTube, ative as legendas e marque “Conferi: o vídeo tem legendas” no bloco, ou cole a transcrição (ou o link dela) no campo Transcrição.", WCAG.media);
           break;

@@ -868,6 +868,14 @@ function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquati
         {window.CaptionsFetcher && <window.CaptionsFetcher video={p.id} hasText={String(p.transcript || "").trim().length > 0} onFill={(r) => setP({ transcript: r.text, transcriptAuto: !!r.auto, transcriptReviewed: false })} />}
         {window.SubtitleFile && <window.SubtitleFile cues={p.transcriptCues} hasText={String(p.transcript || "").trim().length > 0} onLoad={(r) => setP({ transcriptCues: r.cues, transcript: r.text, transcriptAuto: false, transcriptReviewed: false })} onClear={() => setP({ transcriptCues: [] })} />}
         {window.SummaryBox && <window.SummaryBox value={p.summaryMd} cues={p.transcriptCues} transcript={p.transcript} onChange={(v) => setP({ summaryMd: v })} />}
+        <div data-vis="box" style={{ margin: "10px 0", padding: "10px 12px", border: "1px solid var(--tool-line)", borderRadius: 9, background: "var(--tool-surface)" }}>
+          <div style={{ fontSize: 11.5, fontWeight: 600, margin: "0 0 2px" }}>O que aparece na aula, junto do vídeo</div>
+          <p style={{ ...hint, margin: "0 0 6px" }}>Desligar esconde da aula (HTML, SCORM, pacote e PDF), mas guarda o conteúdo aqui no painel.</p>
+          <Toggle value={p.showSubtitle !== false} onChange={(v) => setP({ showSubtitle: v })} label="Faixa de legenda (letras amarelas sob o vídeo)" />
+          <Toggle value={p.showSummary !== false} onChange={(v) => setP({ showSummary: v })} label="Resumo do vídeo" />
+          <Toggle value={p.showTranscript !== false} onChange={(v) => setP({ showTranscript: v })} label="Transcrição" />
+          {p.showTranscript === false && <p style={{ ...hint, margin: "6px 0 0" }}>Com a transcrição desligada, o verificador de acessibilidade deixa de contá-la como alternativa ao vídeo.</p>}
+        </div>
         <Field label="Transcrição (texto do vídeo)"><TextArea value={p.transcript} onChange={(v) => setP({ transcript: v })} placeholder="Cole aqui a transcrição. Separe parágrafos com uma linha em branco." /></Field>
         {p.transcriptAuto && <Toggle value={!!p.transcriptReviewed} onChange={(v) => setP({ transcriptReviewed: v })} label="Revisei a transcrição automática" />}
         <Field label="Ou link da transcrição"><TextInput value={p.transcriptUrl} onChange={(v) => setP({ transcriptUrl: v })} placeholder="https://…" /></Field>

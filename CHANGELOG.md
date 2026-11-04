@@ -4,12 +4,20 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.14.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.15.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.15.0 · 04/11/2026 · Escolher o que aparece junto do vídeo
+
+- No painel do bloco **Vídeo**, o grupo **O que aparece na aula, junto do vídeo** tem três interruptores: **Faixa de legenda** (letras amarelas sob o vídeo), **Resumo do vídeo** e **Transcrição**. Todos vêm ligados. Desligar esconde da aula (HTML, SCORM, pacote e PDF), mas **guarda o conteúdo** no painel, para ligar de novo quando quiser.
+- Desligando a **Transcrição**, o verificador de acessibilidade deixa de contá-la como alternativa ao vídeo (e avisa de novo, se o vídeo também não tiver legendas conferidas). O campo e o arquivo de legenda continuam guardados.
+- Quando só a faixa e a transcrição estão desligadas, a página não carrega o controle do player do YouTube à toa; o vídeo se comporta como o de antes.
+- O aviso **«Vídeo sem título descritivo»** do verificador de acessibilidade agora também aceita o campo **Legenda** como nome do vídeo: só avisa quando o título sobre o vídeo **e** a Legenda estão vazios ou genéricos («Vídeo», «Legenda do vídeo.»). Na aula, o leitor de tela anuncia o título e, se ele for genérico, a Legenda.
+- Aulas já feitas continuam iguais: sem nenhuma chave ainda gravada, os três aparecem como antes.
 
 ### 1.14.0 · 04/11/2026 · Resumo do vídeo (tópicos com tempo)
 
