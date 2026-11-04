@@ -1374,3 +1374,21 @@
 .aula-sub-cue.is-on { background: rgba(255, 225, 77, .14); border-left-color: #ffe14d; color: #ffe14d; font-weight: 700; }
 .aula-sub-cue__t { flex: 0 0 auto; min-width: 3.4em; font-variant-numeric: tabular-nums; font-size: .82rem; color: rgba(255, 225, 77, .6); }
 @media print { .aula-sub, .aula-transcript--sync { display: none; } }
+
+/* ─── Resumo do vídeo (tópicos com tempo) ─── */
+.aula-summary > summary { flex-wrap: wrap; }
+.aula-summary .aula-transcript__hint { margin-left: auto; font-size: .82rem; font-weight: 400; color: var(--ink-3, #6b6a63); }
+.aula-summary__body { padding: 0 18px 14px; max-height: 30rem; overflow: auto; line-height: 1.55; font-size: .96rem; }
+.aula-summary__h { margin: 14px 0 6px; font-size: 1.02rem; font-weight: 700; }
+.aula-summary__h:first-child { margin-top: 2px; }
+.aula-summary__h2 { margin: 10px 0 4px; font-size: .96rem; font-weight: 700; color: var(--ink-2, inherit); }
+.aula-summary__list { list-style: none; margin: 0 0 4px; padding: 0; }
+.aula-summary__list li { display: flex; gap: 10px; align-items: baseline; padding: 4px 8px; margin: 1px 0; border-radius: 6px; border-left: 3px solid transparent; }
+.aula-summary__list li.is-on { background: color-mix(in srgb, var(--c-video-play-bg, var(--terracotta, #c8553d)) 12%, transparent); border-left-color: var(--c-video-play-bg, var(--terracotta, #c8553d)); font-weight: 600; }
+.aula-summary__t { flex: 0 0 auto; min-width: 3.1em; padding: 1px 8px; border: 1px solid var(--rule, #d8d5cc); border-radius: 999px; background: transparent; color: inherit;
+  font: inherit; font-size: .8rem; font-variant-numeric: tabular-nums; text-align: center; }
+button.aula-summary__t { cursor: pointer; }
+button.aula-summary__t:hover { border-color: var(--c-video-play-bg, var(--terracotta, #c8553d)); color: var(--c-video-play-bg, var(--terracotta, #c8553d)); }
+button.aula-summary__t:focus-visible { outline: 2px solid var(--c-video-play-bg, var(--terracotta, #c8553d)); outline-offset: 2px; }
+.aula-summary.is-print .aula-summary__body { padding: 0; max-height: none; overflow: visible; }
+

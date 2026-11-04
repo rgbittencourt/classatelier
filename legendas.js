@@ -114,7 +114,61 @@
     return ans;
   }
 
-  var api = { parseSubtitles: parseSubtitles, cueAt: cueAt };
+
+  // ── Resumo do vídeo (Markdown simples) ↔ itens ──
+  // Formato: "# Seção", "## Subseção" e tópicos ("- [12:58] texto"). O tempo é opcional e aceita
+  // [12:58], (12:58), 12:58 – no começo, ou [12:58](link) / (12:58) no fim (como o Video Highlight copia).
+  // Item: { k: "h1" | "h2" | "p", x: texto, s: segundos | null }
+  var T = "(?:\\d{1,2}:)?\\d{1,2}:\\d{2}";
+  var LEAD = new RegExp("^[\\s*_]*[\\[(]?\\s*(" + T + ")\\s*[\\])]?(?:\\([^)]*\\))?[\\s*_]*(?:[-–—:|]\\s*)?");
+  var TRAIL = new RegExp("[\\s\\-–—]*[\\[(]\\s*(" + T + ")\\s*[\\])](?:\\((?:https?:)[^)]*\\))?[\\s.]*$");
+  function clock(str) {
+    var p = String(str).split(":").map(Number), n = 0;
+    p.forEach(function (v) { n = n * 60 + v; });
+    return n;
+  }
+  function cleanText(x) {
+    return String(x)
+      .replace(/\[([^\]]+)\]\((?:https?:)[^)]*\)/g, "$1")
+      .replace(/(\*\*|__)(.*?)\1/g, "$2").replace(/(^|\s)[*_]([^*_]+)[*_](?=\s|$)/g, "$1$2")
+      .replace(/\s+/g, " ").trim();
+  }
+  function parseSummary(md) {
+    var out = [];
+    String(md || "").replace(/\r\n?/g, "\n").split("\n").forEach(function (raw) {
+      var line = raw.trim();
+      if (!line || /^[-*_=]{3,}$/.test(line)) return;
+      var kind = "p", m = line.match(/^(#{1,6})\s*(.*)$/);
+      if (m) { kind = m[1].length === 1 ? "h1" : "h2"; line = m[2]; }
+      else line = line.replace(/^(?:[-*•▪◦]|\d+[.)])\s+/, "");
+      var s = null, mm;
+      if ((mm = line.match(LEAD)) && mm[0].trim()) { s = clock(mm[1]); line = line.slice(mm[0].length); }
+      else if ((mm = line.match(TRAIL))) { s = clock(mm[1]); line = line.slice(0, mm.index); }
+      var x = cleanText(line);
+      if (!x) return;
+      out.push({ k: kind, x: x, s: s });
+    });
+    // Título sem tempo próprio herda o do primeiro tópico que vem depois.
+    for (var i = 0; i < out.length; i++) {
+      if (out[i].k !== "p" && out[i].s === null) {
+        for (var j = i + 1; j < out.length && out[j].k === "p"; j++) { if (out[j].s !== null) { out[i].s = out[j].s; break; } }
+      }
+    }
+    return out;
+  }
+  function fmtClock(sec) {
+    var n = Math.max(0, Math.floor(sec)), h = Math.floor(n / 3600), m = Math.floor((n % 3600) / 60), r = n % 60;
+    return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(r).padStart(2, "0");
+  }
+  function summaryToMd(items) {
+    return (items || []).map(function (it) {
+      if (it.k === "h1") return "# " + it.x;
+      if (it.k === "h2") return "## " + it.x;
+      return "- " + (it.s !== null && it.s !== undefined ? "[" + fmtClock(it.s) + "] " : "") + it.x;
+    }).join("\n");
+  }
+
+  var api = { parseSubtitles: parseSubtitles, cueAt: cueAt, parseSummary: parseSummary, summaryToMd: summaryToMd };
   if (typeof window !== "undefined") Object.assign(window, api);
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })();

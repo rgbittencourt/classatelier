@@ -215,6 +215,78 @@
       </div>
     );
   }
+  // ── Resumo do vídeo: colar (Markdown simples) ou gerar com IA a partir da legenda ──
+  async function askSummary({ base, code, aiKey, cues, text }) {
+    const url = String(base || DEFAULT_BASE).trim().replace(/\/+$/, "") + "/api/video-summary";
+    const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 120000);
+    let res;
+    try {
+      res = await fetch(url, { method: "POST", signal: ctl.signal, headers: { "Content-Type": "application/json", ...(code ? { "x-aula-access-code": code } : {}), ...keyHeaders(aiKey) }, body: JSON.stringify({ action: "videosummary", cues, text, language: "pt" }) });
+    } catch (e) {
+      throw new Error(e && e.name === "AbortError" ? "A IA demorou demais. Tente de novo." : "Não consegui falar com o ClassAuthor em " + url.replace(/\/api\/video-summary$/, "") + ". Confira o endereço e a conexão.");
+    } finally { clearTimeout(timer); }
+    let data = null; try { data = await res.json(); } catch (e) { /* sem JSON */ }
+    if (!res.ok || !data || !data.ok) {
+      if (res.status === 401) throw new Error("O código de acesso do ClassAuthor não foi aceito. Sem o código? Cole a sua chave de IA no campo ao lado.");
+      if (res.status === 404) throw new Error("O ClassAuthor em uso ainda não tem o resumo de vídeo. Ele precisa estar na versão 1.13.0 ou mais nova.");
+      throw new Error((data && data.error) || "O ClassAuthor respondeu com erro " + res.status + ".");
+    }
+    return data;
+  }
+
+  function SummaryBox({ value, cues, transcript, onChange }) {
+    const [base, setBase] = useState(safeGet("localStorage", LS_BASE) || DEFAULT_BASE);
+    const [code, setCode] = useState(safeGet("localStorage", LS_CODE) || safeGet("sessionStorage", LS_CODE));
+    const [aiKey, setAiKey] = useState(safeGet("sessionStorage", LS_KEY));
+    const [busy, setBusy] = useState(false);
+    const [err, setErr] = useState("");
+    const [note, setNote] = useState("");
+    const [confirm, setConfirm] = useState(false);
+    const hasCues = Array.isArray(cues) && cues.length > 0;
+    const text = String(transcript || "");
+    const canAsk = hasCues || text.trim().length >= 400;
+    const parsed = window.parseSummary ? window.parseSummary(value) : [];
+    const topics = parsed.filter((i) => i.k === "p").length, timed = parsed.filter((i) => i.k === "p" && i.s !== null).length;
+    const inp = { width: "100%", boxSizing: "border-box", padding: "7px 9px", border: "1px solid var(--tool-line-2)", borderRadius: 7, fontSize: 12.5, fontFamily: "inherit", background: "#fff" };
+    const btn = { padding: "7px 12px", border: "1px solid var(--tool-accent)", borderRadius: 7, background: "#fff", color: "var(--tool-accent)", fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" };
+    const go = async () => {
+      setErr(""); setNote("");
+      if (String(value || "").trim() && !confirm) { setConfirm(true); return; }
+      setConfirm(false); setBusy(true);
+      try {
+        const r = await askSummary({ base, code: code.trim(), aiKey, cues: hasCues ? cues : undefined, text: hasCues ? undefined : text });
+        safeSet("localStorage", LS_BASE, base.trim() === DEFAULT_BASE ? "" : base.trim());
+        safeSet("sessionStorage", LS_CODE, code.trim()); safeSet("sessionStorage", LS_KEY, String(aiKey || "").trim());
+        onChange(window.summaryToMd ? window.summaryToMd(r.items) : "");
+        const n = (r.items || []).filter((i) => i.k === "p").length;
+        setNote("Resumo gerado por IA: " + n + " tópicos" + (r.parts > 1 ? " (vídeo longo, feito em " + r.parts + " partes)" : "") + ". Leia e confira o texto e os tempos antes de publicar: a IA pode errar.");
+      } catch (e) { setErr(e.message); }
+      finally { setBusy(false); }
+    };
+    return (
+      <div data-sm="box" style={{ margin: "8px 0 10px", padding: "10px 12px", border: "1px solid var(--tool-line)", borderRadius: 9, background: "var(--tool-surface)" }}>
+        <div style={{ fontSize: 11.5, fontWeight: 600, margin: "0 0 4px" }}>Resumo do vídeo (tópicos com tempo)</div>
+        <p style={{ fontSize: 11.5, margin: "0 0 8px", color: "var(--tool-ink-3)", lineHeight: 1.45 }}>Aparece na aula, abaixo do vídeo, antes da transcrição. Clicar no tempo leva o vídeo àquele trecho. Cole um resumo (por exemplo o do Video Highlight) ou gere com IA a partir da legenda carregada.</p>
+        <textarea data-sm="text" value={value || ""} onChange={(e) => { setConfirm(false); onChange(e.target.value); }} rows={8} spellCheck="false" placeholder={"# Título da seção\n- [0:39] Primeiro tópico\n- [2:07] Segundo tópico\n## Subseção\n- [5:48] Outro tópico"} style={{ ...inp, fontFamily: "ui-monospace, Menlo, monospace", fontSize: 12, lineHeight: 1.5, resize: "vertical" }} />
+        {topics > 0 && <p role="status" data-sm="state" style={{ fontSize: 12, margin: "6px 0 0", color: "var(--tool-ink-2)" }}>{topics} tópicos, {timed} com tempo.{timed === 0 ? " Sem tempo, o aluno lê o resumo, mas não pula no vídeo." : ""}</p>}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+          <button type="button" data-sm="go" onClick={go} disabled={busy || !canAsk} title={canAsk ? "" : "Carregue um arquivo de legenda (ou cole uma transcrição de 400 caracteres ou mais) primeiro."} style={{ ...btn, background: confirm ? "var(--tool-accent)" : "#fff", color: confirm ? "#fff" : "var(--tool-accent)", opacity: busy || !canAsk ? 0.55 : 1 }}>{busy ? "Gerando… (pode levar 1 a 2 minutos)" : confirm ? "Clique de novo para substituir o resumo" : "Gerar resumo com IA"}</button>
+          {String(value || "").trim() && <button type="button" data-sm="clear" onClick={() => { onChange(""); setNote("Resumo removido."); setConfirm(false); }} style={{ ...btn, color: "#8a2f18", borderColor: "#d9b3a8" }}>Remover resumo</button>}
+        </div>
+        {!canAsk && <p style={{ fontSize: 11.5, margin: "6px 0 0", color: "var(--tool-ink-3)", lineHeight: 1.45 }}>Para gerar com IA, carregue antes o arquivo de legenda (assim o resumo sai com tempos) ou preencha a transcrição.</p>}
+        <details style={{ marginTop: 8 }}><summary style={{ fontSize: 11.5, color: "var(--tool-ink-3)", cursor: "pointer" }}>Acesso ao ClassAuthor (só para gerar com IA; tem custo)</summary>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 6 }}>
+            <div><label style={{ display: "block", fontSize: 11.5, fontWeight: 600, margin: "0 0 3px" }}>Código de acesso do ClassAuthor</label><input type="password" data-sm="code" value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" spellCheck="false" style={inp} /></div>
+            <div><label style={{ display: "block", fontSize: 11.5, fontWeight: 600, margin: "0 0 3px" }}>Sem o código? Sua chave de IA (o custo é da sua conta)</label><input type="password" data-sm="key" value={aiKey} onChange={(e) => setAiKey(e.target.value)} autoComplete="off" spellCheck="false" placeholder="Opcional (sk-ant-… ou sk-…)" style={inp} /></div>
+            <div><label style={{ display: "block", fontSize: 11.5, fontWeight: 600, margin: "0 0 3px" }}>Endereço do ClassAuthor</label><input value={base} onChange={(e) => setBase(e.target.value)} autoComplete="off" spellCheck="false" style={inp} /></div>
+          </div>
+        </details>
+        {note && <p role="status" data-sm="note" style={{ fontSize: 12, margin: "8px 0 0", color: "var(--tool-ink-2)", lineHeight: 1.45 }}>{note}</p>}
+        {err && <p role="alert" data-sm="err" style={{ fontSize: 12, margin: "8px 0 0", padding: "8px 10px", borderRadius: 8, background: "#fdecea", color: "#8a2f18", lineHeight: 1.45 }}>{err}</p>}
+      </div>
+    );
+  }
+
   // ── Legenda sincronizada: escolhe um arquivo .srt/.vtt do computador ──
   function SubtitleFile({ cues, hasText, onLoad, onClear }) {
     const [err, setErr] = useState("");
@@ -254,5 +326,5 @@
       </div>
     );
   }
-  Object.assign(window, { InsertImageDialog, CaptionsFetcher, askCaptions, SubtitleFile });
+  Object.assign(window, { InsertImageDialog, CaptionsFetcher, askCaptions, SubtitleFile, SummaryBox, askSummary });
 })();

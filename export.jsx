@@ -156,7 +156,16 @@ async function buildExportHTML(lesson, opts = {}) {
     catch (e) { fontStyle = ""; /* fall back to system fonts if embedding fails */ }
   }
 
-  const data = JSON.stringify(lesson);
+  // A aula exportada não tem o leitor de Markdown do editor: o resumo do vídeo segue já em itens (props.summary).
+  const withSummaries = (node) => {
+    if (Array.isArray(node)) return node.map(withSummaries);
+    if (!node || typeof node !== "object") return node;
+    const copy = {};
+    Object.keys(node).forEach((key) => { copy[key] = withSummaries(node[key]); });
+    if (copy.type === "video" && copy.props && typeof copy.props.summaryMd === "string" && window.parseSummary) copy.props = { ...copy.props, summary: window.parseSummary(copy.props.summaryMd) };
+    return copy;
+  };
+  const data = JSON.stringify(withSummaries(lesson));
   const usesFontAwesome = !!(theme && theme.usesFontAwesome);
   const usesMath = lessonUsesMath(lesson);
   const forcePDF = opts.pdf === true;
@@ -304,7 +313,7 @@ function ExportCore({ block }) {
     case "pitaco": return h(R.PitacoDo, { kicker: p.kicker, name: p.name, gender: p.gender, role: p.role, tone: p.tone, src: p.src, slotId: p.slotId || block.id }, html(p.body));
     case "imagem": return h(R.ImagemLegenda, { src: p.src, slotId: p.slotId || block.id, ratio: p.ratio, caption: htmlSpan(p.caption), credit: p.credit });
     case "parallax": return h(R.ParallaxImage, { src: p.src, slotId: p.slotId || block.id, height: p.height || "70vh", overlayTitle: htmlSpan(p.overlayTitle), caption: htmlSpan(p.caption), credit: p.credit });
-    case "video": return h(R.VideoYouTube, { id: p.id, title: p.title, caption: p.caption, credit: p.credit, start: p.start, transcript: p.transcript, transcriptUrl: p.transcriptUrl, cues: p.transcriptCues });
+    case "video": return h(R.VideoYouTube, { id: p.id, title: p.title, caption: p.caption, credit: p.credit, start: p.start, transcript: p.transcript, transcriptUrl: p.transcriptUrl, cues: p.transcriptCues, summary: p.summary });
     case "audio": return h(R.AudioPodcast, { spotify: p.spotify, src: p.src, title: p.title, show: p.show, description: p.description, duration: p.duration, slotId: block.id, transcript: p.transcript, transcriptUrl: p.transcriptUrl });
     case "externalembed": return h(R.ExternalEmbed, { embed: p.embed, title: p.title, responsive: p.responsive, useEmbedDimensions: p.useEmbedDimensions, width: p.width, height: p.height });
     case "cases": return h(R.CaseCards, { title: p.title, intro: p.intro, columns: p.columns, layout: p.layout, cards: (p.cards||[]).map((c,i)=>({ ...c, slotId: c.slotId || block.id+"-"+i })) });

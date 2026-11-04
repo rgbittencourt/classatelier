@@ -806,6 +806,42 @@ function SubtitleList({ cues, idx, onSeek }) {
   );
 }
 
+// Resumo do vídeo: lista de { k: "h1"|"h2"|"p", x: texto, s: segundos|null }.
+const it0 = (v) => v !== null && v !== undefined && Number.isFinite(Number(v));
+function summaryGroups(items) {
+  const groups = [];
+  items.forEach((it, i) => {
+    if (it.k === "p") {
+      const last = groups[groups.length - 1];
+      if (last && last.type === "ul") last.rows.push({ it, i });
+      else groups.push({ type: "ul", rows: [{ it, i }] });
+    } else groups.push({ type: it.k, it, i });
+  });
+  return groups;
+}
+function VideoSummary({ items, active = -1, onSeek, print = false }) {
+  return (
+    <div className="aula-summary__body">
+      {summaryGroups(items).map((g, gi) => {
+        if (g.type === "h1") return <h4 className="aula-summary__h" key={gi}>{g.it.x}</h4>;
+        if (g.type === "h2") return <h5 className="aula-summary__h2" key={gi}>{g.it.x}</h5>;
+        return (
+          <ul className="aula-summary__list" key={gi}>
+            {g.rows.map(({ it, i }) => (
+              <li key={i} className={i === active ? "is-on" : undefined}>
+                {it.s !== null && it.s !== undefined && (print || !onSeek
+                  ? <span className="aula-summary__t">{formatSubtitleTime(it.s)}</span>
+                  : <button type="button" className="aula-summary__t" onClick={() => onSeek(it.s)} aria-label={`Ir para ${formatSubtitleTime(it.s)} no vídeo`}>{formatSubtitleTime(it.s)}</button>)}
+                <span className="aula-summary__x">{it.x}</span>
+              </li>
+            ))}
+          </ul>
+        );
+      })}
+    </div>
+  );
+}
+
 function MediaTranscript({ text, url, label = "Transcrição" }) {
   const paras = String(text || "").split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean);
   if (!paras.length && !url) return null;
@@ -820,7 +856,7 @@ function MediaTranscript({ text, url, label = "Transcrição" }) {
 }
 
 // VIDEO YOUTUBE — responsive 16:9 embed with caption
-function VideoYouTube({ id, title = "Vídeo", caption, credit, start, transcript, transcriptUrl, cues }) {
+function VideoYouTube({ id, title = "Vídeo", caption, credit, start, transcript, transcriptUrl, cues, summary }) {
   const titleText = richPlain(title) || "Vídeo";
   if (usePDF()) {
     // PDF: static poster + the public YouTube URL underneath.
@@ -838,11 +874,17 @@ function VideoYouTube({ id, title = "Vídeo", caption, credit, start, transcript
         </div>
         {caption && <figcaption className="aula-media-cap"><RichInline value={caption}/>{credit && <span className="aula-media-credit"> — <RichInline value={credit}/></span>}</figcaption>}
         <RecursoLink rotulo="Assista em" href={url} />
+        {Array.isArray(summary) && summary.length > 0 && <section className="aula-transcript is-print aula-summary"><h4>Resumo do vídeo</h4><VideoSummary items={summary} print /></section>}
         <MediaTranscript text={transcript} url={transcriptUrl} />
       </figure>
     );
   }
   const hasCues = Array.isArray(cues) && cues.length > 0;
+  const items = Array.isArray(summary) ? summary : [];
+  const hasSummary = items.some((it) => it.k === "p");
+  const timed = items.map((it, i) => [it.s, i]).filter((r) => it0(r[0]) && items[r[1]].k === "p");
+  const needApi = hasCues || timed.length > 0;
+  const [sumIdx, setSumIdx] = useState(-1);     // tópico do resumo em andamento
   const [playing, setPlaying] = useState(false);
   const [from, setFrom] = useState(null);       // início pedido ao clicar numa fala antes de o vídeo rodar
   const [idx, setIdx] = useState(-1);           // fala em andamento
@@ -851,23 +893,28 @@ function VideoYouTube({ id, title = "Vídeo", caption, credit, start, transcript
   const iframeRef = useRef(null);
   const playerRef = useRef(null);
   const startAt = from != null ? from : start;
-  const origin = hasCues && typeof location !== "undefined" && /^https?:/.test(location.protocol) ? `&origin=${encodeURIComponent(location.origin)}` : "";
-  const src = `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&autoplay=1${startAt ? `&start=${startAt}` : ""}${hasCues ? "&enablejsapi=1" + origin : ""}`;
+  const origin = needApi && typeof location !== "undefined" && /^https?:/.test(location.protocol) ? `&origin=${encodeURIComponent(location.origin)}` : "";
+  const src = `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&autoplay=1${startAt ? `&start=${startAt}` : ""}${needApi ? "&enablejsapi=1" + origin : ""}`;
   const thumb = `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
 
   useEffect(() => {
-    if (!playing || !hasCues || !iframeRef.current) return undefined;
+    if (!playing || !needApi || !iframeRef.current) return undefined;
     let dead = false, timer = null;
     setSync("idle");
     loadYTApi().then((YT) => {
       if (dead || !iframeRef.current) return;
       const player = new YT.Player(iframeRef.current, { events: { onReady: () => { if (!dead) { playerRef.current = player; setSync("ready"); } } } });
       timer = setInterval(() => {
-        try { const t = player && player.getCurrentTime ? player.getCurrentTime() : null; if (typeof t === "number") { const i = subtitleIndexAt(cues, t); setIdx((prev) => (prev === i ? prev : i)); } } catch (e) { /* player ainda não pronto */ }
+        try {
+          const t = player && player.getCurrentTime ? player.getCurrentTime() : null;
+          if (typeof t !== "number") return;
+          if (hasCues) { const i = subtitleIndexAt(cues, t); setIdx((prev) => (prev === i ? prev : i)); }
+          if (timed.length) { let k = -1; for (let n = 0; n < timed.length; n++) { if (timed[n][0] <= t + 0.3) k = timed[n][1]; } setSumIdx((prev) => (prev === k ? prev : k)); }
+        } catch (e) { /* player ainda não pronto */ }
       }, 250);
     }).catch(() => { if (!dead) setSync("failed"); });
     return () => { dead = true; if (timer) clearInterval(timer); playerRef.current = null; };
-  }, [playing, hasCues, from]);
+  }, [playing, needApi, from]);
 
   const seek = (sec) => {
     const player = playerRef.current;
@@ -911,6 +958,12 @@ function VideoYouTube({ id, title = "Vídeo", caption, credit, start, transcript
         <figcaption className="aula-media-cap">
           <RichInline value={caption}/>{credit && <span className="aula-media-credit"> — <RichInline value={credit}/></span>}
         </figcaption>
+      )}
+      {hasSummary && (
+        <details className="aula-transcript aula-summary" open>
+          <summary><strong>Resumo do vídeo</strong>{timed.length > 0 && <span className="aula-transcript__hint">clique no tempo para ir até o trecho</span>}<Icon name="chevron-down" size={18} stroke={1.7} /></summary>
+          <VideoSummary items={items} active={sumIdx} onSeek={timed.length ? seek : null} />
+        </details>
       )}
       {hasCues ? (
         <details className="aula-transcript aula-transcript--sync" onToggle={(e) => setOpen(e.currentTarget.open)}>

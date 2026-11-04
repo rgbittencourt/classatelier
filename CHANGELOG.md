@@ -4,12 +4,20 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.13.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.14.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.14.0 · 04/11/2026 · Resumo do vídeo (tópicos com tempo)
+
+- No painel do bloco **Vídeo** há **Resumo do vídeo (tópicos com tempo)**. Na aula ele aparece abaixo do vídeo, aberto, **antes da Transcrição**: títulos, tópicos curtos e, em cada tópico, o tempo (ex.: 5:48). **Clicar no tempo leva o vídeo àquele trecho** (se o vídeo ainda não começou, começa dali) e o tópico em andamento fica destacado enquanto o vídeo toca. No PDF o resumo sai aberto, com os tempos em texto.
+- **Colar o resumo**: formato Markdown simples (`# Seção`, `## Subseção`, `- [5:48] tópico`). Entende o resumo copiado do Video Highlight (tempo no fim, como `[5:48](link)`), tempos entre colchetes ou parênteses no começo, negrito e links. Linha sem tempo vira tópico comum. O campo mostra quantos tópicos têm tempo.
+- **Gerar resumo com IA**: usa as falas do arquivo de legenda (com tempos) ou, sem ele, o texto da Transcrição (sem tempos). Passa pelo ClassAuthor 1.13.0 ou mais novo, com o código de acesso ou a chave de IA própria; tem custo, e o painel avisa para conferir texto e tempos, porque a IA pode errar. O resumo gerado vira texto no mesmo campo, então dá para corrigir à mão. Pede confirmação antes de substituir um resumo existente.
+- Na aula exportada o resumo funciona igual (HTML, SCORM, pacote): a sincronia e o clique no tempo usam o mesmo controle do player do YouTube da legenda sincronizada.
+- Aulas já feitas continuam iguais: sem resumo, nada muda.
 
 ### 1.13.0 · 04/11/2026 · Legenda sincronizada no bloco Vídeo
 
