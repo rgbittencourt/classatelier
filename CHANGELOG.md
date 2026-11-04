@@ -4,12 +4,18 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.15.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.15.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.15.1 · 04/11/2026 · Um só quadro de acesso ao ClassAuthor
+
+- O painel do bloco Vídeo pedia o código de acesso (e a chave de IA) em dois lugares, na busca de legendas e no resumo com IA. Agora há **um só quadro, «Acesso ao ClassAuthor»**, no começo dos recursos do vídeo: código, chave de IA própria, «Lembrar o código neste navegador» e endereço. Ele abre sozinho enquanto está vazio e fica recolhido, com ✓, depois de preenchido.
+- O que se digita vale para **tudo que usa o ClassAuthor**: buscar legendas, resumo com IA e figuras com IA (a janela «Inserir imagem → Criar com IA» lê os mesmos dados). Quem trocar de professor só precisa preencher uma vez.
+- A chave de IA continua só na sessão da aba; o código só é lembrado se a caixa estiver marcada. Sem mudança no que vai ao servidor.
 
 ### 1.15.0 · 04/11/2026 · Escolher o que aparece junto do vídeo
 

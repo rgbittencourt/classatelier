@@ -865,6 +865,7 @@ function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquati
         <Field label="Crédito"><TextInput value={p.credit} onChange={(v) => setP({ credit: v })} /></Field>
         <Field label="Início (segundos)"><TextInput value={p.start} onChange={(v) => setP({ start: v })} /></Field>
         <Toggle value={!!p.captionsOk} onChange={(v) => setP({ captionsOk: v })} label="Conferi: o vídeo tem legendas" />
+        {window.AccessBox && <window.AccessBox />}
         {window.CaptionsFetcher && <window.CaptionsFetcher video={p.id} hasText={String(p.transcript || "").trim().length > 0} onFill={(r) => setP({ transcript: r.text, transcriptAuto: !!r.auto, transcriptReviewed: false })} />}
         {window.SubtitleFile && <window.SubtitleFile cues={p.transcriptCues} hasText={String(p.transcript || "").trim().length > 0} onLoad={(r) => setP({ transcriptCues: r.cues, transcript: r.text, transcriptAuto: false, transcriptReviewed: false })} onClear={() => setP({ transcriptCues: [] })} />}
         {window.SummaryBox && <window.SummaryBox value={p.summaryMd} cues={p.transcriptCues} transcript={p.transcript} onChange={(v) => setP({ summaryMd: v })} />}

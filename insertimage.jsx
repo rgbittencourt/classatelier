@@ -15,6 +15,36 @@
   const safeSet = (store, key, value) => { try { if (value) window[store].setItem(key, value); else window[store].removeItem(key); } catch (e) { /* sem armazenamento */ } };
 
 
+  // Acesso ao ClassAuthor: UM só lugar de dados para figuras com IA, busca de legendas e resumo com IA.
+  // O que se digita em qualquer campo vale para os outros; o código pode ser lembrado, a chave de IA fica só na sessão da aba.
+  const accessStore = (() => {
+    let state = {
+      base: safeGet("localStorage", LS_BASE) || DEFAULT_BASE,
+      code: safeGet("localStorage", LS_CODE) || safeGet("sessionStorage", LS_CODE),
+      remember: !!safeGet("localStorage", LS_CODE),
+      aiKey: safeGet("sessionStorage", LS_KEY)
+    };
+    const subs = new Set();
+    return {
+      get: () => state,
+      set: (patch) => { state = { ...state, ...patch }; subs.forEach((fn) => fn()); },
+      subscribe: (fn) => { subs.add(fn); return () => subs.delete(fn); },
+      persist: () => {
+        safeSet("localStorage", LS_BASE, state.base.trim() === DEFAULT_BASE ? "" : state.base.trim());
+        safeSet("sessionStorage", LS_CODE, state.code.trim()); safeSet("localStorage", LS_CODE, state.remember ? state.code.trim() : "");
+        safeSet("sessionStorage", LS_KEY, String(state.aiKey || "").trim());
+      }
+    };
+  })();
+  function useAccess() {
+    const [, force] = useState(0);
+    useEffect(() => accessStore.subscribe(() => force((n) => n + 1)), []);
+    const a = accessStore.get();
+    return { base: a.base, code: a.code, remember: a.remember, aiKey: a.aiKey,
+      setBase: (v) => accessStore.set({ base: v }), setCode: (v) => accessStore.set({ code: v }),
+      setRemember: (v) => accessStore.set({ remember: v }), setAiKey: (v) => accessStore.set({ aiKey: v }) };
+  }
+
   // Chave de IA própria (para quem não tem o código de acesso): fica só na sessão desta aba, nunca em localStorage.
   // Vai ao servidor do ClassAuthor em cabeçalhos x-aula-*; o servidor a usa na hora, sem guardar nem registrar.
   const keyHeaders = (aiKey) => {
@@ -58,7 +88,7 @@
     } finally { clearTimeout(timer); }
     let data = null; try { data = await res.json(); } catch (e) { /* resposta sem JSON */ }
     if (!res.ok || !data || !data.ok) {
-      if (res.status === 401) throw new Error("O código de acesso do ClassAuthor não foi aceito. É o mesmo que você digita na entrada do ClassAuthor. Sem o código? Cole a sua chave de IA no campo ao lado.");
+      if (res.status === 401) throw new Error("O código de acesso do ClassAuthor não foi aceito. É o mesmo que você digita na entrada do ClassAuthor. Sem o código? Cole a sua chave de IA em «Acesso ao ClassAuthor».");
       if (res.status === 503) throw new Error("O ClassAuthor está sem chave de IA configurada. " + ((data && data.error) || ""));
       throw new Error((data && data.error) || "O ClassAuthor respondeu com erro " + res.status + ".");
     }
@@ -70,10 +100,7 @@
     const [img, setImg] = useState(null); // { src, alt, caption, credit, ai }
     const [decor, setDecor] = useState(false);
     const [prompt, setPrompt] = useState("");
-    const [base, setBase] = useState(safeGet("localStorage", LS_BASE) || DEFAULT_BASE);
-    const [code, setCode] = useState(safeGet("localStorage", LS_CODE) || safeGet("sessionStorage", LS_CODE));
-    const [remember, setRemember] = useState(!!safeGet("localStorage", LS_CODE));
-    const [aiKey, setAiKey] = useState(safeGet("sessionStorage", LS_KEY));
+    const { base, code, remember, aiKey, setBase, setCode, setRemember, setAiKey } = useAccess();
     const [busy, setBusy] = useState("");
     const [err, setErr] = useState("");
     const fileRef = useRef(null);
@@ -91,8 +118,7 @@
       setBusy("Criando a figura… leva de 20 a 60 segundos.");
       try {
         const r = await askFigure({ base, code: code.trim(), aiKey, prompt: prompt.trim(), context, title });
-        safeSet("localStorage", LS_BASE, base.trim() === DEFAULT_BASE ? "" : base.trim());
-        safeSet("sessionStorage", LS_CODE, code.trim()); safeSet("localStorage", LS_CODE, remember ? code.trim() : ""); safeSet("sessionStorage", LS_KEY, String(aiKey || "").trim());
+        accessStore.persist();
         setImg({ src: r.src, alt: r.alt || "", caption: r.caption || "", credit: r.credit || "", ai: true });
       } catch (e) { setErr(e.message); }
       finally { setBusy(""); }
@@ -171,17 +197,14 @@
     } finally { clearTimeout(timer); }
     let data = null; try { data = await res.json(); } catch (e) { /* sem JSON */ }
     if (!res.ok || !data || !data.ok) {
-      if (res.status === 401) throw new Error("O código de acesso do ClassAuthor não foi aceito. É o mesmo que você digita na entrada do ClassAuthor. Sem o código? Cole a sua chave de IA no campo ao lado.");
+      if (res.status === 401) throw new Error("O código de acesso do ClassAuthor não foi aceito. É o mesmo que você digita na entrada do ClassAuthor. Sem o código? Cole a sua chave de IA em «Acesso ao ClassAuthor».");
       throw new Error((data && data.error) || "O ClassAuthor respondeu com erro " + res.status + ".");
     }
     return data;
   }
 
   function CaptionsFetcher({ video, hasText, onFill }) {
-    const [base, setBase] = useState(safeGet("localStorage", LS_BASE) || DEFAULT_BASE);
-    const [code, setCode] = useState(safeGet("localStorage", LS_CODE) || safeGet("sessionStorage", LS_CODE));
-    const [remember, setRemember] = useState(!!safeGet("localStorage", LS_CODE));
-    const [aiKey, setAiKey] = useState(safeGet("sessionStorage", LS_KEY));
+    const { base, code, aiKey } = useAccess();
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState("");
     const [note, setNote] = useState("");
@@ -193,8 +216,7 @@
       setConfirm(false); setBusy(true);
       try {
         const r = await askCaptions({ base, code: code.trim(), aiKey, video });
-        safeSet("localStorage", LS_BASE, base.trim() === DEFAULT_BASE ? "" : base.trim());
-        safeSet("sessionStorage", LS_CODE, code.trim()); safeSet("localStorage", LS_CODE, remember ? code.trim() : ""); safeSet("sessionStorage", LS_KEY, String(aiKey || "").trim());
+        accessStore.persist();
         onFill(r);
         setNote((r.auto ? "Legenda automática do YouTube" : "Legenda do YouTube") + " (" + (r.languageName || r.language) + ", " + r.paragraphs + " parágrafos) colocada no campo. Leia e corrija antes de publicar.");
       } catch (e) { setErr(e.message); }
@@ -203,18 +225,34 @@
     return (
       <div data-cf="box" style={{ margin: "8px 0 10px", padding: "10px 12px", border: "1px solid var(--tool-line)", borderRadius: 9, background: "var(--tool-surface)" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <div><label style={{ display: "block", fontSize: 11.5, fontWeight: 600, margin: "0 0 3px" }}>Código de acesso do ClassAuthor</label><input type="password" value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" spellCheck={false} style={inp} data-cf="code" /></div>
-          <div><label style={{ display: "block", fontSize: 11.5, fontWeight: 600, margin: "0 0 3px" }}>Sem o código? Sua chave de IA (só serve de passe: buscar legenda não gasta IA)</label><input type="password" value={aiKey} onChange={(e) => setAiKey(e.target.value)} autoComplete="off" spellCheck={false} placeholder="Opcional (sk-ant-… ou sk-…)" style={inp} data-cf="aikey" /></div>
           <button type="button" onClick={go} disabled={busy || !video} data-cf="go" style={{ padding: "7px 12px", border: "1px solid var(--tool-accent)", borderRadius: 7, background: confirm ? "var(--tool-accent)" : "#fff", color: confirm ? "#fff" : "var(--tool-accent)", fontWeight: 600, fontSize: 12.5, cursor: busy || !video ? "not-allowed" : "pointer", whiteSpace: "nowrap" }}>{busy ? "Buscando…" : confirm ? "Substituir o texto" : "Buscar legendas do YouTube"}</button>
         </div>
         {confirm && <p role="status" style={{ fontSize: 12, margin: "6px 0 0", color: "var(--tool-ink-2)" }}>Já há texto no campo Transcrição. Clique de novo para substituir.</p>}
-        <label style={{ display: "flex", gap: 7, fontSize: 11.5, color: "var(--tool-ink-3)", margin: "6px 0 0" }}><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> Lembrar o código neste navegador</label>
-        <details style={{ marginTop: 6 }}><summary style={{ fontSize: 11.5, color: "var(--tool-ink-3)", cursor: "pointer" }}>Endereço do ClassAuthor</summary><input value={base} onChange={(e) => setBase(e.target.value)} autoComplete="off" spellCheck={false} style={{ ...inp, marginTop: 4 }} data-cf="base" /></details>
         {note && <p role="status" data-cf="note" style={{ fontSize: 12, margin: "8px 0 0", color: "var(--tool-ink-2)", lineHeight: 1.45 }}>{note}</p>}
         {err && <p role="alert" data-cf="err" style={{ fontSize: 12, margin: "8px 0 0", padding: "8px 10px", borderRadius: 8, background: "#fdecea", color: "#8a2f18", lineHeight: 1.45 }}>{err}</p>}
       </div>
     );
   }
+  // ── Acesso ao ClassAuthor: preenchido uma vez, vale para tudo que usa o ClassAuthor ──
+  function AccessBox() {
+    const { base, code, remember, aiKey, setBase, setCode, setRemember, setAiKey } = useAccess();
+    const [open] = useState(() => !(accessStore.get().code || accessStore.get().aiKey));
+    const inp = { width: "100%", boxSizing: "border-box", padding: "7px 9px", border: "1px solid var(--tool-line-2)", borderRadius: 7, fontSize: 12.5, fontFamily: "inherit", background: "#fff" };
+    const lab = { display: "block", fontSize: 11.5, fontWeight: 600, margin: "0 0 3px" };
+    return (
+      <details data-ac="box" open={open} style={{ margin: "8px 0 10px", padding: "10px 12px", border: "1px solid var(--tool-line)", borderRadius: 9, background: "var(--tool-surface)" }}>
+        <summary style={{ fontSize: 12, fontWeight: 650, cursor: "pointer" }}>Acesso ao ClassAuthor{(code || aiKey) ? " ✓" : ""}</summary>
+        <p style={{ fontSize: 11.5, margin: "6px 0 8px", color: "var(--tool-ink-3)", lineHeight: 1.45 }}>Preencha uma vez: vale para buscar legendas, gerar o resumo com IA e criar figuras com IA. Buscar legendas não usa IA e não tem custo; o resumo e as figuras têm.</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div><label style={lab}>Código de acesso do ClassAuthor</label><input type="password" data-ac="code" value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" spellCheck="false" style={inp} /></div>
+          <div><label style={lab}>Sem o código? Sua chave de IA (o custo é da sua conta)</label><input type="password" data-ac="key" value={aiKey} onChange={(e) => setAiKey(e.target.value)} autoComplete="off" spellCheck="false" placeholder="Opcional (sk-ant-… ou sk-…)" style={inp} /></div>
+          <label style={{ display: "flex", gap: 7, fontSize: 11.5, color: "var(--tool-ink-3)" }}><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> Lembrar o código neste navegador</label>
+          <div><label style={lab}>Endereço do ClassAuthor</label><input data-ac="base" value={base} onChange={(e) => setBase(e.target.value)} autoComplete="off" spellCheck="false" style={inp} /></div>
+        </div>
+      </details>
+    );
+  }
+
   // ── Resumo do vídeo: colar (Markdown simples) ou gerar com IA a partir da legenda ──
   async function askSummary({ base, code, aiKey, cues, text }) {
     const url = String(base || DEFAULT_BASE).trim().replace(/\/+$/, "") + "/api/video-summary";
@@ -227,7 +265,7 @@
     } finally { clearTimeout(timer); }
     let data = null; try { data = await res.json(); } catch (e) { /* sem JSON */ }
     if (!res.ok || !data || !data.ok) {
-      if (res.status === 401) throw new Error("O código de acesso do ClassAuthor não foi aceito. Sem o código? Cole a sua chave de IA no campo ao lado.");
+      if (res.status === 401) throw new Error("O código de acesso do ClassAuthor não foi aceito. Sem o código? Cole a sua chave de IA em «Acesso ao ClassAuthor».");
       if (res.status === 404) throw new Error("O ClassAuthor em uso ainda não tem o resumo de vídeo. Ele precisa estar na versão 1.13.0 ou mais nova.");
       throw new Error((data && data.error) || "O ClassAuthor respondeu com erro " + res.status + ".");
     }
@@ -235,9 +273,7 @@
   }
 
   function SummaryBox({ value, cues, transcript, onChange }) {
-    const [base, setBase] = useState(safeGet("localStorage", LS_BASE) || DEFAULT_BASE);
-    const [code, setCode] = useState(safeGet("localStorage", LS_CODE) || safeGet("sessionStorage", LS_CODE));
-    const [aiKey, setAiKey] = useState(safeGet("sessionStorage", LS_KEY));
+    const { base, code, aiKey } = useAccess();
     const [busy, setBusy] = useState(false);
     const [err, setErr] = useState("");
     const [note, setNote] = useState("");
@@ -255,8 +291,7 @@
       setConfirm(false); setBusy(true);
       try {
         const r = await askSummary({ base, code: code.trim(), aiKey, cues: hasCues ? cues : undefined, text: hasCues ? undefined : text });
-        safeSet("localStorage", LS_BASE, base.trim() === DEFAULT_BASE ? "" : base.trim());
-        safeSet("sessionStorage", LS_CODE, code.trim()); safeSet("sessionStorage", LS_KEY, String(aiKey || "").trim());
+        accessStore.persist();
         onChange(window.summaryToMd ? window.summaryToMd(r.items) : "");
         const n = (r.items || []).filter((i) => i.k === "p").length;
         setNote("Resumo gerado por IA: " + n + " tópicos" + (r.parts > 1 ? " (vídeo longo, feito em " + r.parts + " partes)" : "") + ". Leia e confira o texto e os tempos antes de publicar: a IA pode errar.");
@@ -274,13 +309,6 @@
           {String(value || "").trim() && <button type="button" data-sm="clear" onClick={() => { onChange(""); setNote("Resumo removido."); setConfirm(false); }} style={{ ...btn, color: "#8a2f18", borderColor: "#d9b3a8" }}>Remover resumo</button>}
         </div>
         {!canAsk && <p style={{ fontSize: 11.5, margin: "6px 0 0", color: "var(--tool-ink-3)", lineHeight: 1.45 }}>Para gerar com IA, carregue antes o arquivo de legenda (assim o resumo sai com tempos) ou preencha a transcrição.</p>}
-        <details style={{ marginTop: 8 }}><summary style={{ fontSize: 11.5, color: "var(--tool-ink-3)", cursor: "pointer" }}>Acesso ao ClassAuthor (só para gerar com IA; tem custo)</summary>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 6 }}>
-            <div><label style={{ display: "block", fontSize: 11.5, fontWeight: 600, margin: "0 0 3px" }}>Código de acesso do ClassAuthor</label><input type="password" data-sm="code" value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" spellCheck="false" style={inp} /></div>
-            <div><label style={{ display: "block", fontSize: 11.5, fontWeight: 600, margin: "0 0 3px" }}>Sem o código? Sua chave de IA (o custo é da sua conta)</label><input type="password" data-sm="key" value={aiKey} onChange={(e) => setAiKey(e.target.value)} autoComplete="off" spellCheck="false" placeholder="Opcional (sk-ant-… ou sk-…)" style={inp} /></div>
-            <div><label style={{ display: "block", fontSize: 11.5, fontWeight: 600, margin: "0 0 3px" }}>Endereço do ClassAuthor</label><input value={base} onChange={(e) => setBase(e.target.value)} autoComplete="off" spellCheck="false" style={inp} /></div>
-          </div>
-        </details>
         {note && <p role="status" data-sm="note" style={{ fontSize: 12, margin: "8px 0 0", color: "var(--tool-ink-2)", lineHeight: 1.45 }}>{note}</p>}
         {err && <p role="alert" data-sm="err" style={{ fontSize: 12, margin: "8px 0 0", padding: "8px 10px", borderRadius: 8, background: "#fdecea", color: "#8a2f18", lineHeight: 1.45 }}>{err}</p>}
       </div>
@@ -326,5 +354,5 @@
       </div>
     );
   }
-  Object.assign(window, { InsertImageDialog, CaptionsFetcher, askCaptions, SubtitleFile, SummaryBox, askSummary });
+  Object.assign(window, { InsertImageDialog, CaptionsFetcher, askCaptions, SubtitleFile, SummaryBox, AccessBox, askSummary });
 })();
