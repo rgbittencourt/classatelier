@@ -4,12 +4,17 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.17.4** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.17.5** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.17.5 · 04/11/2026 · Referências: título sempre em negrito
+
+- O **título sai sempre em negrito**: a mensagem «falta o destaque (negrito) no título» deixou de existir. Com autor, o título é o trecho logo depois dele; sem autor, a obra entra pelo título (negrito e primeira palavra em maiúsculas).
+- O que não existe ganha marcador no lugar certo, com a tipografia certa: **«[título]»** em negrito, «[ano]», «Acesso em: [dia mês ano].». Um endereço colado sozinho vira «**[TÍTULO]**, [ano]. Disponível em: <endereço>. Acesso em: [dia mês ano].».
 
 ### 1.17.4 · 04/11/2026 · Referências: sem editora, entidade como autor e o que falta à vista
 
