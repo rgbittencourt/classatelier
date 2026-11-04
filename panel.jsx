@@ -53,18 +53,69 @@ const FREE_ICONS = [
   ["magnifying-glass","busca pesquisa lupa"],["filter","filtro organizar"],["list-check","tarefas checklist"],
   ["target","alvo objetivo meta"],["trophy","prêmio conquista"],["medal","medalha conquista"],["flag","bandeira marco meta"],
 ];
+// Busca no catálogo completo do Font Awesome Free (icones.js: 1.392 ícones sólidos, com termos em inglês e em português).
+// Sem o catálogo carregado, cai nas sugestões acima. Cada palavra digitada precisa aparecer no começo de alguma palavra do ícone.
+const faSemAcento = (s) => String(s || "").toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[̀-ͯ]/g, "");
+let FA_INDEX = null;
+function faIndex() {
+  const cat = window.FA_ICONES;
+  if (!cat) return null;
+  if (FA_INDEX && FA_INDEX.n === cat.length) return FA_INDEX;
+  const dicas = new Map(FREE_ICONS.map(([name, words]) => [name, faSemAcento(words)]));
+  const items = cat.map(([name, label, ptCore, enExtra, ptExtra]) => ({
+    name, label,
+    forte: (faSemAcento(name.replace(/-/g, " ")) + " " + faSemAcento(label) + " " + faSemAcento(ptCore) + " " + (dicas.get(name) || "")).split(/\s+/).filter(Boolean),
+    fraco: (faSemAcento(enExtra) + " " + faSemAcento(ptExtra)).split(/\s+/).filter(Boolean),
+  }));
+  FA_INDEX = { n: cat.length, items };
+  return FA_INDEX;
+}
+function faBuscar(consulta) {
+  const idx = faIndex();
+  const toks = faSemAcento(consulta).split(/[\s,;]+/).filter(Boolean).map((w) => (w.length > 3 ? w.replace(/(es|s)$/, "") : w));
+  if (!idx) {
+    if (!toks.length) return { lista: FREE_ICONS.map(([name, words]) => ({ name, label: words })), total: FREE_ICONS.length, sugestoes: true };
+    const lista = FREE_ICONS.filter(([name, words]) => toks.every((w) => faSemAcento(name + " " + words).includes(w))).map(([name, words]) => ({ name, label: words }));
+    return { lista, total: lista.length };
+  }
+  if (!toks.length) return { lista: FREE_ICONS.map(([name, words]) => ({ name, label: words })), total: idx.n, sugestoes: true };
+  const achados = [];
+  idx.items.forEach((it) => {
+    let pontos = 0;
+    for (const w of toks) {
+      let melhor = 0;
+      for (const x of it.forte) { if (x === w) { melhor = 6; break; } if (x.startsWith(w)) melhor = Math.max(melhor, 4); }
+      if (!melhor) for (const x of it.fraco) { if (x === w) { melhor = 2; break; } if (x.startsWith(w)) melhor = Math.max(melhor, 1); }
+      if (!melhor) { pontos = 0; return; }
+      pontos += melhor;
+    }
+    if (faSemAcento(it.name) === toks.join("-")) pontos += 10;
+    achados.push({ it, pontos });
+  });
+  achados.sort((a, b) => b.pontos - a.pontos || a.it.name.length - b.it.name.length || (a.it.name < b.it.name ? -1 : 1));
+  return { lista: achados.map(({ it }) => ({ name: it.name, label: it.label })), total: achados.length };
+}
+window.faBuscar = faBuscar;
 function IconPicker({ value, onChange, placeholder }) {
   const [query, setQuery] = useStateP("");
-  const q = query.trim().toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  const matches = FREE_ICONS.filter(([name, words]) => !q || (name + " " + words).normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(q)).slice(0, 24);
+  const [limite, setLimite] = useStateP(48);
+  const [, setPronto] = useStateP(0);
+  useEffectP(() => { if (!window.FA_ICONES) { const t = setInterval(() => { if (window.FA_ICONES) { clearInterval(t); setPronto(1); } }, 400); return () => clearInterval(t); } }, []);
+  const { lista, total, sugestoes } = faBuscar(query);
+  const mostra = lista.slice(0, limite);
+  const cls = (name) => (window.fontAwesomeClass ? window.fontAwesomeClass(name) : "fa-solid fa-" + name);
   return <div>
     <div style={{ display: "flex", gap: 6 }}>
-      <span style={{ width: 38, display: "grid", placeItems: "center", border: "1px solid var(--tool-line-2)", borderRadius: 8, background: "#fff", color: "var(--tool-sel)" }}><i className={window.fontAwesomeClass ? window.fontAwesomeClass(value || "icons") : "fa-solid fa-" + (value || "icons")} /></span>
-      <input style={ps.input} value={query} placeholder={placeholder || "Busque por ideia, saúde, alerta…"} onChange={(e) => setQuery(e.target.value)} />
+      <span style={{ width: 38, display: "grid", placeItems: "center", border: "1px solid var(--tool-line-2)", borderRadius: 8, background: "#fff", color: "var(--tool-sel)" }}><i className={cls(value || "icons")} /></span>
+      <input style={ps.input} value={query} placeholder={placeholder || "Busque em português ou inglês: saúde, gato, prova, graph…"} onChange={(e) => { setQuery(e.target.value); setLimite(48); }} />
     </div>
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 5, marginTop: 7, maxHeight: 150, overflowY: "auto" }}>
-      {matches.map(([name, words]) => <button type="button" key={name} title={name + " · " + words} onClick={() => { onChange(name); setQuery(""); }} style={{ height: 34, borderRadius: 7, cursor: "pointer", background: value === name ? "var(--tool-sel-soft)" : "#fff", color: value === name ? "var(--tool-sel)" : "var(--tool-ink-2)", border: value === name ? "2px solid var(--tool-sel)" : "1px solid var(--tool-line)" }}><i className={window.fontAwesomeClass ? window.fontAwesomeClass(name) : "fa-solid fa-" + name} /></button>)}
+    {value && <div style={{ fontSize: 11, color: "var(--tool-ink-3)", margin: "5px 0 0" }}>Ícone atual: <code>{value}</code></div>}
+    <div style={{ fontSize: 11, color: "var(--tool-ink-3)", margin: "6px 0 4px" }}>{sugestoes ? `Sugestões · digite para buscar entre ${total.toLocaleString("pt-BR")} ícones` : total ? `${total.toLocaleString("pt-BR")} ${total === 1 ? "ícone" : "ícones"}` : "Nenhum ícone com essas palavras."}</div>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 5, maxHeight: 210, overflowY: "auto" }}>
+      {mostra.map(({ name, label }) => <button type="button" key={name} title={name + (label ? " · " + label : "")} onClick={() => { onChange(name); setQuery(""); setLimite(48); }} style={{ height: 34, borderRadius: 7, cursor: "pointer", background: value === name ? "var(--tool-sel-soft)" : "#fff", color: value === name ? "var(--tool-sel)" : "var(--tool-ink-2)", border: value === name ? "2px solid var(--tool-sel)" : "1px solid var(--tool-line)" }}><i className={cls(name)} /></button>)}
     </div>
+    {lista.length > limite && <button type="button" onClick={() => setLimite(limite + 72)} style={{ ...miniBtn, marginTop: 6 }}>Mostrar mais ({lista.length - limite})</button>}
+    {!lista.length && query.trim() && <button type="button" onClick={() => { onChange(query.trim().toLowerCase().replace(/\s+/g, "-")); setQuery(""); }} style={{ ...miniBtn, marginTop: 6 }}>Usar «{query.trim().toLowerCase().replace(/\s+/g, "-")}» como nome do ícone</button>}
     {value && <button type="button" onClick={() => onChange("")} style={{ ...miniBtn, marginTop: 6 }}>Usar ícone padrão</button>}
   </div>;
 }

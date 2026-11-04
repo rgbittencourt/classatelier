@@ -4,12 +4,19 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.17.7** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.17.8** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.17.8 · 04/11/2026 · Seletor de ícones com busca em português e inglês
+
+- O seletor de ícones (blocos Destaque, Atenção, Reflexão, Eyebrow, Destaques com ícones, Cards e Slider) agora pesquisa nos **1.392 ícones gratuitos do Font Awesome 6.5** (antes, cerca de 85). A busca entende **português e inglês** («saúde», «gato», «prova», «dinheiro», «graph», «wrench»…), ignora acentos e plural, aceita mais de uma palavra, mostra os mais parecidos primeiro e traz 48 por vez com «Mostrar mais». Sem resultado, o botão «Usar «nome» como nome do ícone» grava o que foi digitado.
+- Novo arquivo `icones.js` (catálogo e termos de busca), gerado por `_build/mk_icones.py` a partir dos metadados oficiais do Font Awesome e de um dicionário em português.
+- Referências: autor-entidade em minúsculas («gartner.») vai para MAIÚSCULAS com o título em negrito (motor da ClassAuthor 1.15.8).
+- Manual Class com as capturas de tela refeitas.
 
 ### 1.17.7 · 04/11/2026 · Manual Class: Ficha do ClassAuthor com o botão «Organizar lista»
 
