@@ -4,12 +4,16 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.17.6** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.17.7** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.17.7 · 04/11/2026 · Manual Class: Ficha do ClassAuthor com o botão «Organizar lista»
+
+- Só o Manual Class mudou: descreve que o ClassAuthor também corrige as referências da Ficha da disciplina apenas pelo botão. O ClassAtelier em si não mudou.
 
 ### 1.17.6 · 04/11/2026 · Referências: só o botão corrige, conforme a NBR 6023:2025
 
