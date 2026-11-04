@@ -36,7 +36,7 @@
     if (T === "divider") { const t = plain(p.label); return t ? "## " + t : ""; }
     if (T === "pagebreak" || T === "collapsebreak") return "";
     if (T === "sintese") { const t = lines({ eyebrow: p.eyebrow, title: p.title }); const b2 = lines(p.body); return [t.length ? "## " + t.join(": ") : "", b2.join("\n\n")].filter(Boolean).join("\n\n"); }
-    if (T === "referencias") { const t = plain(p.title); const refs = lines(p.items).map((r) => r.replace(/\n+/g, " ")); const sorted = window.ABNT ? window.ABNT.sortReferencesAbnt(refs) : refs; return ["## " + (t || "Referências"), sorted.join("\n\n")].join("\n\n"); }
+    if (T === "referencias") { const t = plain(p.title); const refs = lines(window.ABNT ? window.ABNT.prepareHtmlReferences(p.items) : p.items).map((r) => r.replace(/\n+/g, " ")); return ["## " + (t || "Referências"), refs.join("\n\n")].join("\n\n"); }
     if (T === "prose") return plain(p.body);
     if (T === "citacao") { const q = plain(p.quote); const a = [plain(p.author), plain(p.source)].filter(Boolean).join(", "); return q ? "> " + q.replace(/\n+/g, " ") + (a ? "\n> — " + a : "") : ""; }
     if (T === "forum") { const rs = (Array.isArray(p.rules) ? p.rules : []).map((r) => "- " + plain(r)).filter((x) => x.length > 2); return ["## Fórum: " + (plain(p.title) || "discussão"), plain(p.prompt), plain(p.dueInitial) ? "Postagem inicial: " + plain(p.dueInitial) : "", plain(p.dueReplies) ? "Respostas aos colegas: " + plain(p.dueReplies) : "", ...rs, p.showCriteria ? "Critérios: " + plain(p.criteria) : "", p.href && !/^https?:\/\/$/i.test(String(p.href).trim()) ? "Link: " + p.href : ""].filter(Boolean).join("\n"); }

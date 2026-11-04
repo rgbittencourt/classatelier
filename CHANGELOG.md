@@ -4,12 +4,19 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.16.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.17.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.17.0 · 04/11/2026 · Referências: correção automática do que a norma resolve sem dúvida
+
+- O quadro ABNT do bloco Referências **corrige sozinho**, ao sair do campo ou ao abrir o bloco, sem apertar botão: acha o **título e põe o negrito** (livro, revista do artigo, obra de um capítulo, «Lei nº» de leis e normas), põe o **autor em «SOBRENOME, Nome»** quando o resto da referência confirma a estrutura («Paulo Freire.», «Silva, Ana.», «Ana Souza e Bia Lima.»), e segue com 4+ autores, *et al.*, «(Org.)», edição, `< >` na URL e data de acesso.
+- **A conferir** passa a mostrar só o que sobrou depois da correção: falta informação que não dá para deduzir (ano, autor, «Acesso em») ou a referência não tem estrutura clara, e o app não adivinha.
+- A prévia, o HTML exportado e o texto da aula já saem com as referências corrigidas e em ordem alfabética, mesmo em aulas que você nunca abriu no painel.
+- Mesmo motor do ClassAuthor 1.15.0.
 
 ### 1.16.0 · 04/11/2026 · Referências na ABNT NBR 6023
 
