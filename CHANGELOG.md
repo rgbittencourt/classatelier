@@ -4,12 +4,17 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.17.2** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.17.3** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.17.3 · 04/11/2026 · Referências: desfaz negrito fora do título e arruma digitação
+
+- Negrito na **referência inteira**, no autor, na editora ou em vários trechos é desfeito e o negrito volta só ao título.
+- Arruma **espaços e pontuação**, **caixa** (minúsculas, nome em MAIÚSCULAS, título todo em maiúsculas) e a forma **Autor (ano)**.
 
 ### 1.17.2 · 04/11/2026 · Referências: casos que a correção automática deixava passar
 
