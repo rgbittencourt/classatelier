@@ -4,12 +4,18 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.17.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.17.2** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.17.2 · 04/11/2026 · Referências: casos que a correção automática deixava passar
+
+- A correção automática agora também atua em **referência com link** (o texto é corrigido e o link continua no lugar), em **autor entidade com órgão e documento online sem editora** (BRASIL. Ministério da Educação. **Título**. Brasília, 2018.) e em **editora com ponto antes do ano** («Campinas: Papirus. 2000» vira «Campinas: Papirus, 2000.»).
+- **Obra sem autor** (Título. Local: Editora, ano.) entra pelo título: negrito e primeira palavra em maiúsculas.
+- O **Manual Class** passa a citar o ClassAuthor 1.15.2.
 
 ### 1.17.1 · 04/11/2026 · Manual Class: capa atualizada
 
