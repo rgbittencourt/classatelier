@@ -13,8 +13,8 @@
 (function () {
   var BASE = window.AULA_BASE || "";
   // Versão do ClassAtelier (Versionamento Semântico; histórico em CHANGELOG.md).
-  window.CLASSATELIER_VERSION = "1.21.0";
-  var BUILD_REV = "20261112-v1.21.0";
+  window.CLASSATELIER_VERSION = "1.22.0";
+  var BUILD_REV = "20261112-v1.22.0";
   var theme = window.resolveAulaTheme();
   window.AULA_ACTIVE_THEME = theme;
 
@@ -81,6 +81,7 @@
   w('<script src="' + attr(rev(BASE + "abnt.js")) + '"><\/script>');
   // 6d) Gerador de slides: paletas, divisão da aula em seções e desenho do HTML (botão «Slides»)
   w('<script src="' + attr(rev(BASE + "slides-render.js")) + '"><\/script>');
+  w('<script src="' + attr(rev(BASE + "slides-pptx.js")) + '"><\/script>');
 
   // 7) Módulos do builder (agnósticos de tema — vivem ao lado do index.html)
   ["editable.jsx", "registry.jsx", "blocks.jsx", "panel.jsx", "export.jsx", "a11y.jsx", "scormcheck.jsx", "versions.jsx", "republish.jsx", "moodle.jsx", "lessontext.jsx", "devicepreview.jsx", "present.jsx", "insertimage.jsx", "referencias.jsx", "slides.jsx", "app.jsx", "mount.jsx"].forEach(function (m) {

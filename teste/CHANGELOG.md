@@ -4,12 +4,19 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.21.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.22.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.22.0 · 12/11/2026 · Slides planejados pela aula inteira, PowerPoint e mais paletas
+
+- **Conteúdo melhor:** antes de escrever, a IA lê a aula inteira e planeja os N slides de uma vez (seção, tipo, título e ideia de cada um), sem repetir conceito; glossário e revisão ficam com no máximo 1 slide; nada repete a pergunta da aula. Cada parte é escrita seguindo o plano e vendo os títulos do deck inteiro. Analogias, exemplos próximos e contas resolvidas passam a ser permitidos (fatos, números e autores continuam só os do texto). Requer ClassAuthor 1.19.0.
+- **Seções certas:** as aulas vindas do ClassAuthor têm um único Tópico de conteúdo com todos os títulos dentro; antes isso virava uma seção só (roteiro com 1 item e slides repetidos). Agora cada título de nível 2 dentro do Tópico abre uma seção; subtítulos (nível 3) ficam dentro dela.
+- **Baixar PowerPoint (.pptx)**: deck editável, com paleta, fontes, figuras (convertidas para PNG) e notas do apresentador. Usa o PptxGenJS 3.12.0 (`vendor/pptxgen.bundle.js`, MIT), carregado só quando clicado; novo arquivo `slides-pptx.js`.
+- Mais três paletas: **Turquesa** (verde-azulado e âmbar), **Rubi** (carvão e vermelho) e **Nórdico** (azul-ardósia e verde-menta). São 12 no total.
 
 ### 1.21.0 · 12/11/2026 · Seis paletas novas para os slides
 
