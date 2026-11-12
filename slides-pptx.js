@@ -65,7 +65,7 @@
     return new Promise((res) => { const im = new Image(); im.onload = () => res({ w: im.naturalWidth || 4, h: im.naturalHeight || 3 }); im.onerror = () => res(null); im.src = src; });
   }
   // O PowerPoint não lê SVG embutido em todas as versões: toda figura vira PNG (até 2400 px).
-  async function toDataUrl(src) {
+  async function toDataUrl(src, scale) {
     let data = src;
     if (!/^data:/.test(src)) {
       try { const r = await fetch(src, { mode: "cors" }); const b = await r.blob(); data = await new Promise((res) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = () => res(""); fr.readAsDataURL(b); }); }
@@ -76,9 +76,9 @@
       const im = new Image();
       im.onload = () => {
         try {
-          const w0 = im.naturalWidth || 1200, h0 = im.naturalHeight || 900; const k = Math.min(1, 2400 / Math.max(w0, h0)) * (Math.max(w0, h0) < 1200 ? 2 : 1);
+          const w0 = im.naturalWidth || 1200, h0 = im.naturalHeight || 900; const k = scale || Math.min(1, 2400 / Math.max(w0, h0)) * (Math.max(w0, h0) < 1200 ? 2 : 1);
           const cv = document.createElement("canvas"); cv.width = Math.round(w0 * k); cv.height = Math.round(h0 * k);
-          const g = cv.getContext("2d"); g.fillStyle = "#FFFFFF"; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(im, 0, 0, cv.width, cv.height);
+          const g = cv.getContext("2d"); if (!scale) { g.fillStyle = "#FFFFFF"; g.fillRect(0, 0, cv.width, cv.height); } g.drawImage(im, 0, 0, cv.width, cv.height);
           res(cv.toDataURL("image/png"));
         } catch (e) { res(data); }
       };
@@ -112,6 +112,8 @@
 
     // Figuras: carrega e mede antes de montar.
     const imgs = {};
+    const D = window.ClassDiagram;
+    for (let i = 0; i < deck.slides.length; i += 1) { const s = deck.slides[i]; if (s.type === "diagram" && D) { const data = await toDataUrl("data:image/svg+xml;charset=utf-8," + encodeURIComponent(D.diagramSVG(s, P)), 2); const sz = data ? await imgSize(data) : null; imgs["diagram:" + i] = data && sz ? { data, ...sz } : null; } }
     for (const s of deck.slides) if (s.type === "image" && s.src && !imgs[s.src]) { const data = await toDataUrl(s.src); const sz = data ? await imgSize(data) : null; imgs[s.src] = data && sz ? { data, ...sz } : null; }
 
     let statements = 0;
@@ -266,6 +268,12 @@
           const cell = (t, o) => ({ text: symRuns(String(t || "")).map((r) => ({ text: r.text, options: { ...o, ...r.options } })), options: o });
           const data = [hd.map((t) => cell(t, { bold: true, color: "FFFFFF", fill: { color: c(P.dark) }, fontFace: FT }))].concat(rows.map((r, i) => r.map((t) => cell(t, { color: c(P.ink), fill: { color: c(i % 2 ? P.bg : P.card) } }))));
           sl.addTable(data, { x: X0, y: b.y, w: CW, fontFace: FB, fontSize: fs, border: { type: "solid", pt: 0.75, color: c(P.line) }, margin: 0.08, valign: "middle", autoPage: false });
+          break;
+        }
+        case "diagram": {
+          const b = head(s.eyebrow, s.title); const im = imgs["diagram:" + idx]; const capH = s.caption ? 0.4 : 0; const bh = b.h - capH;
+          if (im) { const r = im.w / im.h; let w = CW, h = w / r; if (h > bh) { h = bh; w = h * r; } sl.addImage({ data: im.data, x: X0 + (CW - w) / 2, y: b.y + (bh - h) / 2, w, h, altText: s.caption || s.title || "diagrama" }); }
+          if (s.caption) T(s.caption, { x: X0, y: b.y + bh + 0.05, w: CW, h: 0.35, align: "center", fontSize: pt(24), color: P.muted });
           break;
         }
         case "calc": {

@@ -4,12 +4,17 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.23.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.24.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.24.0 · 12/11/2026 · Diagramas nos slides
+
+- Novo tipo de slide **diagrama**, desenhado pelo ClassAtelier a partir de peças prontas, nas cores da paleta: **eco** (o pulso vai, bate no alvo e volta, com a medida), **ondas** (até 3 comprimentos de onda comparados, com o λ marcado), **curva** (gráfico qualitativo com até 3 séries e marcas no eixo), **reflexão** (superfície lisa, especular, × rugosa, difusa), **geometria de visada** (plataforma, nadir, feixe oblíquo e ângulo), **camadas** (atravessadas por um feixe que enfraquece) e **Bragg** (ondas do mar com λ_B e o feixe em ângulo). Novo arquivo `slides-diagram.js`. Requer ClassAuthor 1.21.0.
+- No PowerPoint, o diagrama entra como imagem PNG nítida (com fundo transparente).
 
 ### 1.23.0 · 12/11/2026 · Slides mais visuais, com todas as equações, e símbolos no PowerPoint
 

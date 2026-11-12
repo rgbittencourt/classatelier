@@ -370,6 +370,10 @@
       case "table":
         return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><table><thead><tr>' + s.headers.map((h) => "<th>" + esc(h) + "</th>").join("") + "</tr></thead><tbody>" +
           s.rows.map((r) => "<tr>" + r.map((c) => "<td>" + esc(c) + "</td>").join("") + "</tr>").join("") + "</tbody></table></div></div>" };
+      case "diagram": {
+        const D = (typeof window !== "undefined" && window.ClassDiagram) || (typeof require === "function" ? require("./slides-diagram.js") : null);
+        return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><figure class="diag">' + (D ? D.diagramSVG(s, P) : "") + (s.caption ? "<figcaption>" + esc(s.caption) + "</figcaption>" : "") + "</figure></div></div>" };
+      }
       case "calc": {
         const given = (s.given || []).length ? '<div class="card cgiven"><p class="kicker">Dados</p>' + s.given.map((g) => '<div class="lg"><span class="sym">' + esc(g.sym) + "</span><span>" + esc(g.text) + "</span></div>").join("") + "</div>" : "";
         return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><div class="row calc">' + given +
@@ -473,6 +477,7 @@ p{font-size:max(24px,calc(28px*var(--k)));line-height:1.45}
 .kicker{font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:${P.muted}}
 .stepn{font-family:'JetBrains Mono','Courier New',monospace;font-weight:700;font-size:max(32px,calc(44px*var(--k)));color:${P.accent}}
 .card.ink .stepn{color:${P.accentLight}}
+.diag{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}.diag svg{width:100%;height:auto;max-height:100%;flex:1;min-height:0}.diag figcaption{font-size:24px;color:${P.muted};text-align:center}
 .calc{align-items:stretch}.cgiven{flex:0.8!important}.csteps{flex:1.6!important;justify-content:center}.cres{flex:1!important;justify-content:center}
 .cline{font-family:'JetBrains Mono','Courier New',monospace;font-size:max(24px,calc(40px*var(--k)));line-height:1.3;color:${P.title};border-bottom:2px dashed ${P.line};padding-bottom:calc(10px*var(--k))}.cline.last{border-bottom:0;color:${P.accent};font-weight:700}
 .calc .arr{align-self:center}.cres .value{font-size:calc(96px*var(--k))}

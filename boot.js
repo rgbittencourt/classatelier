@@ -13,8 +13,8 @@
 (function () {
   var BASE = window.AULA_BASE || "";
   // Versão do ClassAtelier (Versionamento Semântico; histórico em CHANGELOG.md).
-  window.CLASSATELIER_VERSION = "1.23.0";
-  var BUILD_REV = "20261112-v1.23.0";
+  window.CLASSATELIER_VERSION = "1.24.0";
+  var BUILD_REV = "20261112-v1.24.0";
   var theme = window.resolveAulaTheme();
   window.AULA_ACTIVE_THEME = theme;
 
@@ -80,6 +80,7 @@
   // 6c) Motor das referências ABNT (NBR 6023), cópia do ClassAuthor
   w('<script src="' + attr(rev(BASE + "abnt.js")) + '"><\/script>');
   // 6d) Gerador de slides: paletas, divisão da aula em seções e desenho do HTML (botão «Slides»)
+  w('<script src="' + attr(rev(BASE + "slides-diagram.js")) + '"><\/script>');
   w('<script src="' + attr(rev(BASE + "slides-render.js")) + '"><\/script>');
   w('<script src="' + attr(rev(BASE + "slides-pptx.js")) + '"><\/script>');
 
