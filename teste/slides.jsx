@@ -44,8 +44,8 @@
   function PaletteCard({ p, on, onPick }) {
     const sw = [p.dark, p.accent, p.second, p.bg, p.accentLight];
     return (
-      <button type="button" role="radio" aria-checked={on} data-sl={"pal-" + p.id} onClick={() => onPick(p.id)} style={{ flex: "1 1 0", minWidth: 150, textAlign: "left", cursor: "pointer", border: on ? "2px solid var(--tool-accent)" : "1px solid var(--tool-line-2)", borderRadius: 10, padding: on ? 9 : 10, background: "#fff", fontFamily: "inherit" }}>
-        <div style={{ height: 58, borderRadius: 6, background: p.dark, position: "relative", overflow: "hidden", marginBottom: 8 }}>
+      <button type="button" role="radio" aria-checked={on} data-sl={"pal-" + p.id} onClick={() => onPick(p.id)} style={{ minWidth: 0, textAlign: "left", cursor: "pointer", border: on ? "2px solid var(--tool-accent)" : "1px solid var(--tool-line-2)", borderRadius: 10, padding: on ? 9 : 10, background: "#fff", fontFamily: "inherit" }}>
+        <div style={{ height: 46, borderRadius: 6, background: p.dark, position: "relative", overflow: "hidden", marginBottom: 8 }}>
           <div style={{ position: "absolute", left: 10, top: 10, width: 44, height: 5, borderRadius: 3, background: p.accentLight }} />
           <div style={{ position: "absolute", left: 10, top: 22, width: 92, height: 9, borderRadius: 3, background: "#F7F5F0" }} />
           <div style={{ position: "absolute", left: 10, bottom: 10, right: 10, height: 12, borderRadius: 3, background: p.bg }} />
@@ -177,7 +177,7 @@
           <div className="tool-scroll" style={{ padding: "14px 20px 18px", overflow: "auto", display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
               <div style={{ fontSize: 12, fontWeight: 650, marginBottom: 6, color: "var(--tool-ink-2)" }}>Paleta de cores</div>
-              <div role="radiogroup" aria-label="Paleta de cores" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>{CS.PALETTES.map((p) => <PaletteCard key={p.id} p={p} on={pal === p.id} onPick={setPal} />)}</div>
+              <div role="radiogroup" aria-label="Paleta de cores" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 8 }}>{CS.PALETTES.map((p) => <PaletteCard key={p.id} p={p} on={pal === p.id} onPick={setPal} />)}</div>
               {deck && <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--tool-ink-3)" }}>Trocar a paleta agora refaz o visual na hora, sem chamar a IA de novo.</p>}
             </div>
             <div>

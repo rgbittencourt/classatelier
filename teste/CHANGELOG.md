@@ -4,12 +4,17 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.20.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.21.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.21.0 · 12/11/2026 · Seis paletas novas para os slides
+
+- Além de Descanso, Floresta e Grafite: **Oceano** (azul-petróleo e coral), **Vinho** (bordô e dourado), **Lavanda** (roxo e verde-água), **Areia** (café e laranja queimado), **Ipê** (magenta e verde-folha) e **Alto contraste** (preto, azul e amarelo, para projetor fraco ou sala clara). Todas passam no contraste mínimo de leitura (WCAG AA) nos textos.
+- As paletas aparecem numa grade mais compacta na janela de slides.
 
 ### 1.20.0 · 12/11/2026 · Slides na quantidade pedida, com respostas nas notas
 
