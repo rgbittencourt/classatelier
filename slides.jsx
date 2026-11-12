@@ -90,41 +90,53 @@
     const generate = async () => {
       setErr(""); setDeck(null); setSaved(""); setWarns([]); cancel.current = false;
       safeSet(LS_PAL, pal); safeSet(LS_SIZE, size); if (size === "custom") safeSet(LS_CUSTOM, String(custom));
-      const J = CS.jobs(plan, CS.FIXED + content);
       const n = plan.sections.length;
-      const ANS = J.length + 1;
-      const list = [{ label: "Pergunta da aula, objetivos, síntese e pergunta final", state: "wait" }]
-        .concat(J.map((j) => ({ label: "Seção " + (j.sec + 1) + " de " + n + (j.part ? " (" + j.part + ")" : "") + ": " + plan.sections[j.sec].title + " · " + j.count + " slide(s)", state: "wait" })))
-        .concat([{ label: "Respostas detalhadas das perguntas, nas notas", state: "wait" }]);
-      setSteps(list); setBusy(true);
+      setSteps([{ label: "Pergunta da aula, objetivos, síntese e pergunta final", state: "wait" }, { label: "Plano do deck: a IA lê a aula inteira e distribui os " + content + " slides", state: "wait" }]);
+      setBusy(true);
       if (window.aulaAccess) window.aulaAccess.persist();
-      let frame = null; const got = new Array(J.length); const w = [];
+      let frame = null; const w = []; let J = []; let deckTitles = []; let got = []; let ANS = 0;
       try {
         const frameJob = (async () => {
           setStep(0, "run");
           try { frame = await withRetry(() => askSlides({ mode: "frame", lessonTitle: plan.title, sectionTitles: plan.sections.map((s) => s.title), text: CS.frameText(plan) })); setStep(0, "ok"); }
           catch (e) { if (e.fatal) throw e; frame = null; setStep(0, "warn"); w.push("Pergunta, objetivos e síntese: usei uma versão simples, a partir dos títulos. " + e.message); }
         })();
+        setStep(1, "run");
+        try {
+          const r = await withRetry(() => askSlides({ mode: "outline", lessonTitle: plan.title, count: content, sections: plan.sections.map((s) => ({ title: s.title, text: s.text, images: s.images.map((im) => ({ id: im.id, caption: im.caption || im.alt })) })) }));
+          J = CS.jobsFromOutline(plan, r.outline, content);
+          deckTitles = J.reduce((a, j) => a.concat(j.outline.map((o) => o.title)), []);
+          setStep(1, "ok");
+        } catch (e) {
+          if (e.fatal) throw e;
+          J = CS.jobs(plan, CS.FIXED + content); setStep(1, "warn");
+          w.push("O plano do deck falhou; dividi a aula pelo tamanho de cada seção. " + e.message);
+        }
+        if (cancel.current) return;
+        got = new Array(J.length); ANS = J.length + 2;
+        setSteps((st) => st.slice(0, 2).concat(J.map((j) => ({ label: "Seção " + (j.sec + 1) + " de " + n + (j.part ? " (" + j.part + ")" : "") + ": " + plan.sections[j.sec].title + " · " + j.count + " slide(s)", state: "wait" }))).concat([{ label: "Respostas detalhadas das perguntas, nas notas", state: "wait" }]));
         const firstPart = {};
         const secJob = pool(J, 3, async (j, k) => {
           if (cancel.current) return;
-          setStep(k + 1, "run");
+          setStep(k + 2, "run");
           const sec = plan.sections[j.sec];
-          const withImages = firstPart[j.sec] === undefined; firstPart[j.sec] = k;
-          const body = { mode: "section", lessonTitle: plan.title, sectionTitle: sec.title, sectionIndex: j.sec + 1, sectionCount: n, part: j.part, text: j.text, images: withImages ? sec.images.map((im) => ({ id: im.id, caption: im.caption, alt: im.alt })) : [], count: j.count, min: j.count, max: j.count };
+          const planned = j.outline ? j.outline.map((o) => o.imageId).filter(Boolean) : null;
+          const withImages = planned ? planned.length > 0 : firstPart[j.sec] === undefined; firstPart[j.sec] = k;
+          const imgs = sec.images.filter((im) => !planned || planned.indexOf(im.id) >= 0);
+          const body = { mode: "section", lessonTitle: plan.title, sectionTitle: sec.title, sectionIndex: j.sec + 1, sectionCount: n, part: j.part, text: j.text, images: withImages ? imgs.map((im) => ({ id: im.id, caption: im.caption, alt: im.alt })) : [], count: j.count, min: j.count, max: j.count, ...(j.outline ? { outline: j.outline, deck: deckTitles } : {}) };
           try {
             let sl = ((await withRetry(() => askSlides(body))).slides || []).filter((x) => x.type !== "image" || sec.images.some((im) => im.id === x.imageId));
             if (sl.length < j.count) {
               const miss = j.count - sl.length;
-              try { const r2 = await askSlides({ ...body, images: [], count: miss, min: miss, max: miss, avoid: sl.map((x) => x.title || x.text || x.question).filter(Boolean) }); sl = sl.concat((r2.slides || []).filter((x) => x.type !== "image")); }
+              try { const r2 = await askSlides({ ...body, images: [], outline: j.outline ? j.outline.slice(sl.length) : undefined, count: miss, min: miss, max: miss, avoid: sl.map((x) => x.title || x.text || x.question).filter(Boolean) }); sl = sl.concat((r2.slides || []).filter((x) => x.type !== "image")); }
               catch (e) { if (e.fatal) throw e; }
             }
             if (sl.length < j.count) sl = sl.concat(CS.fallbackSlides(sec, j.count - sl.length, j.text));
             got[k] = sl.slice(0, j.count).map((x) => ({ ...x, _job: k }));
-            setStep(k + 1, "ok");
+            setStep(k + 2, "ok");
           } catch (e) {
             if (e.fatal) throw e;
-            got[k] = CS.fallbackSlides(sec, j.count, j.text).map((x) => ({ ...x, _job: k })); setStep(k + 1, "warn");
+            got[k] = CS.fallbackSlides(sec, j.count, j.text).map((x) => ({ ...x, _job: k })); setStep(k + 2, "warn");
             w.push("Seção " + (j.sec + 1) + " (" + sec.title + "): montei " + j.count + " slide(s) simples sem IA. " + e.message);
           }
         });
@@ -150,6 +162,17 @@
         saveFolder(CS.renderDeckHTML(d, pal), fileBase(lesson) + "-slides-" + pal + ".html");
       } catch (e) { setErr(e.message || String(e)); }
       finally { setBusy(false); }
+    };
+    const [pptxBusy, setPptxBusy] = useState(false);
+    const downloadPptx = async () => {
+      setErr(""); setPptxBusy(true);
+      try {
+        const b = await window.ClassSlidesPptx.deckToPptx(deck, pal);
+        const name = fileBase(lesson) + "-slides-" + pal + ".pptx";
+        const u = URL.createObjectURL(b); const a = document.createElement("a"); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 3000);
+        try { if (window.PastaProjeto && window.PastaProjeto.status().state === "granted") await window.PastaProjeto.save(b, name, "slides"); } catch (e) { /* sem pasta */ }
+      } catch (e) { setErr("Não consegui montar o PowerPoint: " + (e.message || e)); }
+      finally { setPptxBusy(false); }
     };
     const downloadNotes = () => { const u = URL.createObjectURL(new Blob([CS.notesText(deck)], { type: "text/plain;charset=utf-8" })); const a = document.createElement("a"); a.href = u; a.download = fileBase(lesson) + "-notas-do-apresentador.txt"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 3000); };
 
@@ -211,11 +234,13 @@
             {deck && (
               <div data-sl="done" ref={doneRef} style={{ padding: "12px 14px", borderRadius: 10, background: "#eef7f1", border: "1px solid #cfe8d8", display: "flex", flexDirection: "column", gap: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: "#1f5e3c" }}>{deck.slides.length} slides prontos ({deck.slides.length - CS.FIXED} de conteúdo + {CS.FIXED} fixos) · paleta {CS.paletteById(pal).name}</div>
+                <div style={{ fontSize: 12, color: "#2f5a43", lineHeight: 1.45 }}>O PowerPoint sai editável, com as notas do apresentador e as fontes Space Grotesk, IBM Plex Sans e JetBrains Mono. Se elas não estiverem instaladas no computador, o PowerPoint troca por uma parecida; são gratuitas no <a href="https://fonts.google.com/?query=Space+Grotesk" target="_blank" rel="noopener noreferrer">Google Fonts</a>.</div>
                 <div style={{ fontSize: 12, color: "#2f5a43", lineHeight: 1.45 }}>Na apresentação: setas ou espaço avançam, <b>N</b> mostra as notas, <b>F</b> põe em tela cheia e o botão <b>PDF</b> (ou Ctrl+P) imprime um slide por página.</div>
                 {saved && <div style={{ fontSize: 12, color: "#2f5a43" }}>{saved}</div>}
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <button type="button" data-sl="open" onClick={open} style={primary}>Abrir apresentação</button>
                   <button type="button" data-sl="download" onClick={download} style={btn}>Baixar .html</button>
+                  <button type="button" data-sl="pptx" onClick={downloadPptx} disabled={pptxBusy} style={btn}>{pptxBusy ? "Montando o PowerPoint…" : "Baixar PowerPoint (.pptx)"}</button>
                   <button type="button" data-sl="notes" onClick={downloadNotes} style={btn}>Baixar notas (.txt)</button>
                 </div>
                 {warns.length > 0 && <ul style={{ margin: "4px 0 0", paddingLeft: 18, fontSize: 12, color: "#7a4a0c", lineHeight: 1.45 }}>{warns.map((x, i) => <li key={i}>{x}</li>)}</ul>}

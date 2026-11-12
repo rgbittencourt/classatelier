@@ -62,7 +62,22 @@
     bg: "#FFFFFF", bg2: "#EEF1F5", card: "#FFFFFF", line: "#C9D0D9", rule: "#BFC7D1",
     dark: "#0B0D12", dark2: "#1B2230", title: "#0B0D12", ink: "#1F2630", muted: "#3F4856",
     accent: "#0A4FB8", accentLight: "#FFD23F", accentSoft: "#E1ECFB", warn: "#FFF4CC",
-    second: "#8A1C1C", secondSoft: "#F8E1E1", onDark: "#E6EAF0", onDarkMuted: "#AAB4C2", onAccent: "#FFFFFF", onAccentMuted: "#DCE8FB" }
+    second: "#8A1C1C", secondSoft: "#F8E1E1", onDark: "#E6EAF0", onDarkMuted: "#AAB4C2", onAccent: "#FFFFFF", onAccentMuted: "#DCE8FB" },
+    { id: "turquesa", name: "Turquesa", hint: "Verde-azulado profundo e âmbar",
+    bg: "#F1F6F5", bg2: "#E0EDEB", card: "#FAFCFC", line: "#D1E0DD", rule: "#C9DAD6",
+    dark: "#073B3A", dark2: "#0B5250", title: "#073B3A", ink: "#2F4644", muted: "#55696A",
+    accent: "#7D5800", accentLight: "#F2C14E", accentSoft: "#F5EACB", warn: "#FAF1D9",
+    second: "#0F6E67", secondSoft: "#DDEEEB", onDark: "#C8E0DD", onDarkMuted: "#8DB3AF", onAccent: "#FFFBF0", onAccentMuted: "#F6E8C4" },
+    { id: "rubi", name: "Rubi", hint: "Carvão e vermelho-rubi, sóbrio e forte",
+    bg: "#F6F4F3", bg2: "#ECE7E6", card: "#FCFBFA", line: "#DDD6D4", rule: "#D5CDCB",
+    dark: "#1F1A1C", dark2: "#2F282B", title: "#1F1A1C", ink: "#3F3A3C", muted: "#655F61",
+    accent: "#B0122E", accentLight: "#FF8A9A", accentSoft: "#F7DADF", warn: "#FCEBEE",
+    second: "#35577D", secondSoft: "#E0E8F1", onDark: "#E3DCDE", onDarkMuted: "#A99FA3", onAccent: "#FFF5F6", onAccentMuted: "#FBD9DE" },
+    { id: "nordico", name: "Nórdico", hint: "Azul-ardósia e verde-menta, claro e frio",
+    bg: "#F3F5F7", bg2: "#E4E9EE", card: "#FBFCFD", line: "#D5DCE3", rule: "#CDD5DD",
+    dark: "#1E2A38", dark2: "#2B3A4C", title: "#1E2A38", ink: "#3A4654", muted: "#5D6876",
+    accent: "#2A7354", accentLight: "#8FE0B8", accentSoft: "#DCF0E6", warn: "#E9F6EF",
+    second: "#6E4A93", secondSoft: "#ECE4F4", onDark: "#CFD8E2", onDarkMuted: "#95A4B5", onAccent: "#F5FFFA", onAccentMuted: "#D3EDE0" }
   ];
   const paletteById = (id) => PALETTES.find((p) => p.id === id) || PALETTES[0];
 
@@ -80,6 +95,7 @@
   }
   function headingOf(b) {
     const p = b.props || {};
+    if (b.type === "titulo" && /^h[3-6]$/i.test(String(p.level || ""))) return ""; // subtítulo: fica dentro da seção
     if (b.type === "titulo" || b.type === "divider") return plain(p.text || p.label);
     if (TOPIC.indexOf(b.type) >= 0) {
       if (p.title) return plain(p.title);
@@ -106,7 +122,17 @@
     const plan = { title: plain(meta.title), eyebrow: "", lead: "", author: plain(meta.author), role: plain(meta.role || meta.institution), year: plain(meta.year), sections: [], references: [], synthesis: "", license: meta.license || "" };
     let cur = null, imgN = 0;
     const open = (title) => { cur = { title: title || "", text: "", images: [] }; plan.sections.push(cur); };
-    blocks.forEach((b) => {
+    // Tópicos de conteúdo são contêineres: os títulos de seção que estão dentro deles também abrem seção.
+    const flat = [];
+    const walk = (list) => (list || []).forEach((b) => {
+      const p = (b && b.props) || {};
+      if (b && TOPIC.indexOf(b.type) >= 0 && Array.isArray(p.children)) {
+        if (plain(p.title)) flat.push({ type: "titulo", props: { text: p.title } });
+        walk(p.children);
+      } else if (b) flat.push(b);
+    });
+    walk(blocks);
+    flat.forEach((b) => {
       const p = b.props || {};
       if (b.type === "hero") {
         if (!isPlaceholder(p.title) && plain(p.title)) plan.title = plan.title || plain(p.title);
@@ -120,7 +146,7 @@
       if (b.type === "sintese") { plan.synthesis += (plan.synthesis ? "\n\n" : "") + blockText(b, toText); return; }
       if (b.type === "pagebreak" || b.type === "collapsebreak") return;
       const head = headingOf(b);
-      if (head || TOPIC.indexOf(b.type) >= 0 || !cur) open(head || (cur ? "" : "Abertura"));
+      if (head || !cur) open(head || "Abertura");
       const t = blockText(b, toText);
       if (t) cur.text += (cur.text ? "\n\n" : "") + t;
       const imgs = []; collectImages(b, imgs);
@@ -152,6 +178,27 @@
     return Math.max(plan.sections.length || 1, Math.min(150, c));
   }
   function targetFor(plan, size, custom) { return FIXED + contentFor(plan, size, custom); }
+  // Partes a partir do plano do deck (mode "outline"): cada seção leva os seus itens do plano,
+  // em blocos de até 8. Completa ou corta para bater a quantidade pedida e garante 1 slide por seção.
+  function jobsFromOutline(plan, outline, content) {
+    const n = plan.sections.length; if (!n) return [];
+    const per = plan.sections.map(() => []);
+    (outline || []).forEach((o) => { const i = Math.min(n, Math.max(1, Number(o.sec) || 1)) - 1; per[i].push({ type: o.type, title: o.title, idea: o.idea || "", ...(o.imageId ? { imageId: o.imageId } : {}) }); });
+    per.forEach((l, i) => { if (!l.length) l.push({ type: "cards", title: plan.sections[i].title, idea: "As ideias centrais desta seção, com um exemplo concreto do texto." }); });
+    let total = per.reduce((a, l) => a + l.length, 0);
+    while (total > content) { const i = per.reduce((m, l, j) => (l.length > per[m].length ? j : m), 0); if (per[i].length <= 1) break; per[i].pop(); total -= 1; }
+    const extra = ["Um exemplo concreto do texto, resolvido passo a passo.", "O erro mais comum sobre este assunto e como evitá-lo.", "Uma comparação que deixe a diferença clara.", "Uma pergunta para a turma refletir, com base no texto."];
+    for (let k = 0; total < content; k += 1) { const i = per.reduce((m, l, j) => (plan.sections[j].text.length / (l.length + 1) > plan.sections[m].text.length / (per[m].length + 1) ? j : m), 0); per[i].push({ type: ["bignumber", "alert", "compare", "reflect"][k % 4], title: "Aprofundar: " + clip(plan.sections[i].title, 50), idea: extra[k % 4] }); total += 1; }
+    const out = [];
+    per.forEach((l, i) => {
+      const k = Math.ceil(l.length / 8); const size = Math.ceil(l.length / k);
+      for (let j = 0; j < k; j += 1) { const items = l.slice(j * size, j * size + size); if (items.length) out.push({ sec: i, part: k > 1 ? "parte " + (j + 1) + " de " + k : "", text: plan.sections[i].text, count: items.length, outline: items }); }
+    });
+    return out;
+  }
+
+  // Glossário, resumo e revisão repetem o que a aula já disse: recebem bem poucos slides.
+  const isReview = (t) => /gloss[áa]rio|resumo|revis[ãa]o|conceitos?-chave|recapitula/i.test(String(t || ""));
   // Divide o texto em k partes de tamanho parecido, sem cortar parágrafos.
   function splitText(text, k) {
     if (k <= 1) return [text];
@@ -166,7 +213,7 @@
   function jobs(plan, target) {
     const n = plan.sections.length; if (!n) return [];
     const content = Math.max(n, target - FIXED);
-    const lens = plan.sections.map((s) => Math.max(1, s.text.length)); const total = lens.reduce((a, b) => a + b, 0);
+    const lens = plan.sections.map((s) => Math.max(1, s.text.length) * (isReview(s.title) ? 0.12 : 1)); const total = lens.reduce((a, b) => a + b, 0);
     const raw = lens.map((l) => content * l / total);
     const cnt = raw.map((x) => Math.max(1, Math.floor(x)));
     let left = content - cnt.reduce((a, b) => a + b, 0);
@@ -196,11 +243,12 @@
   function fallbackSlides(section, count, text) {
     const n = Math.max(1, count || 1);
     const src = text || section.text;
-    const sentences = plain(src).replace(/^#+\s.*$/gm, "").split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter((x) => x.length > 30);
+    const clean = plain(String(src).replace(/^#+\s.*$/gm, "")).replace(/#+\s/g, "");
+    const sentences = clean.split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter((x) => x.length > 30);
     const per = Math.max(1, Math.min(4, Math.ceil(sentences.length / n)));
     return Array.from({ length: n }, (_, i) => {
       const part = sentences.slice(i * per, i * per + per);
-      return { type: "list", title: section.title + (n > 1 ? " (" + (i + 1) + "/" + n + ")" : ""), items: part.length ? part.map((x) => clip(x, 140)) : [clip(src, 140)], notes: "Slide montado sem IA, a partir do texto da seção (a IA não respondeu). Revise antes de apresentar e explique cada item com exemplos:\n" + (part.length ? part.join("\n") : clip(src, 600)) };
+      return { type: "list", title: section.title + (n > 1 ? " (" + (i + 1) + "/" + n + ")" : ""), items: part.length ? part.map((x) => clip(x, 140)) : [clip(sentences[i % Math.max(1, sentences.length)] || clean, 140)], notes: "Slide montado sem IA, a partir do texto da seção (a IA não respondeu). Revise antes de apresentar e explique cada item com exemplos:\n" + (part.length ? part.join("\n") : clip(clean, 600)) };
     });
   }
 
@@ -498,6 +546,6 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitAll);
       "<script>" + SCRIPT + "</script></body></html>";
   }
 
-  const api = { PALETTES, paletteById, planLesson, FIXED, fixedCount, contentFor, targetFor, jobs, splitText, frameText, fallbackSlides, buildDeck, questionOf, needsAnswer, notesText, renderDeckHTML };
+  const api = { PALETTES, paletteById, planLesson, FIXED, fixedCount, contentFor, targetFor, jobs, jobsFromOutline, splitText, frameText, fallbackSlides, buildDeck, questionOf, needsAnswer, notesText, renderDeckHTML };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ClassSlides = api;
 })(typeof window !== "undefined" ? window : this);
