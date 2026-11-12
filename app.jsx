@@ -1154,10 +1154,10 @@ function CourseDialog({ entries, onClose, onConfirm, onCheck, onMoodle }) {
                   <div style={{ fontWeight: 700, marginBottom: 4 }}>{published.sent ? "Publicado: " + published.sent + " arquivo(s) novo(s) ou alterado(s) enviado(s)" + (published.total > published.sent ? "; os outros " + (published.total - published.sent) + " já estavam iguais no GitHub." : ".") : "Nada mudou: tudo já estava publicado."}</div>
                   <div style={{ marginBottom: 6 }}>GitHub Pages: {published.pages}. {published.pagesHint ? published.pagesHint : /desligado|não consegui/.test(published.pages) ? "Em Settings → Pages do repositório, escolha a branch e a pasta raiz." : "O site pode levar alguns minutos para aparecer na primeira vez."}</div>
                   {published.links.map((l) => (
-                    <div key={l.url} style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 0" }}>
-                      <span style={{ flexShrink: 0, fontWeight: 600 }}>{l.label}</span>
-                      <a href={l.url} target="_blank" rel="noopener noreferrer" style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "inherit" }}>{l.url}</a>
-                      <button onClick={() => copy(l.url)} style={{ ...ghostBtn, width: "auto", height: 26, padding: "0 8px", fontSize: 11.5 }}>Copiar</button>
+                    <div key={l.url} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
+                      <span style={{ flex: "1 1 50%", minWidth: 0, fontWeight: 600, overflowWrap: "anywhere" }}>{l.label}</span>
+                      <a href={l.url} target="_blank" rel="noopener noreferrer" title={l.url} style={{ flex: "1 1 40%", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "inherit" }}>{l.url}</a>
+                      <button onClick={() => copy(l.url)} style={{ ...ghostBtn, width: "auto", height: 26, padding: "0 8px", fontSize: 11.5, flexShrink: 0 }}>Copiar</button>
                     </div>
                   ))}
                   <div style={{ marginTop: 8 }}><button onClick={() => onMoodle && onMoodle(published.links)} data-act="moodle" style={{ ...ghostBtn, width: "auto", height: 30, padding: "0 12px", fontSize: 12.5, fontWeight: 700, background: "#fff", border: "1px solid #b9d9c7" }}>Colocar no Moodle: endereços e código iframe</button></div>

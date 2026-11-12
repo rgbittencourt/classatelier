@@ -82,7 +82,7 @@ function MoodleDialog({ links, lesson, onClose }) {
             <p style={p}>No curso do Moodle: <b>Ativar edição → Adicionar uma atividade ou recurso → URL</b>. Cole o endereço abaixo e, em <b>Aparência → Exibir</b>, escolha <b>Incorporar</b> (a aula aparece dentro da página do Moodle) ou <b>Em uma nova janela</b> (melhor para celular).</p>
             {list.map((l) => (
               <div key={l.url} data-mo="url-row" style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
-                <span style={{ flex: "none", maxWidth: 190, fontSize: 12.5, fontWeight: 650, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.label}</span>
+                <span style={{ flex: "0 1 190px", minWidth: 0, fontSize: 12.5, fontWeight: 650, overflowWrap: "anywhere" }}>{l.label}</span>
                 <input readOnly value={l.url} onFocus={(e) => e.target.select()} style={{ ...box, flex: 1, minWidth: 0, padding: "6px 8px" }} />
                 <button onClick={() => copy(l.url, "Endereço")} style={btn} data-mo="copy-url">Copiar</button>
               </div>))}

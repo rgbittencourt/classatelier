@@ -4,12 +4,16 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.18.2** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.18.3** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.18.3 · 12/11/2026 · Títulos longos na lista de endereços
+
+- Em **Montar o curso** (depois de publicar) e em **Colocar no Moodle**, o título comprido de uma aula agora **quebra em várias linhas**, em vez de passar por cima do endereço e dos botões.
 
 ### 1.18.2 · 12/11/2026 · Publicar no GitHub: avisos mais claros
 
