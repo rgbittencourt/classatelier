@@ -4,12 +4,16 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.18.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.18.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.18.1 · 12/11/2026 · Foto do autor no cabeçalho não distorce mais
+
+- No bloco Cabeçalho da aula, a **foto do autor** em retrato (mais alta que larga) saía esticada, como um oval, e vazava do círculo. Agora o círculo tem tamanho fixo (44 px) e a foto, de qualquer proporção, é recortada para preenchê-lo, sem deformar. Vale no editor, na prévia e nas aulas exportadas (HTML, SCORM, site). Aulas já exportadas precisam ser exportadas de novo para receber a correção.
 
 ### 1.18.0 · 12/11/2026 · Imagens inseridas guardam o original e se ligam à figura sugerida
 

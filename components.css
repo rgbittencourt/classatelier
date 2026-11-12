@@ -299,8 +299,11 @@
   background: var(--c-hero-avatar-bg, var(--terracotta)); color: var(--paper);
   display: grid; place-items: center;
   font-family: var(--font-serif); font-size: 20px; font-weight: 600;
+  /* Foto de qualquer proporção (retrato ou paisagem) preenche o círculo sem esticar: a imagem fica
+     solta do fluxo (absolute) e é recortada por object-fit; sem isso, a foto em retrato alongava o círculo. */
+  position: relative; overflow: hidden; flex: 0 0 44px;
 }
-.aula-hero__avatar-img { width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit; }
+.aula-hero__avatar-img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit; }
 .aula-hero__author { font-family: var(--font-sans); font-size: 15px; font-weight: 600; color: var(--ink); }
 .aula-hero__byline { display: flex; gap: 8px; font-family: var(--font-sans); font-size: 13px; color: var(--ink-mute); margin-top: 2px; }
 .aula-hero__byline-sep { color: var(--ink-faint); }
