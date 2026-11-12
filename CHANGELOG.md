@@ -4,12 +4,20 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.19.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.20.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.20.0 · 12/11/2026 · Slides na quantidade pedida, com respostas nas notas
+
+- **Quantidade exata de slides.** Além de Automático, Enxuto (12 de conteúdo) e Completo (32), a opção **Quantos eu quiser** aceita o número de slides de conteúdo. O total é sempre esse número **+ 8 fixos**, e a janela mostra a conta antes de gerar e no resultado.
+- Os 8 fixos agora saem sempre, mesmo se a IA falhar na moldura: Capa, A Pergunta da Aula, Roteiro, Objetivos de Aprendizagem, Síntese, **A Pergunta que Fica** (novo slide, com caminhos para pensar e orientação de resposta nas notas), Referências e Créditos. As referências ficam num slide só (a letra encolhe se forem muitas).
+- Seções grandes viram partes de até 8 slides por chamada; se a IA devolver menos, o ClassAtelier pede o que falta sem repetir assunto; se falhar, completa com slides simples na mesma quantidade.
+- **Notas completas e respostas.** Todo slide sai com notas detalhadas; todo slide com pergunta ou reflexão leva a **RESPOSTA** detalhada nas notas (pedida à parte quando faltar). Novo botão **Baixar notas (.txt)**. Requer ClassAuthor 1.18.0.
+- **Como gerar a chave de IA?** Novo link em «Acesso ao ClassAuthor» (vale para slides, figuras e resumo de vídeo), com o passo a passo da Anthropic e da OpenAI e links para as páginas oficiais de chaves e de créditos.
 
 ### 1.19.0 · 12/11/2026 · Botão Slides
 
