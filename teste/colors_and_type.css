@@ -1,0 +1,599 @@
+/* ============================================================
+   Aula Design System — Foundations
+   Color tokens, typography scale, semantic element styles
+   ============================================================ */
+
+@import url("./fonts/fonts.css");
+
+:root {
+  /* ─── Brand palette ────────────────────────────────────────
+     Warm paper-and-ink base with editorial accent hues.
+     Inspired by Brazilian editorial design + Medium reading. */
+
+  /* Surfaces (full-bleed section colors) */
+  --paper:        #FBF6EE;  /* primary page background */
+  --paper-warm:   #F7EFE0;  /* slightly toasted variant */
+  --sand:         #F0E5CF;  /* tan, cozy section break */
+  --bone:         #FFFFFF;  /* card surface, hero blocks */
+  --ink:          #1B1A17;  /* near-black on cream, body text */
+  --ink-soft:     #3A3833;  /* secondary text */
+  --ink-mute:     #6B665D;  /* tertiary text / meta */
+  --ink-faint:    #A39B8B;  /* captions, timestamps */
+  --rule:         #E6DDC9;  /* hairline rules, borders on paper */
+  --rule-strong:  #C9BDA0;  /* stronger rule */
+
+  /* Content profiles. Sections select one profile from their background
+     metadata; descendants consume only the contextual aliases. */
+  --content-dark-primary: var(--ink);
+  --content-dark-secondary: var(--ink-soft);
+  --content-dark-muted: var(--ink-mute);
+  --content-dark-faint: var(--ink-faint);
+  --content-dark-border: var(--rule);
+  --content-dark-border-strong: var(--rule-strong);
+
+  --content-light-primary: var(--bone);
+  --content-light-secondary: color-mix(in oklab, var(--bone) 86%, transparent);
+  --content-light-muted: color-mix(in oklab, var(--bone) 70%, transparent);
+  --content-light-faint: color-mix(in oklab, var(--bone) 56%, transparent);
+  --content-light-border: color-mix(in oklab, var(--bone) 24%, transparent);
+  --content-light-border-strong: color-mix(in oklab, var(--bone) 42%, transparent);
+
+  --content-primary: var(--content-dark-primary);
+  --content-secondary: var(--content-dark-secondary);
+  --content-muted: var(--content-dark-muted);
+  --content-faint: var(--content-dark-faint);
+  --content-border: var(--content-dark-border);
+  --content-border-strong: var(--content-dark-border-strong);
+
+  /* Accent palette — each has a vivid, soft, and ink variant
+     for use in semantic blocks (full-bleed sections, badges,
+     icons, marker highlights). */
+
+  /* Marigold — destaque / highlighter pen */
+  --marigold:        #FFCB47;
+  --marigold-soft:   #FFE8A8;
+  --marigold-deep:   #B8821D;
+
+  /* Terracotta — atenção / warning */
+  --terracotta:      #D85C3C;
+  --terracotta-soft: #F6D5C8;
+  --terracotta-deep: #8A2F18;
+
+  /* Lavender — reflexão / pause-and-think */
+  --lavender:        #7C6BAD;
+  --lavender-soft:   #E2DDF0;
+  --lavender-deep:   #3D3168;
+
+  /* Sage — saiba mais / supplement */
+  --sage:            #6E8B5C;
+  --sage-soft:       #DCE7D2;
+  --sage-deep:       #2E4423;
+
+  /* Ocean — citação / quote */
+  --ocean:           #2C5B7A;
+  --ocean-soft:      #CDDDE8;
+  --ocean-deep:      #143147;
+
+  /* Coral — interaction / playful CTAs */
+  --coral:           #E89F8E;
+  --coral-soft:      #F7DCD3;
+  --coral-deep:      #95412F;
+
+  /* Highlighter colors — translucent so they layer like real ink */
+  --hl-yellow:  oklch(0.92 0.16 92 / 0.55);
+  --hl-pink:    oklch(0.85 0.13 18  / 0.42);
+  --hl-green:   oklch(0.88 0.13 140 / 0.45);
+  --hl-blue:    oklch(0.86 0.10 230 / 0.42);
+
+  /* ─── Type ────────────────────────────────────────────── */
+  --font-display: "Bricolage Grotesque", sans-serif; /* hero / display titles */
+  --font-serif:   "Newsreader", "Source Serif Pro", Georgia, serif;
+  --font-sans:    "Geist", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", "SF Mono", Consolas, monospace;
+
+  /* Base scale — generous, made for long reading */
+  --fs-display:   clamp(2.75rem, 1.6rem + 4.5vw, 4.5rem); /* @kind other */
+  --fs-h1:        clamp(2.25rem, 1.4rem + 3vw, 3.25rem); /* @kind other */
+  --fs-h2:        clamp(1.75rem, 1.2rem + 2vw, 2.25rem); /* @kind other */
+  --fs-h3:        1.5rem; /* @kind font */
+  --fs-h4:        1.25rem; /* @kind font */
+  --fs-lead:      1.375rem; /* @kind font */
+  --fs-body:      1.125rem; /* @kind font */
+  --fs-small:     1rem; /* @kind font */
+  --fs-meta:      0.875rem; /* @kind font */
+  --fs-cap:       0.75rem; /* @kind font */
+
+  /* Line heights tuned for serif reading */
+  --lh-tight:     1.15; /* @kind font */
+  --lh-snug:      1.3; /* @kind font */
+  --lh-body:      1.65; /* @kind font */
+  --lh-loose:     1.8; /* @kind font */
+
+  /* Letter spacing */
+  --ls-display:   -0.02em; /* @kind font */
+  --ls-tight:     -0.01em; /* @kind font */
+  --ls-eyebrow:   0.14em; /* @kind font */
+
+  /* ─── Layout ────────────────────────────────────────────── */
+  --measure:      68ch; /* @kind spacing */
+  --page-pad:     clamp(1.25rem, 4vw, 3rem); /* @kind spacing */
+
+  /* Spacing scale (rem) */
+  --sp-0: 0; /* @kind spacing */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4rem;
+  --sp-9: 6rem;
+  --sp-10: 8rem;
+
+  /* Radii — restrained; we are paper, not chrome */
+  --r-0: 0; /* @kind radius */
+  --r-sm: 4px;
+  --r-md: 8px;
+  --r-lg: 14px;
+  --r-xl: 22px;
+  --r-pill: 999px;
+
+  /* Shadows — soft, paper-on-paper. No glow. */
+  --sh-1: 0 1px 2px rgba(27, 26, 23, 0.04), 0 1px 1px rgba(27, 26, 23, 0.03);
+  --sh-2: 0 4px 12px rgba(27, 26, 23, 0.06), 0 1px 3px rgba(27, 26, 23, 0.04);
+  --sh-3: 0 14px 40px rgba(27, 26, 23, 0.10), 0 4px 10px rgba(27, 26, 23, 0.05);
+  --sh-inset: inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -1px 0 rgba(27,26,23,0.04);
+
+  /* Motion */
+  --ease-out:  cubic-bezier(0.22, 1, 0.36, 1); /* @kind other */
+  --ease-in:   cubic-bezier(0.55, 0, 0.6, 0.2); /* @kind other */
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.5, 1); /* @kind other */
+  --dur-1: 120ms; /* @kind other */
+  --dur-2: 220ms; /* @kind other */
+  --dur-3: 380ms; /* @kind other */
+  --dur-4: 700ms; /* @kind other */
+}
+
+/* ============================================================
+   Base styles — applied via .aula-prose wrapper so the
+   design system can coexist with surrounding UI chrome.
+   ============================================================ */
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-feature-settings: "kern", "liga", "calt";
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection { background: var(--marigold); color: var(--ink); }
+
+/* ─── Typography elements ───────────────────────────────── */
+
+h1, .h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  font-weight: 600;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-display);
+  margin: 0 0 var(--sp-4);
+  color: var(--ink);
+  text-wrap: balance;
+}
+h2, .h2 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  line-height: var(--lh-snug);
+  letter-spacing: var(--ls-tight);
+  margin: var(--sp-7) 0 var(--sp-3);
+  text-wrap: balance;
+}
+h3, .h3 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  line-height: var(--lh-snug);
+  margin: var(--sp-6) 0 var(--sp-2);
+}
+h4, .h4 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-h4);
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+  margin: var(--sp-5) 0 var(--sp-2);
+}
+
+.display {
+  font-family: var(--font-display);
+  font-size: var(--fs-display);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: var(--ls-display);
+  text-wrap: balance;
+}
+
+.lead {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: var(--fs-lead);
+  line-height: 1.5;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+p {
+  font-family: var(--font-serif);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  margin: 0 0 var(--sp-5);
+  text-wrap: pretty;
+  hanging-punctuation: first last;
+}
+
+/* ─── Drop cap / inicial capitular ───────────────────────
+   For the opening paragraph of longer reading blocks. Apply
+   .dropcap to a <p>; the first letter is raised into a
+   3-line editorial initial. Use only once, on the first
+   substantial paragraph — never on short or stacked blocks. */
+/* Works both when .dropcap is the <p> itself (hand-authored) AND when it
+   wraps a block child, e.g. <div class="dropcap"><p>…</p></div> (the builder/
+   export markup) — a div's own ::first-letter does not render when its first
+   child is a block, so we also target that first child. */
+.dropcap::first-letter,
+.dropcap > :first-child::first-letter {
+  float: left;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-style: normal;
+  font-size: 3.5em;
+  line-height: 0.78;
+  padding: 0.04em 0.08em 0 0;
+  margin: 0.14em 0.04em 0 0;
+  color: var(--terracotta);
+}
+/* Tonal variants */
+.dropcap-ink::first-letter,      .dropcap-ink > :first-child::first-letter      { color: var(--ink); }
+.dropcap-ocean::first-letter,    .dropcap-ocean > :first-child::first-letter    { color: var(--ocean); }
+.dropcap-sage::first-letter,     .dropcap-sage > :first-child::first-letter     { color: var(--sage); }
+.dropcap-lavender::first-letter, .dropcap-lavender > :first-child::first-letter { color: var(--lavender); }
+.dropcap-marigold::first-letter, .dropcap-marigold > :first-child::first-letter { color: var(--marigold-deep); }
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--fs-cap);
+  font-weight: 600;
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.meta {
+  font-family: var(--font-sans);
+  font-size: var(--fs-meta);
+  color: var(--ink-mute);
+  line-height: 1.4;
+}
+
+.caption {
+  font-family: var(--font-sans);
+  font-size: var(--fs-meta);
+  color: var(--ink-mute);
+  line-height: 1.45;
+  font-style: normal;
+}
+
+a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--rule-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--dur-1) var(--ease-out);
+}
+a:hover { text-decoration-color: var(--terracotta); }
+
+strong, b { font-weight: 700; color: var(--ink); }
+em, i { font-style: italic; }
+
+blockquote {
+  margin: var(--sp-6) 0;
+  padding: 0 0 0 var(--sp-5);
+  border-left: 3px solid var(--ink);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 1.375rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--sand);
+  padding: 0.12em 0.4em;
+  border-radius: var(--r-sm);
+  color: var(--ink);
+}
+pre {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  background: var(--ink);
+  color: #F7EFE0;
+  padding: var(--sp-5);
+  border-radius: var(--r-md);
+  overflow-x: auto;
+  line-height: 1.55;
+}
+pre code { background: transparent; padding: 0; color: inherit; }
+
+hr {
+  border: 0;
+  height: 1px;
+  background: var(--rule);
+  margin: var(--sp-7) auto;
+  width: 60%;
+}
+
+ul, ol {
+  font-family: var(--font-serif);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  padding-left: 1.4em;
+  margin: 0 0 var(--sp-5);
+}
+li { margin-bottom: var(--sp-2); }
+li::marker { color: var(--ink-mute); }
+
+img { max-width: 100%; height: auto; display: block; }
+
+/* ─── Highlighter mark — the signature flourish ──────────
+   <mark> looks like a real highlighter stripe, slightly off-axis. */
+mark, .mark, .hl {
+  background: linear-gradient(
+    100deg,
+    transparent 0.4%,
+    var(--hl-yellow) 1%,
+    var(--hl-yellow) 99%,
+    transparent 99.6%
+  );
+  background-size: 100% 65%;
+  background-position: 0 65%;
+  background-repeat: no-repeat;
+  padding: 0.05em 0.12em;
+  color: inherit;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+.hl-pink  { background-image: linear-gradient(100deg, transparent 0.4%, var(--hl-pink) 1%, var(--hl-pink) 99%, transparent 99.6%); }
+.hl-green { background-image: linear-gradient(100deg, transparent 0.4%, var(--hl-green) 1%, var(--hl-green) 99%, transparent 99.6%); }
+.hl-blue  { background-image: linear-gradient(100deg, transparent 0.4%, var(--hl-blue) 1%, var(--hl-blue) 99%, transparent 99.6%); }
+
+/* Underline scribble — for emphasis with a hand-drawn feel */
+.scribble {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 12' preserveAspectRatio='none'><path d='M2 7 Q 30 2, 60 6 T 120 7 T 198 5' stroke='%23D85C3C' stroke-width='2.2' fill='none' stroke-linecap='round'/></svg>");
+  background-repeat: no-repeat;
+  background-size: 100% 0.42em;
+  background-position: 0 100%;
+  padding-bottom: 0.18em;
+}
+
+/* ─── Glossário — termo com definição curta ───────────────
+   Marca um termo dentro do texto corrido com sublinhado
+   pontilhado. O clique (ou Enter) abre um popover com a
+   definição. Ativado por CLIQUE, não hover — assim toque e
+   mouse têm o mesmo comportamento. Requer glossario.js para a
+   interação (ou o componente React <Termo>).
+
+   É um <span role="button"> (não <button>) para fluir como
+   texto corrido e quebrar entre linhas como qualquer palavra.
+
+   Markup:
+   <span class="termo" role="button" tabindex="0" aria-expanded="false">meio interno<span class="termo__pop" role="tooltip"><span class="termo__label">Glossário</span><span class="termo__word">Meio interno</span><span class="termo__def">Definição curta, 1–2 frases.</span></span></span>  */
+.termo {
+  display: inline;
+  position: relative;
+  cursor: help;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: var(--rule-strong);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--dur-1) var(--ease-out);
+}
+.termo:hover,
+.termo:focus-visible,
+.termo[aria-expanded="true"] { text-decoration-color: var(--ocean); }
+
+.termo__pop {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 11px);
+  transform: translateX(-50%) translateY(5px);
+  z-index: 60;
+  width: max-content;
+  max-width: min(290px, 78vw);
+  padding: 13px 16px 14px;
+  text-align: left;
+  background: var(--bone);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-3);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--dur-2) var(--ease-out),
+              transform var(--dur-2) var(--ease-out),
+              visibility var(--dur-2) linear;
+}
+.termo[aria-expanded="true"] .termo__pop {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+/* seta */
+.termo__pop::before {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top-color: var(--bone);
+  filter: drop-shadow(0 1px 0 var(--rule));
+}
+/* variante: abre abaixo quando não há espaço acima */
+.termo--below .termo__pop { bottom: auto; top: calc(100% + 11px); }
+.termo--below .termo__pop::before {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: var(--bone);
+  filter: drop-shadow(0 -1px 0 var(--rule));
+}
+.termo__label {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--ocean);
+  margin-bottom: 5px;
+}
+.termo__word {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--ink);
+  margin-bottom: 3px;
+}
+.termo__def {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* ─── Auto-contraste em faixas de fundo escuro ───────────────
+   FullBleedSection marca faixas escuras com [data-dark]. O corpo
+   de texto já herda a cor clara da faixa; aqui ajustamos os
+   elementos de apoio (links, negrito, marcadores, código, citação,
+   capitular, termos de glossário) para manter bom contraste sem o
+   autor precisar trocar cor manualmente. Tudo via inherit/
+   currentColor — então dentro de cartões claros (Destaque/Atenção)
+   o currentColor volta a ser escuro e os ajustes continuam certos. */
+.aula-fullbleed[data-dark] a { color: inherit; text-decoration-color: color-mix(in oklab, currentColor 45%, transparent); }
+.aula-fullbleed[data-dark] a:hover { text-decoration-color: var(--marigold); }
+.aula-fullbleed[data-dark] strong,
+.aula-fullbleed[data-dark] b { color: inherit; }
+.aula-fullbleed[data-dark] code { background: color-mix(in oklab, currentColor 16%, transparent); color: inherit; }
+.aula-fullbleed[data-dark] blockquote { color: inherit; border-left-color: color-mix(in oklab, currentColor 55%, transparent); }
+.aula-fullbleed[data-dark] li::marker { color: color-mix(in oklab, currentColor 62%, transparent); }
+.aula-fullbleed[data-dark] hr { background: color-mix(in oklab, currentColor 24%, transparent); }
+.aula-fullbleed[data-dark] .dropcap::first-letter,
+.aula-fullbleed[data-dark] .dropcap > :first-child::first-letter { color: var(--marigold); }
+.aula-fullbleed[data-dark] .termo { text-decoration-color: color-mix(in oklab, currentColor 50%, transparent); }
+.aula-fullbleed[data-dark] .termo:hover,
+.aula-fullbleed[data-dark] .termo[aria-expanded="true"] { text-decoration-color: var(--marigold); }
+
+/* ─── Case cards — grade responsiva + layout horizontal ──────
+   1 coluna no mobile; 2 ou 3 no desktop conforme data-cols.
+   Layout horizontal: capa à esquerda, texto à direita (empilha
+   no mobile). */
+.aula-cases-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 22px;
+}
+@media (min-width: 560px) {
+  .aula-cases-grid[data-cols="2"],
+  .aula-cases-grid[data-cols="3"] { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 900px) {
+  .aula-cases-grid[data-cols="3"] { grid-template-columns: repeat(3, 1fr); }
+}
+.aula-case-card { display: flex; flex-direction: column; }
+.aula-case-cover { aspect-ratio: 3 / 2; }
+.aula-case-card.is-text-only { min-height: 100%; }
+
+.aula-cases-grid.is-horizontal { grid-template-columns: 1fr; }
+@media (min-width: 800px) {
+  .aula-cases-grid.is-horizontal[data-cols="2"] { grid-template-columns: repeat(2, 1fr); }
+}
+.aula-cases-grid.is-horizontal .aula-case-card { flex-direction: row; align-items: stretch; }
+.aula-cases-grid.is-horizontal .aula-case-cover {
+  aspect-ratio: auto;
+  flex: 0 0 42%;
+  min-height: 150px;
+}
+.aula-cases-grid.is-horizontal .aula-case-body { justify-content: center; }
+.aula-cases-grid.is-horizontal .aula-case-card.is-text-only .aula-case-body { justify-content: flex-start; }
+@media (max-width: 519px) {
+  .aula-cases-grid.is-horizontal .aula-case-card { flex-direction: column; }
+  .aula-cases-grid.is-horizontal .aula-case-cover { flex: none; aspect-ratio: 3 / 2; min-height: 0; }
+}
+
+/* ─── Feature grid — grade responsiva 1 / 2 / 3 por linha ──── */
+.aula-feature-grid { grid-template-columns: 1fr; }
+@media (min-width: 560px) {
+  .aula-feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 880px) {
+  .aula-feature-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.aula-feature-item i { line-height: 1; }
+
+/* ─── Tópico de conteúdo — band único, ritmo compacto ─────
+   Um "tópico" agrupa título + texto + destaques numa só faixa. O
+   espaçamento entre os itens é controlado AQUI (não pelas margens próprias
+   de cada componente), para um capítulo coeso. Títulos recebem margem
+   assimétrica: bastante acima (separa do que veio antes) e pouca abaixo
+   (cola no parágrafo que vem logo em seguida). */
+.aula-topic { display: flex; flex-direction: column; }
+.aula-topic > .aula-topic-item { margin: 0; }
+/* Zera a margem externa de cada item; o ritmo vem dos seletores abaixo. */
+.aula-topic > .aula-topic-item > * { margin-top: 0 !important; margin-bottom: 0 !important; }
+/* Ritmo padrão entre itens de conteúdo. */
+.aula-topic > .aula-topic-item + .aula-topic-item { margin-top: 1.15em; }
+/* Parágrafos com mais de um <p> mantêm respiro interno. */
+.aula-topic > .aula-topic-item[data-type="prose"] p + p { margin-top: 0.9em; }
+/* Títulos (h2/h3): muito espaço acima, pouco abaixo. */
+.aula-topic > .aula-topic-item[data-type="titulo"] { margin-top: 2.1em; }
+.aula-topic > .aula-topic-item[data-type="titulo"] + .aula-topic-item { margin-top: 0.65em; }
+/* Destaques dentro de um tópico respiram um pouco mais que texto puro. */
+.aula-topic > .aula-topic-item[data-type="destaque"],
+.aula-topic > .aula-topic-item[data-type="atencao"],
+.aula-topic > .aula-topic-item[data-type="reflexao"],
+.aula-topic > .aula-topic-item[data-type="pitaco"],
+.aula-topic > .aula-topic-item[data-type="citacao"] { margin-top: 1.5em; }
+/* Primeiro item nunca empurra para baixo. */
+.aula-topic > .aula-topic-item:first-child { margin-top: 0 !important; }
+
+/* ─── Focus ring — accessible, on-brand ─────────────────── */
+:focus-visible {
+  outline: 2px solid var(--terracotta);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* ─── Reduced motion ───────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
