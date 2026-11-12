@@ -109,17 +109,47 @@
     return plan;
   }
 
-  // Quantos slides pedir por seção.
-  function budget(plan, size) {
-    const lens = plan.sections.map((s) => s.text.length);
-    const total = lens.reduce((a, b) => a + b, 0) || 1;
-    return plan.sections.map((s, i) => {
-      let n;
-      if (size === "enxuto") n = Math.max(1, Math.min(4, Math.round(14 * lens[i] / total)));
-      else if (size === "completo") n = Math.max(2, Math.min(8, Math.round(33 * lens[i] / total)));
-      else n = Math.max(2, Math.min(7, Math.round(lens[i] / 900)));
-      return { min: Math.max(1, n - 1), max: n + 1 };
+  // Slides fixos, sempre os mesmos 8: capa, pergunta da aula, roteiro, objetivos, síntese,
+  // a pergunta que fica, referências e créditos. A quantidade pedida é só de slides de conteúdo.
+  const FIXED = 8;
+  function fixedCount() { return FIXED; }
+  // Slides de conteúdo pedidos (o total é 8 + isto): Enxuto 12, Completo 32, número digitado,
+  // ou automático pelo tamanho do texto (cerca de um slide a cada 700 caracteres).
+  function contentFor(plan, size, custom) {
+    const chars = plan.sections.reduce((a, s) => a + s.text.length, 0);
+    let c = size === "enxuto" ? 12 : size === "completo" ? 32 : size === "custom" ? Math.round(Number(custom)) || 20 : Math.round(chars / 700);
+    if (size === "auto") c = Math.max(6, Math.min(50, c));
+    return Math.max(plan.sections.length || 1, Math.min(150, c));
+  }
+  function targetFor(plan, size, custom) { return FIXED + contentFor(plan, size, custom); }
+  // Divide o texto em k partes de tamanho parecido, sem cortar parágrafos.
+  function splitText(text, k) {
+    if (k <= 1) return [text];
+    const paras = text.split(/\n{2,}/); const goal = text.length / k; const out = []; let cur = "";
+    paras.forEach((p) => { if (cur && cur.length >= goal && out.length < k - 1) { out.push(cur); cur = ""; } cur += (cur ? "\n\n" : "") + p; });
+    if (cur) out.push(cur);
+    while (out.length < k) { let i = out.reduce((m, x, j) => (x.length > out[m].length ? j : m), 0); const t = out[i]; const cut = t.lastIndexOf(". ", Math.floor(t.length / 2)) + 1 || Math.floor(t.length / 2); out.splice(i, 1, t.slice(0, cut).trim(), t.slice(cut).trim()); }
+    return out;
+  }
+  // Quantos slides cada seção recebe (proporcional ao texto, pelo menos 1), e em quantas
+  // chamadas: nenhuma chamada pede mais de 8 slides, então seções grandes viram partes.
+  function jobs(plan, target) {
+    const n = plan.sections.length; if (!n) return [];
+    const content = Math.max(n, target - FIXED);
+    const lens = plan.sections.map((s) => Math.max(1, s.text.length)); const total = lens.reduce((a, b) => a + b, 0);
+    const raw = lens.map((l) => content * l / total);
+    const cnt = raw.map((x) => Math.max(1, Math.floor(x)));
+    let left = content - cnt.reduce((a, b) => a + b, 0);
+    const order = raw.map((x, i) => [x - Math.floor(x), i]).sort((a, b) => b[0] - a[0]);
+    for (let j = 0; left > 0; j = (j + 1) % n) { cnt[order[j][1]] += 1; left -= 1; }
+    while (left < 0) { const i = cnt.indexOf(Math.max(...cnt)); if (cnt[i] <= 1) break; cnt[i] -= 1; left += 1; }
+    const out = [];
+    plan.sections.forEach((sec, i) => {
+      const k = Math.ceil(cnt[i] / 8); const parts = splitText(sec.text, k);
+      const base = Math.floor(cnt[i] / parts.length); let extra = cnt[i] - base * parts.length;
+      parts.forEach((t, j) => { out.push({ sec: i, part: parts.length > 1 ? "parte " + (j + 1) + " de " + parts.length : "", text: t, count: base + (extra-- > 0 ? 1 : 0) }); });
     });
+    return out;
   }
 
   // Texto resumido para a moldura (pergunta, objetivos e síntese).
@@ -133,19 +163,31 @@
   }
 
   // Slide de reserva, sem IA, quando uma seção falha duas vezes.
-  function fallbackSlides(section) {
-    const sentences = plain(section.text).replace(/^#+\s.*$/gm, "").split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter((x) => x.length > 30).slice(0, 4);
-    return [{ type: "list", title: section.title, items: sentences.length ? sentences.map((x) => clip(x, 140)) : [clip(section.text, 140)], notes: "Slide montado sem IA, a partir do texto da seção (a IA não respondeu). Revise antes de apresentar." }];
+  function fallbackSlides(section, count, text) {
+    const n = Math.max(1, count || 1);
+    const src = text || section.text;
+    const sentences = plain(src).replace(/^#+\s.*$/gm, "").split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter((x) => x.length > 30);
+    const per = Math.max(1, Math.min(4, Math.ceil(sentences.length / n)));
+    return Array.from({ length: n }, (_, i) => {
+      const part = sentences.slice(i * per, i * per + per);
+      return { type: "list", title: section.title + (n > 1 ? " (" + (i + 1) + "/" + n + ")" : ""), items: part.length ? part.map((x) => clip(x, 140)) : [clip(src, 140)], notes: "Slide montado sem IA, a partir do texto da seção (a IA não respondeu). Revise antes de apresentar e explique cada item com exemplos:\n" + (part.length ? part.join("\n") : clip(src, 600)) };
+    });
   }
 
   // Junta tudo na ordem do deck.
   function buildDeck(plan, frame, sectionSlides) {
     const deck = { title: plan.title, eyebrow: plan.eyebrow, lead: plan.lead, author: plan.author, role: plan.role, year: plan.year, slides: [] };
     const S = deck.slides;
-    S.push({ type: "cover", notes: plan.lead ? "Abertura. " + plan.lead : "Abertura da aula." });
-    if (frame && frame.question) S.push({ type: "question", text: frame.question, notes: "Lance a pergunta e deixe a turma arriscar hipóteses antes de qualquer conceito. A aula inteira responde a ela." });
-    if (plan.sections.length > 1) S.push({ type: "roteiro", items: plan.sections.map((s) => s.title), notes: "O caminho da aula, seção por seção." });
-    if (frame && frame.objectives && frame.objectives.length) S.push({ type: "objetivos", items: frame.objectives, notes: "Os objetivos de aprendizagem: ao final da aula, a turma deve conseguir fazer cada um deles." });
+    const F = frame || {};
+    const secTitles = plan.sections.map((s) => s.title);
+    const question = F.question || (/\?\s*$/.test(plan.title) ? plan.title : "O que esta aula vai nos ajudar a entender?");
+    const objectives = (F.objectives && F.objectives.length) ? F.objectives : secTitles.slice(0, 8).map((t) => ({ verb: "Compreender", text: t.charAt(0).toLowerCase() + t.slice(1) }));
+    const synthesis = (F.synthesis && F.synthesis.length) ? F.synthesis : secTitles.slice(0, 6).map((t, i) => ({ title: String(i + 1).padStart(2, "0"), text: t }));
+    const C = F.closing || {};
+    S.push({ type: "cover", notes: "Abertura. Apresente-se, apresente a aula e o que vem pela frente." + (plan.lead ? "\n\n" + plan.lead : "") + (secTitles.length ? "\n\nA aula percorre " + secTitles.length + " seção(ões): " + secTitles.join("; ") + "." : "") });
+    S.push({ type: "question", text: question, notes: "Lance a pergunta e deixe a turma arriscar hipóteses antes de qualquer conceito; anote as hipóteses no quadro e volte a elas no fim. A aula inteira responde a esta pergunta." + (F.questionAnswer ? "\n\nRESPOSTA: " + F.questionAnswer : "") });
+    S.push({ type: "roteiro", items: secTitles.length ? secTitles : [plan.title], notes: "Apresente o caminho da aula antes de começar, para a turma saber onde está a cada momento:\n" + secTitles.map((t, i) => (i + 1) + ". " + t).join("\n") + "\nVolte a este roteiro nas transições entre as seções." });
+    S.push({ type: "objetivos", items: objectives, notes: "Leia os objetivos com a turma e diga como cada um será verificado ao longo da aula. Ao final, a turma deve conseguir:\n" + objectives.map((o) => "• " + o.verb + " " + o.text).join("\n") + "\nRetome esta lista na síntese, conferindo um a um." });
     plan.sections.forEach((sec, i) => {
       const eyebrow = String(i + 1).padStart(2, "0") + " · " + clip(sec.title, 46);
       (sectionSlides[i] || []).forEach((sl) => {
@@ -154,15 +196,34 @@
         S.push(s);
       });
     });
-    if (frame && frame.synthesis && frame.synthesis.length) S.push({ type: "sintese", items: frame.synthesis, notes: "Amarre o fio da aula com as ideias centrais." });
-    if (plan.references.length) {
-      const chunks = []; let cur = [], size = 0;
-      plan.references.forEach((r) => { const n = plain(r).length; if (cur.length && (cur.length >= 10 || size + n > 1500)) { chunks.push(cur); cur = []; size = 0; } cur.push(r); size += n; });
-      if (cur.length) chunks.push(cur);
-      chunks.forEach((c, k) => S.push({ type: "referencias", items: c, part: chunks.length > 1 ? (k + 1) + "/" + chunks.length : "", notes: "Referências citadas na aula." }));
-    }
+    S.push({ type: "sintese", items: synthesis, notes: "Amarre o fio da aula com as ideias centrais, uma por cartão, e peça à turma um exemplo de cada:\n" + synthesis.map((x) => "• " + x.title + ": " + x.text).join("\n") + "\nPara fechar, volte à pergunta da aula («" + question + "») e compare a resposta com as hipóteses do início." });
+    S.push({ type: "fechamento", title: C.title || "O que levamos desta aula", question: C.question || "Onde, fora da sala de aula, você usaria o que vimos hoje?", hints: (C.hints && C.hints.length ? C.hints : secTitles.slice(0, 3)),
+      notes: "A pergunta que fica: ela não se fecha nesta aula e abre a próxima conversa. Dê um minuto para a turma pensar em duplas e ouça duas ou três ideias." + (C.answer ? "\n\nRESPOSTA (orientação para o professor): " + C.answer : "") });
+    S.push({ type: "referencias", items: plan.references, notes: plan.references.length ? "Referências citadas na aula (" + plan.references.length + "). Indique por onde a turma pode começar a ler." : "A aula não lista referências. Inclua-as no ClassAtelier (bloco Referências) e gere de novo." });
     S.push({ type: "creditos", notes: "Créditos da aula." });
     return deck;
+  }
+
+  // Pergunta contida num slide (para garantir a resposta detalhada nas notas).
+  function questionOf(s) {
+    if (!s) return "";
+    if (s.type === "reflect") return [s.question, s.sub].filter(Boolean).join(" ");
+    if (s.type === "question") return s.text || "";
+    if (s.type === "fechamento") return s.question || "";
+    const pool = [s.text, s.title, s.sub].concat((s.items || []).map((x) => (typeof x === "string" ? x : [x.title, x.text].join(" "))));
+    const q = pool.find((t) => t && /\?/.test(t));
+    return q || "";
+  }
+  const needsAnswer = (s) => { const q = questionOf(s); return Boolean(q) && (!/RESPOSTA\s*:/i.test(s.notes || "") || String(s.notes || "").length < 400); };
+  // Roteiro do apresentador em texto: título de cada slide e as notas completas.
+  function notesText(deck) {
+    const L = [deck.title, "Notas do apresentador · " + deck.slides.length + " slides", ""];
+    deck.slides.forEach((s, i) => {
+      if (s.type === "fechamento") { L.push("── Slide " + (i + 1) + " · A pergunta que fica: " + clip(s.question, 90) + " ──", (s.notes || "").trim(), ""); return; }
+      const t = s.type === "cover" ? "Capa" : s.type === "question" ? "A pergunta da aula: " + s.text : s.type === "reflect" ? "Para refletir: " + s.question : s.title || s.text || ({ roteiro: "Roteiro", objetivos: "Objetivos", sintese: "Síntese", referencias: "Referências", creditos: "Créditos" })[s.type] || s.type;
+      L.push("── Slide " + (i + 1) + " · " + clip(t, 110) + " ──", (s.notes || "(sem notas)").trim(), "");
+    });
+    return L.join("\n");
   }
 
   // ───────────────────────── desenho ─────────────────────────
@@ -244,7 +305,12 @@
       case "sintese":
         return { cls: "dark", html: '<div class="frame">' + head("Síntese", "A ideia que fecha a aula") + '<div class="body"><div class="grid g3">' +
           s.items.map((it) => '<div class="card dk"><h3>' + esc(it.title) + "</h3><p>" + esc(it.text) + "</p></div>").join("") + "</div></div></div>" };
+      case "fechamento":
+        return { cls: "", html: '<div class="frame">' + head("A pergunta que fica", s.title) + '<div class="body"><div class="row center-items">' +
+          '<div class="card ink" style="flex:1.5"><p class="kicker">Para levar adiante</p><h3>' + esc(s.question) + "</h3></div>" +
+          '<div class="card"><p class="kicker">Por onde começar</p><ul class="bul">' + (s.hints || []).map((h) => "<li>" + esc(h) + "</li>").join("") + "</ul></div></div></div></div>" };
       case "referencias": {
+        if (!s.items.length) return { cls: "", html: '<div class="frame">' + head("", "Referências") + '<div class="body"><p class="sub">A aula ainda não lista referências.</p></div></div>' };
         const half = Math.ceil(s.items.length / 2);
         const col = (a) => '<div class="refcol">' + a.map((r) => "<p>" + safeRef(r) + "</p>").join("") + "</div>";
         return { cls: "", html: '<div class="frame refs">' + head(s.part ? "Referências · " + s.part : "", "Referências") + '<div class="body"><div class="row refrow">' + col(s.items.slice(0, half)) + col(s.items.slice(half)) + "</div></div></div>" };
@@ -339,7 +405,7 @@ figcaption{font-size:24px;color:${P.muted};text-align:center}
 .num{font-family:'JetBrains Mono','Courier New',monospace;font-weight:700;font-size:max(28px,calc(40px*var(--k)));color:${P.accent}}
 .refs .head h2{font-size:calc(72px*var(--k))}
 .refrow{gap:64px;align-items:flex-start}.refcol{flex:1;display:flex;flex-direction:column;gap:calc(16px*var(--k))}
-.refcol p{font-size:24px;line-height:1.32}
+.refcol p{font-size:calc(24px*var(--k));line-height:1.32}
 .credits{align-items:flex-start}.credits .card{padding:32px;gap:10px}.credits .card.wide{flex:1.4}.credits p{font-size:24px;line-height:1.4}
 .ctitle{font-weight:600;color:${P.title}}
 .cover .decor{position:absolute;right:0;bottom:0;width:900px;height:900px}
@@ -355,7 +421,7 @@ figcaption{font-size:24px;color:${P.muted};text-align:center}
 #hud{position:fixed;right:16px;bottom:14px;display:flex;gap:8px;align-items:center;font:600 13px system-ui,sans-serif;color:#cfd6dd;opacity:.0;transition:opacity .25s}
 body:hover #hud,#hud:focus-within{opacity:.9}
 #hud button{background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:7px;padding:6px 10px;font:inherit;cursor:pointer}
-#notes{position:fixed;left:0;right:0;bottom:0;max-height:38vh;overflow:auto;background:rgba(10,12,16,.94);color:#e8ecef;font:17px/1.55 system-ui,sans-serif;padding:18px 26px 52px;white-space:pre-wrap;display:none}
+#notes{position:fixed;left:0;right:0;bottom:0;max-height:46vh;overflow:auto;background:rgba(10,12,16,.94);color:#e8ecef;font:17px/1.55 system-ui,sans-serif;padding:18px 26px 52px;white-space:pre-wrap;display:none}
 #notes.on{display:block}
 @page{size:1920px 1080px;margin:0}
 @media print{html,body{background:none;overflow:visible;height:auto}#stage{position:static;transform:none!important;width:auto;height:auto}.slide{display:block!important;visibility:visible!important;position:relative;break-after:page;page-break-after:always}#hud,#notes{display:none!important}}
@@ -365,7 +431,7 @@ body:hover #hud,#hud:focus-within{opacity:.9}
   const SCRIPT = `
 (function(){
 var slides=[].slice.call(document.querySelectorAll('.slide'));var i=0;var stage=document.getElementById('stage');var notes=document.getElementById('notes');var count=document.getElementById('count');
-function fit(s){var f=s.querySelectorAll('.frame');var k=1;s.style.setProperty('--k',1);for(var n=0;n<8;n++){var over=false;for(var j=0;j<f.length;j++){if(f[j].scrollHeight>f[j].clientHeight+2||f[j].scrollWidth>f[j].clientWidth+2)over=true;}if(!over)break;k=Math.round((k-0.05)*100)/100;s.style.setProperty('--k',k);}}
+function fit(s){var f=s.querySelectorAll('.frame');var k=1;s.style.setProperty('--k',1);for(var n=0;n<12;n++){var over=false;for(var j=0;j<f.length;j++){if(f[j].scrollHeight>f[j].clientHeight+2||f[j].scrollWidth>f[j].clientWidth+2)over=true;}if(!over)break;k=Math.round((k-0.05)*100)/100;s.style.setProperty('--k',k);}}
 function fitAll(){slides.forEach(function(s){var on=s.classList.contains('on');if(!on)s.classList.add('measure');fit(s);if(!on)s.classList.remove('measure');});}
 function scale(){var k=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform='translate('+(-960*k)+'px,'+(-540*k)+'px) scale('+k+')';}
 function show(n){i=Math.max(0,Math.min(slides.length-1,n));slides.forEach(function(s,j){s.classList.toggle('on',j===i);s.setAttribute('aria-hidden',j===i?'false':'true');});var a=slides[i].querySelector('.notes');notes.textContent=(i+1)+' / '+slides.length+'\\n\\n'+(a?a.textContent:'');count.textContent=(i+1)+' / '+slides.length;if(location.hash!=='#'+(i+1))history.replaceState(null,'','#'+(i+1));}
@@ -402,6 +468,6 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitAll);
       "<script>" + SCRIPT + "</script></body></html>";
   }
 
-  const api = { PALETTES, paletteById, planLesson, budget, frameText, fallbackSlides, buildDeck, renderDeckHTML };
+  const api = { PALETTES, paletteById, planLesson, FIXED, fixedCount, contentFor, targetFor, jobs, splitText, frameText, fallbackSlides, buildDeck, questionOf, needsAnswer, notesText, renderDeckHTML };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ClassSlides = api;
 })(typeof window !== "undefined" ? window : this);
