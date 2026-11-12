@@ -17,6 +17,7 @@
     ["pdf", "PDFs: na janela de impressão, escolha “Salvar como PDF” e salve aqui"],
     ["textos", "Texto da aula (…-texto.txt)"],
     ["imagens", "Cópias dos originais das imagens inseridas nas aulas (S2-fig-1-napkin.png…); dentro de um projeto do ClassAuthor, vão para a pasta imagens/ dele"],
+    ["slides", "Apresentações geradas pelo botão Slides (…-slides-paleta.html)"],
     ["outros", "Qualquer outro arquivo"]
   ];
 

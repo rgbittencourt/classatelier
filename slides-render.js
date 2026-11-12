@@ -1,0 +1,407 @@
+/* eslint-disable */
+// ClassAtelier — gerador de slides: paletas, divisão da aula em seções e desenho do HTML.
+//
+// A IA (no ClassAuthor, rota /api/slides) escolhe só o CONTEÚDO de cada slide, dentro de um
+// catálogo fechado de tipos. Tudo o que é visual mora aqui: paleta, tipografia (Space Grotesk,
+// IBM Plex Sans, JetBrains Mono), grade 1920×1080, margens de 128 px e uma escala de cinco
+// tamanhos (120/72/44/32/24). O resultado é um único arquivo .html que abre em qualquer navegador:
+// setas ou espaço avançam, N mostra as notas do apresentador, F põe em tela cheia e
+// Ctrl+P imprime um slide por página (salve como PDF).
+//
+// Para criar uma paleta nova: copie um item de PALETTES e troque as cores. Todas as cores de
+// texto precisam de contraste de 4,5:1 sobre o fundo em que aparecem (3:1 a partir de 44 px).
+(function (root) {
+  const PALETTES = [
+    {
+      id: "descanso", name: "Descanso", hint: "Azul-marinho e terracota sobre papel claro",
+      bg: "#F4F1EA", bg2: "#E6ECEE", card: "#FBFAF6", line: "#DDD6C9", rule: "#D8D2C6",
+      dark: "#0F2233", dark2: "#17324A", title: "#0F2233", ink: "#3D4A56", muted: "#5E6975",
+      accent: "#A84A27", accentLight: "#E59A72", accentSoft: "#F2E1D8", warn: "#FBEDE5",
+      second: "#24707B", secondSoft: "#E3ECEE", onDark: "#C9D6DE", onDarkMuted: "#8FA3B2", onAccent: "#FBF7F0", onAccentMuted: "#F4E3D8"
+    },
+    {
+      id: "floresta", name: "Floresta", hint: "Verde-escuro e ocre, tons de mata",
+      bg: "#F5F3EC", bg2: "#E7EEE8", card: "#FBFAF5", line: "#DCD8CA", rule: "#D6D1C1",
+      dark: "#14291F", dark2: "#1E3A2D", title: "#14291F", ink: "#3B4A42", muted: "#5B6B62",
+      accent: "#8A5212", accentLight: "#E3B470", accentSoft: "#F1E4D0", warn: "#F8EEDF",
+      second: "#2F6B4F", secondSoft: "#E1ECE5", onDark: "#CBDCD2", onDarkMuted: "#93AE9F", onAccent: "#FCF7EE", onAccentMuted: "#F3E5CF"
+    },
+    {
+      id: "grafite", name: "Grafite", hint: "Cinza-grafite e azul, sóbrio e técnico",
+      bg: "#F4F5F7", bg2: "#E8ECF1", card: "#FBFBFC", line: "#DADDE3", rule: "#D3D7DE",
+      dark: "#1E2328", dark2: "#2A3138", title: "#1E2328", ink: "#3F4752", muted: "#5D6673",
+      accent: "#2F5FA8", accentLight: "#8DB4F0", accentSoft: "#E1E9F6", warn: "#FDF0E3",
+      second: "#4A5A6A", secondSoft: "#E6EAEF", onDark: "#CDD3DA", onDarkMuted: "#97A1AD", onAccent: "#F7FAFE", onAccentMuted: "#DCE6F5"
+    }
+  ];
+  const paletteById = (id) => PALETTES.find((p) => p.id === id) || PALETTES[0];
+
+  // ───────────────────────── leitura da aula ─────────────────────────
+  const plain = (h) => String(h == null ? "" : h)
+    .replace(/<\s*br\s*\/?>/gi, "\n").replace(/<\/(p|div|li|h[1-6]|tr)>/gi, "\n")
+    .replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/[ \t]+/g, " ").replace(/ ?\n ?/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  const clip = (t, n) => { t = plain(t).replace(/\s+/g, " "); return t.length > n ? t.slice(0, n - 1).replace(/\s+\S*$/, "") + "…" : t; };
+  const isPlaceholder = (s) => /^(autor|nome do autor|título da sua aula|categoria · aula)$/i.test(String(s || "").trim());
+  const TOPIC = ["topic", "topic-collapsible", "topic-slider"];
+
+  function blockText(b, toText) {
+    try { return String(toText({ meta: {}, blocks: [b] }) || "").trim(); } catch (e) { return ""; }
+  }
+  function headingOf(b) {
+    const p = b.props || {};
+    if (b.type === "titulo" || b.type === "divider") return plain(p.text || p.label);
+    if (TOPIC.indexOf(b.type) >= 0) {
+      if (p.title) return plain(p.title);
+      const kids = Array.isArray(p.children) ? p.children : [];
+      const t = kids.find((k) => k.type === "titulo" || k.type === "divider");
+      if (t) return plain((t.props || {}).text || (t.props || {}).label);
+    }
+    return "";
+  }
+  function collectImages(b, out) {
+    if (!b || typeof b !== "object") return;
+    const p = b.props || {};
+    if ((b.type === "imagem" || b.type === "parallax" || b.type === "textoimagem") && p.src && !/placeholder/i.test(String(p.src))) {
+      out.push({ src: String(p.src), alt: plain(p.alt), caption: plain(p.caption || p.overlayTitle || p.title) });
+    }
+    (Array.isArray(p.children) ? p.children : []).forEach((k) => collectImages(k, out));
+  }
+
+  // Divide a aula em seções (cada Tópico, Título de seção ou Divisor começa uma), separa a
+  // abertura, a síntese e as referências.
+  function planLesson(lesson, toText) {
+    const blocks = (lesson && lesson.blocks) || [];
+    const meta = (lesson && lesson.meta) || {};
+    const plan = { title: plain(meta.title), eyebrow: "", lead: "", author: plain(meta.author), role: plain(meta.role || meta.institution), year: plain(meta.year), sections: [], references: [], synthesis: "", license: meta.license || "" };
+    let cur = null, imgN = 0;
+    const open = (title) => { cur = { title: title || "", text: "", images: [] }; plan.sections.push(cur); };
+    blocks.forEach((b) => {
+      const p = b.props || {};
+      if (b.type === "hero") {
+        if (!isPlaceholder(p.title) && plain(p.title)) plan.title = plan.title || plain(p.title);
+        if (!isPlaceholder(p.eyebrow)) plan.eyebrow = plain(p.eyebrow);
+        plan.lead = plain(p.lead);
+        if (!plan.author && !isPlaceholder(p.author)) plan.author = plain(p.author);
+        if (!plan.year && p.date) plan.year = plain(p.date);
+        return;
+      }
+      if (b.type === "referencias") { (Array.isArray(p.items) ? p.items : []).forEach((it) => { const h = typeof it === "string" ? it : (it && it.html) || ""; if (plain(h)) plan.references.push(String(h)); }); return; }
+      if (b.type === "sintese") { plan.synthesis += (plan.synthesis ? "\n\n" : "") + blockText(b, toText); return; }
+      if (b.type === "pagebreak" || b.type === "collapsebreak") return;
+      const head = headingOf(b);
+      if (head || TOPIC.indexOf(b.type) >= 0 || !cur) open(head || (cur ? "" : "Abertura"));
+      const t = blockText(b, toText);
+      if (t) cur.text += (cur.text ? "\n\n" : "") + t;
+      const imgs = []; collectImages(b, imgs);
+      imgs.forEach((im) => { imgN += 1; cur.images.push({ id: "img" + imgN, ...im }); });
+    });
+    // Seções curtas demais se juntam à anterior; títulos vazios ganham o primeiro título do texto.
+    const merged = [];
+    plan.sections.forEach((s) => {
+      if (!s.title) { const m = /^#{1,4}\s+(.+)$/m.exec(s.text); s.title = m ? plain(m[1]) : ""; }
+      if (merged.length && s.text.length < 160) { const prev = merged[merged.length - 1]; prev.text += "\n\n" + s.text; prev.images = prev.images.concat(s.images); }
+      else merged.push(s);
+    });
+    merged.forEach((s, i) => { s.title = clip(s.title || "Seção " + (i + 1), 70); });
+    plan.sections = merged.filter((s) => s.text.trim().length >= 40);
+    if (!plan.title) plan.title = "Aula";
+    return plan;
+  }
+
+  // Quantos slides pedir por seção.
+  function budget(plan, size) {
+    const lens = plan.sections.map((s) => s.text.length);
+    const total = lens.reduce((a, b) => a + b, 0) || 1;
+    return plan.sections.map((s, i) => {
+      let n;
+      if (size === "enxuto") n = Math.max(1, Math.min(4, Math.round(14 * lens[i] / total)));
+      else if (size === "completo") n = Math.max(2, Math.min(8, Math.round(33 * lens[i] / total)));
+      else n = Math.max(2, Math.min(7, Math.round(lens[i] / 900)));
+      return { min: Math.max(1, n - 1), max: n + 1 };
+    });
+  }
+
+  // Texto resumido para a moldura (pergunta, objetivos e síntese).
+  function frameText(plan) {
+    const parts = [];
+    if (plan.lead) parts.push(plan.lead);
+    const per = Math.max(600, Math.floor(12000 / Math.max(1, plan.sections.length)));
+    plan.sections.forEach((s, i) => parts.push("## " + (i + 1) + ". " + s.title + "\n" + s.text.slice(0, per)));
+    if (plan.synthesis) parts.push("## Síntese\n" + plan.synthesis.slice(0, 3000));
+    return parts.join("\n\n").slice(0, 16000);
+  }
+
+  // Slide de reserva, sem IA, quando uma seção falha duas vezes.
+  function fallbackSlides(section) {
+    const sentences = plain(section.text).replace(/^#+\s.*$/gm, "").split(/(?<=[.!?])\s+/).map((x) => x.trim()).filter((x) => x.length > 30).slice(0, 4);
+    return [{ type: "list", title: section.title, items: sentences.length ? sentences.map((x) => clip(x, 140)) : [clip(section.text, 140)], notes: "Slide montado sem IA, a partir do texto da seção (a IA não respondeu). Revise antes de apresentar." }];
+  }
+
+  // Junta tudo na ordem do deck.
+  function buildDeck(plan, frame, sectionSlides) {
+    const deck = { title: plan.title, eyebrow: plan.eyebrow, lead: plan.lead, author: plan.author, role: plan.role, year: plan.year, slides: [] };
+    const S = deck.slides;
+    S.push({ type: "cover", notes: plan.lead ? "Abertura. " + plan.lead : "Abertura da aula." });
+    if (frame && frame.question) S.push({ type: "question", text: frame.question, notes: "Lance a pergunta e deixe a turma arriscar hipóteses antes de qualquer conceito. A aula inteira responde a ela." });
+    if (plan.sections.length > 1) S.push({ type: "roteiro", items: plan.sections.map((s) => s.title), notes: "O caminho da aula, seção por seção." });
+    if (frame && frame.objectives && frame.objectives.length) S.push({ type: "objetivos", items: frame.objectives, notes: "Os objetivos de aprendizagem: ao final da aula, a turma deve conseguir fazer cada um deles." });
+    plan.sections.forEach((sec, i) => {
+      const eyebrow = String(i + 1).padStart(2, "0") + " · " + clip(sec.title, 46);
+      (sectionSlides[i] || []).forEach((sl) => {
+        const s = { ...sl, eyebrow: sl.type === "statement" && sl.eyebrow ? sl.eyebrow : eyebrow };
+        if (s.type === "image") { const im = sec.images.find((x) => x.id === sl.imageId); if (!im) return; s.src = im.src; s.alt = sl.caption || im.alt || im.caption; }
+        S.push(s);
+      });
+    });
+    if (frame && frame.synthesis && frame.synthesis.length) S.push({ type: "sintese", items: frame.synthesis, notes: "Amarre o fio da aula com as ideias centrais." });
+    if (plan.references.length) {
+      const chunks = []; let cur = [], size = 0;
+      plan.references.forEach((r) => { const n = plain(r).length; if (cur.length && (cur.length >= 10 || size + n > 1500)) { chunks.push(cur); cur = []; size = 0; } cur.push(r); size += n; });
+      if (cur.length) chunks.push(cur);
+      chunks.forEach((c, k) => S.push({ type: "referencias", items: c, part: chunks.length > 1 ? (k + 1) + "/" + chunks.length : "", notes: "Referências citadas na aula." }));
+    }
+    S.push({ type: "creditos", notes: "Créditos da aula." });
+    return deck;
+  }
+
+  // ───────────────────────── desenho ─────────────────────────
+  const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  // Referências: mantém só <b>, <strong>, <i>, <em> e escapa o resto.
+  const safeRef = (h) => esc(plain(String(h).replace(/<\s*(\/?)(strong|b)\s*>/gi, "\u0001$1b\u0002").replace(/<\s*(\/?)(em|i)\s*>/gi, "\u0001$1i\u0002"))).replace(/\u0001(\/?)(b|i)\u0002/g, "<$1$2>");
+  const svgBulb = (c) => '<svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2Z"/></svg>';
+  const svgWarn = (c) => '<svg viewBox="0 0 24 24" width="64" height="64" fill="none" stroke="' + c + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>';
+  const arrow = '<span class="arr" aria-hidden="true"></span>';
+
+  function head(eyebrow, title) {
+    return '<div class="head">' + (eyebrow ? '<p class="eyebrow">' + esc(eyebrow) + "</p>" : "") + (title ? "<h2>" + esc(title) + "</h2>" : "") + "</div>";
+  }
+
+  function slideBody(s, ctx) {
+    const P = ctx.p;
+    switch (s.type) {
+      case "cover":
+        return { cls: "dark cover", html:
+          '<svg class="decor" viewBox="0 0 900 900" aria-hidden="true"><g fill="none" stroke="' + P.dark2 + '" stroke-width="3"><circle cx="900" cy="900" r="160"/><circle cx="900" cy="900" r="320"/><circle cx="900" cy="900" r="480"/><circle cx="900" cy="900" r="640"/><circle cx="900" cy="900" r="800"/></g><path d="M900,900 L180,900 A720,720 0 0,1 391,391 Z" fill="' + P.accentLight + '" opacity="0.10"/><line x1="900" y1="900" x2="391" y2="391" stroke="' + P.accentLight + '" stroke-width="4"/></svg>' +
+          '<div class="frame cover-frame"><p class="eyebrow">' + esc(ctx.deck.eyebrow || "Aula") + "</p>" +
+          '<div class="cover-mid"><h1>' + esc(ctx.deck.title) + "</h1>" + (ctx.deck.lead ? '<p class="lead">' + esc(clip(ctx.deck.lead, 160)) + "</p>" : "") + "</div>" +
+          '<div class="cover-who">' + (ctx.deck.author ? '<p class="who">' + esc(ctx.deck.author) + "</p>" : "") + '<p class="who-sub">' + esc([ctx.deck.role, ctx.deck.year].filter(Boolean).join(" · ")) + "</p></div></div>" };
+      case "question":
+        return { cls: "center", html: '<div class="frame mid"><p class="eyebrow">A pergunta da aula</p><h1 class="q">' + esc(s.text) + "</h1></div>" };
+      case "roteiro": {
+        const rows = s.items.map((t, i) => '<div class="rrow"><span class="num">' + String(i + 1).padStart(2, "0") + "</span><span>" + esc(t) + "</span></div>");
+        const half = s.items.length > 6 ? Math.ceil(s.items.length / 2) : s.items.length;
+        const cols = s.items.length > 6 ? '<div class="rcol">' + rows.slice(0, half).join("") + '</div><div class="rcol">' + rows.slice(half).join("") + "</div>" : '<div class="rcol">' + rows.join("") + "</div>";
+        return { cls: "", html: '<div class="frame">' + head("Roteiro", "O caminho de hoje") + '<div class="body"><div class="rcols">' + cols + "</div></div></div>" };
+      }
+      case "objetivos": {
+        const n = s.items.length, cols = n <= 4 ? 2 : n <= 6 ? 3 : 4;
+        return { cls: "", html: '<div class="frame">' + head("Objetivos de aprendizagem", "Ao final da aula, você vai…") + '<div class="body"><div class="grid g' + cols + '">' +
+          s.items.map((o) => '<div class="card"><h3>' + esc(o.verb) + "</h3><p>" + esc(o.text) + "</p></div>").join("") + "</div></div></div>" };
+      }
+      case "statement": {
+        ctx.statements += 1;
+        const accent = ctx.statements % 2 === 0;
+        return { cls: (accent ? "accent " : "") + "center", html: '<div class="frame mid"><p class="eyebrow">' + esc(s.eyebrow) + '</p><h2 class="big">' + esc(s.text) + "</h2>" + (s.sub ? '<p class="sub">' + esc(s.sub) + "</p>" : "") + "</div>" };
+      }
+      case "cards": {
+        const n = s.items.length;
+        return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><div class="row' + (n >= 4 ? " four" : "") + '">' +
+          s.items.map((it, i) => '<div class="card' + (i === n - 1 && n === 3 ? " ink" : "") + '">' + (it.title ? "<h3>" + esc(it.title) + "</h3>" : "") + (it.text ? "<p>" + esc(it.text) + "</p>" : "") + "</div>").join("") + "</div></div></div>" };
+      }
+      case "list":
+        return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><ul class="bul">' + s.items.map((t) => "<li>" + esc(t) + "</li>").join("") + "</ul></div></div>" };
+      case "formula": {
+        const long = s.formula.length > 11;
+        return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><div class="row stretch"><div class="card ink fbox"><p class="formula' + (long ? " long" : "") + '">' + esc(s.formula) + "</p></div>" +
+          '<div class="legend">' + (s.legend || []).map((l) => '<div class="lg"><span class="sym">' + esc(l.sym) + "</span><span>" + esc(l.text) + "</span></div>").join("") + "</div></div>" +
+          (s.note ? '<p class="callout">' + esc(s.note) + "</p>" : "") + "</div></div>" };
+      }
+      case "compare":
+        return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><div class="row center-items">' +
+          '<div class="card"><p class="kicker">' + esc(s.left.label) + "</p><h3>" + esc(s.left.title) + "</h3><p>" + esc(s.left.text) + "</p></div>" + arrow +
+          '<div class="card ink"><p class="kicker">' + esc(s.right.label) + "</p><h3>" + esc(s.right.title) + "</h3><p>" + esc(s.right.text) + "</p></div></div></div></div>" };
+      case "steps":
+        return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><div class="row center-items">' +
+          s.steps.map((st, i) => (i ? arrow : "") + '<div class="card' + (i === s.steps.length - 1 ? " ink" : "") + '"><p class="stepn">' + (i + 1) + "</p><h3>" + esc(st.title) + "</h3><p>" + esc(st.text) + "</p></div>").join("") + "</div></div></div>" };
+      case "timeline":
+        return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><div class="tl">' +
+          s.events.map((e, i) => '<div class="ev' + (i === s.events.length - 1 ? " last" : "") + '"><p class="date">' + esc(e.date) + '</p><p class="evt">' + esc(e.title) + "</p><p>" + esc(e.text) + "</p></div>").join("") + "</div></div></div>" };
+      case "table":
+        return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><table><thead><tr>' + s.headers.map((h) => "<th>" + esc(h) + "</th>").join("") + "</tr></thead><tbody>" +
+          s.rows.map((r) => "<tr>" + r.map((c) => "<td>" + esc(c) + "</td>").join("") + "</tr>").join("") + "</tbody></table></div></div>" };
+      case "bignumber":
+        return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><div class="row center-items"><div class="card ink bign"><p class="value">' + esc(s.value) + '</p><p class="vlabel">' + esc(s.label) + "</p></div>" +
+          (s.text ? '<p class="bigtext">' + esc(s.text) + "</p>" : "") + "</div></div></div>" };
+      case "reflect":
+        return { cls: "mist center", html: '<div class="frame mid"><div class="tag">' + svgBulb(P.accent) + '<p class="eyebrow">Para refletir</p></div><h2 class="big">' + esc(s.question) + "</h2>" + (s.sub ? '<p class="sub">' + esc(s.sub) + "</p>" : "") + "</div>" };
+      case "alert":
+        return { cls: "", html: '<div class="frame">' + head(s.eyebrow, "") + '<div class="body"><div class="warnbox">' + svgWarn(P.accent) + "<div><h3>" + esc(s.title) + "</h3><p>" + esc(s.text) + "</p></div></div></div></div>" };
+      case "quote":
+        return { cls: "center", html: '<div class="frame mid"><p class="eyebrow">' + esc(s.eyebrow) + '</p><blockquote>“' + esc(s.text.replace(/^["“]|["”]$/g, "")) + "”</blockquote>" + (s.author ? '<p class="sub">— ' + esc(s.author) + "</p>" : "") + "</div>" };
+      case "image":
+        return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><figure class="fig"><img src="' + esc(s.src) + '" alt="' + esc(s.alt || "") + '">' + (s.caption ? "<figcaption>" + esc(s.caption) + "</figcaption>" : "") + "</figure></div></div>" };
+      case "sintese":
+        return { cls: "dark", html: '<div class="frame">' + head("Síntese", "A ideia que fecha a aula") + '<div class="body"><div class="grid g3">' +
+          s.items.map((it) => '<div class="card dk"><h3>' + esc(it.title) + "</h3><p>" + esc(it.text) + "</p></div>").join("") + "</div></div></div>" };
+      case "referencias": {
+        const half = Math.ceil(s.items.length / 2);
+        const col = (a) => '<div class="refcol">' + a.map((r) => "<p>" + safeRef(r) + "</p>").join("") + "</div>";
+        return { cls: "", html: '<div class="frame refs">' + head(s.part ? "Referências · " + s.part : "", "Referências") + '<div class="body"><div class="row refrow">' + col(s.items.slice(0, half)) + col(s.items.slice(half)) + "</div></div></div>" };
+      }
+      case "creditos": {
+        const d = ctx.deck;
+        return { cls: "", html: '<div class="frame">' + head("Créditos", "Autoria, apoio de IA e licença") + '<div class="body"><div class="row credits">' +
+          '<div class="card"><p class="ctitle">Autoria</p><p>' + esc([d.author || "Autoria a preencher", d.role, d.year].filter(Boolean).join(" · ")) + "</p></div>" +
+          '<div class="card wide"><p class="ctitle">Apoio de IA e licença</p><p>Produzido com apoio do <b>ClassAuthor</b> (INOVALAB – IFSC), ferramenta de planejamento pedagógico desenvolvida por Rogério Bittencourt.</p>' +
+          "<p>Editado com o <b>ClassAtelier</b>, ferramenta de autoria de aulas interativas e pacotes SCORM, baseada no LumeAuthor, de Luís Lindner, e evoluída em coautoria com Rogério Bittencourt (INOVALAB – IFSC). Slides gerados pelo ClassAtelier com apoio de IA.</p>" +
+          "<p>A curadoria, a revisão e a responsabilidade pelo conteúdo são humanas.</p><p><b>Licença CC BY-NC-SA 4.0:</b> você pode compartilhar e adaptar, citando a autoria, sem uso comercial e mantendo a mesma licença.</p></div></div></div></div>" };
+      }
+      default:
+        return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title || "") + "</div>" };
+    }
+  }
+
+  function css(P) {
+    return `
+:root{--k:1}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0b0d10;overflow:hidden}
+body{font-family:'IBM Plex Sans',Arial,sans-serif}
+#stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:0 0}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;background:${P.bg};color:${P.ink};overflow:hidden;display:none;--k:1}
+.slide.on,.slide.measure{display:block}.slide.measure{visibility:hidden}
+.slide.dark{background:${P.dark};color:${P.onDark}}
+.slide.mist{background:${P.bg2}}
+.slide.accent{background:${P.accent};color:${P.onAccent}}
+.frame{position:absolute;left:128px;top:128px;right:128px;bottom:160px;display:flex;flex-direction:column;gap:calc(56px*var(--k));overflow:hidden}
+.frame.mid{justify-content:center;gap:calc(40px*var(--k))}
+.head{display:flex;flex-direction:column;gap:16px;flex-shrink:0}
+.eyebrow{font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:${P.accent}}
+.dark .eyebrow{color:${P.accentLight}}.accent .eyebrow{color:${P.onAccentMuted}}
+h1,h2,h3{font-family:'Space Grotesk',Arial,sans-serif;font-weight:600;color:${P.title}}
+.dark h1,.dark h2{color:#F7F5F0}.accent h2{color:${P.onAccent}}
+h1{font-size:calc(120px*var(--k));line-height:1.05}
+h2{font-size:calc(72px*var(--k));line-height:1.1}
+h2.big,h1.q{max-width:1600px}
+h1.q{font-size:calc(96px*var(--k))}
+h3{font-size:max(24px,calc(44px*var(--k)));line-height:1.15}
+p{font-size:max(24px,calc(28px*var(--k)));line-height:1.45}
+.sub{font-size:max(28px,calc(44px*var(--k)));line-height:1.3;color:${P.second};max-width:1560px}
+.accent .sub{color:${P.onAccentMuted}}
+.body{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:calc(32px*var(--k));padding-bottom:calc(24px*var(--k))}
+.refs .body,.rcols-wrap{justify-content:flex-start}
+.row{display:flex;gap:calc(32px*var(--k));align-items:stretch}
+.row.center-items{align-items:center}.row.stretch{align-items:stretch}
+.row>.card{flex:1}
+.row.four h3{font-size:max(24px,calc(32px*var(--k)))}
+.card{background:${P.card};border:1px solid ${P.line};border-radius:16px;padding:calc(40px*var(--k));display:flex;flex-direction:column;gap:calc(14px*var(--k))}
+.card.ink{background:${P.dark};border-color:${P.dark};color:${P.onDark}}
+.card.ink h3{color:#F7F5F0}.card.ink .kicker{color:${P.accentLight}}
+.card.dk{background:${P.dark2};border-color:${P.dark2};color:${P.onDark}}.card.dk h3{color:${P.accentLight};font-size:max(24px,calc(32px*var(--k)))}
+.kicker{font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:${P.muted}}
+.stepn{font-family:'JetBrains Mono','Courier New',monospace;font-weight:700;font-size:max(32px,calc(44px*var(--k)));color:${P.accent}}
+.card.ink .stepn{color:${P.accentLight}}
+.arr{flex:0 0 64px;height:32px;background:${P.second};clip-path:polygon(0 30%,60% 30%,60% 0,100% 50%,60% 100%,60% 70%,0 70%)}
+.grid{display:grid;gap:calc(28px*var(--k))}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}.g4{grid-template-columns:1fr 1fr 1fr 1fr}
+.g4 h3{font-size:max(24px,calc(32px*var(--k)))}
+.bul{list-style:none;display:flex;flex-direction:column;gap:calc(24px*var(--k))}
+.bul li{font-size:max(24px,calc(32px*var(--k)));line-height:1.4;padding-left:44px;position:relative;color:${P.title}}
+.bul li:before{content:"";position:absolute;left:0;top:.55em;width:22px;height:6px;border-radius:3px;background:${P.accent}}
+.fbox{flex:0 0 auto;min-width:640px;max-width:900px;justify-content:center;align-items:center;padding:calc(56px*var(--k))}
+.formula{font-family:'JetBrains Mono','Courier New',monospace;font-weight:700;font-size:calc(104px*var(--k));line-height:1.1;color:#F7F5F0;text-align:center}
+.formula.long{font-size:calc(64px*var(--k))}
+.legend{flex:1;display:flex;flex-direction:column;justify-content:center;gap:calc(26px*var(--k))}
+.lg{display:flex;gap:28px;align-items:baseline}.lg span:last-child{font-size:max(24px,calc(28px*var(--k)));line-height:1.4}
+.sym{font-family:'JetBrains Mono','Courier New',monospace;font-weight:700;font-size:max(28px,calc(44px*var(--k)));color:${P.accent};min-width:84px}
+.callout,.warnbox{background:${P.warn};border-left:8px solid ${P.accent};border-radius:0 16px 16px 0;padding:calc(28px*var(--k)) calc(40px*var(--k));color:${P.title}}
+.warnbox{display:flex;gap:40px;align-items:flex-start;padding:calc(48px*var(--k))}.warnbox svg{flex-shrink:0}
+.warnbox h3{margin-bottom:calc(16px*var(--k))}.warnbox p{font-size:max(24px,calc(32px*var(--k)))}
+.tl{display:flex;gap:24px}.ev{flex:1;border-top:6px solid ${P.dark};padding-top:calc(32px*var(--k));display:flex;flex-direction:column;gap:calc(14px*var(--k))}
+.ev:nth-child(2){border-color:${P.second}}.ev.last{border-color:${P.accent}}
+.date{font-family:'JetBrains Mono','Courier New',monospace;font-weight:700;font-size:max(28px,calc(44px*var(--k)));color:${P.title}}
+.evt{font-weight:600;color:${P.title}}
+table{width:100%;border-collapse:collapse;font-size:max(24px,calc(30px*var(--k)));color:${P.title}}
+th{background:${P.dark};color:#F7F5F0;text-align:left;font-weight:600;padding:calc(18px*var(--k)) calc(24px*var(--k))}
+td{padding:calc(16px*var(--k)) calc(24px*var(--k));border-bottom:1px solid ${P.line}}
+tbody tr:nth-child(even){background:${P.secondSoft}}
+.bign{flex:0 0 auto;min-width:620px;align-items:flex-start;padding:calc(56px*var(--k))}
+.value{font-family:'JetBrains Mono','Courier New',monospace;font-weight:700;font-size:calc(120px*var(--k));line-height:1;color:${P.accentLight}}
+.vlabel{color:${P.onDark}}
+.bigtext{flex:1;font-size:max(24px,calc(32px*var(--k)));color:${P.title}}
+.tag{display:flex;gap:20px;align-items:center}
+blockquote{font-family:'Space Grotesk',Arial,sans-serif;font-size:calc(64px*var(--k));line-height:1.2;color:${P.title};max-width:1600px}
+.fig{flex:1;min-height:0;display:flex;flex-direction:column;gap:16px;align-items:center;background:${P.card};border:1px solid ${P.line};border-radius:16px;padding:32px}
+.fig img{flex:1;min-height:0;max-width:100%;object-fit:contain}
+figcaption{font-size:24px;color:${P.muted};text-align:center}
+.rcols{display:flex;gap:96px}.rcol{flex:1;display:flex;flex-direction:column;gap:calc(14px*var(--k))}
+.rrow{display:flex;gap:28px;align-items:baseline;border-top:2px solid ${P.rule};padding-top:calc(18px*var(--k));font-size:max(24px,calc(32px*var(--k)));color:${P.title}}
+.num{font-family:'JetBrains Mono','Courier New',monospace;font-weight:700;font-size:max(28px,calc(40px*var(--k)));color:${P.accent}}
+.refs .head h2{font-size:calc(72px*var(--k))}
+.refrow{gap:64px;align-items:flex-start}.refcol{flex:1;display:flex;flex-direction:column;gap:calc(16px*var(--k))}
+.refcol p{font-size:24px;line-height:1.32}
+.credits{align-items:flex-start}.credits .card{padding:32px;gap:10px}.credits .card.wide{flex:1.4}.credits p{font-size:24px;line-height:1.4}
+.ctitle{font-weight:600;color:${P.title}}
+.cover .decor{position:absolute;right:0;bottom:0;width:900px;height:900px}
+.cover-frame{justify-content:space-between;bottom:128px}
+.cover-mid{display:flex;flex-direction:column;gap:32px;max-width:1300px}
+.lead{font-size:44px;line-height:1.3;color:${P.onDark}}
+.who{font-size:32px;font-weight:600;color:#F7F5F0}.who-sub{font-size:24px;color:${P.onDarkMuted}}
+.foot{position:absolute;left:128px;right:128px;bottom:64px;display:flex;justify-content:space-between;gap:40px;font-size:24px;color:${P.muted}}
+.foot span:first-child{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.dark .foot{color:${P.onDarkMuted}}.accent .foot{color:${P.onAccentMuted}}
+.cover .foot{display:none}
+.notes{display:none}
+#hud{position:fixed;right:16px;bottom:14px;display:flex;gap:8px;align-items:center;font:600 13px system-ui,sans-serif;color:#cfd6dd;opacity:.0;transition:opacity .25s}
+body:hover #hud,#hud:focus-within{opacity:.9}
+#hud button{background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:7px;padding:6px 10px;font:inherit;cursor:pointer}
+#notes{position:fixed;left:0;right:0;bottom:0;max-height:38vh;overflow:auto;background:rgba(10,12,16,.94);color:#e8ecef;font:17px/1.55 system-ui,sans-serif;padding:18px 26px 52px;white-space:pre-wrap;display:none}
+#notes.on{display:block}
+@page{size:1920px 1080px;margin:0}
+@media print{html,body{background:none;overflow:visible;height:auto}#stage{position:static;transform:none!important;width:auto;height:auto}.slide{display:block!important;visibility:visible!important;position:relative;break-after:page;page-break-after:always}#hud,#notes{display:none!important}}
+`;
+  }
+
+  const SCRIPT = `
+(function(){
+var slides=[].slice.call(document.querySelectorAll('.slide'));var i=0;var stage=document.getElementById('stage');var notes=document.getElementById('notes');var count=document.getElementById('count');
+function fit(s){var f=s.querySelectorAll('.frame');var k=1;s.style.setProperty('--k',1);for(var n=0;n<8;n++){var over=false;for(var j=0;j<f.length;j++){if(f[j].scrollHeight>f[j].clientHeight+2||f[j].scrollWidth>f[j].clientWidth+2)over=true;}if(!over)break;k=Math.round((k-0.05)*100)/100;s.style.setProperty('--k',k);}}
+function fitAll(){slides.forEach(function(s){var on=s.classList.contains('on');if(!on)s.classList.add('measure');fit(s);if(!on)s.classList.remove('measure');});}
+function scale(){var k=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform='translate('+(-960*k)+'px,'+(-540*k)+'px) scale('+k+')';}
+function show(n){i=Math.max(0,Math.min(slides.length-1,n));slides.forEach(function(s,j){s.classList.toggle('on',j===i);s.setAttribute('aria-hidden',j===i?'false':'true');});var a=slides[i].querySelector('.notes');notes.textContent=(i+1)+' / '+slides.length+'\\n\\n'+(a?a.textContent:'');count.textContent=(i+1)+' / '+slides.length;if(location.hash!=='#'+(i+1))history.replaceState(null,'','#'+(i+1));}
+addEventListener('keydown',function(e){var k=e.key;if(k==='ArrowRight'||k==='ArrowDown'||k==='PageDown'||k===' '){e.preventDefault();show(i+1);}else if(k==='ArrowLeft'||k==='ArrowUp'||k==='PageUp'){e.preventDefault();show(i-1);}else if(k==='Home')show(0);else if(k==='End')show(slides.length-1);else if(k==='n'||k==='N')notes.classList.toggle('on');else if(k==='f'||k==='F'){if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();}});
+stage.addEventListener('click',function(e){if(e.target.closest('a'))return;show(e.clientX>innerWidth/3?i+1:i-1);});
+var tx=null;addEventListener('touchstart',function(e){tx=e.touches[0].clientX;},{passive:true});addEventListener('touchend',function(e){if(tx==null)return;var d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50)show(d<0?i+1:i-1);tx=null;});
+document.getElementById('prev').onclick=function(){show(i-1);};document.getElementById('next').onclick=function(){show(i+1);};document.getElementById('tnotes').onclick=function(){notes.classList.toggle('on');};document.getElementById('tfull').onclick=function(){if(document.fullscreenElement)document.exitFullscreen();else document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();};document.getElementById('tprint').onclick=function(){print();};
+addEventListener('resize',scale);addEventListener('beforeprint',fitAll);
+scale();var h=parseInt((location.hash||'').slice(1),10);show(h>0?h-1:0);fitAll();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitAll);
+})();`;
+
+  function renderDeckHTML(deck, paletteId) {
+    const P = paletteById(paletteId);
+    const ctx = { p: P, deck, statements: 0 };
+    const total = deck.slides.length;
+    const footTitle = clip(deck.title, 80);
+    const parts = deck.slides.map((s, i) => {
+      const b = slideBody(s, ctx);
+      const left = s.source ? "Fonte: " + s.source : footTitle;
+      return '<section class="slide ' + b.cls + '" aria-label="Slide ' + (i + 1) + " de " + total + '">' + b.html +
+        '<div class="foot"><span>' + esc(left) + "</span><span>" + String(i + 1).padStart(2, "0") + "</span></div>" +
+        '<aside class="notes">' + esc(s.notes || "") + "</aside></section>";
+    });
+    return "<!doctype html>\n<html lang=\"pt-BR\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">" +
+      "<title>" + esc(deck.title) + " · slides</title>" +
+      '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' +
+      '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400..700&family=IBM+Plex+Sans:wght@400;600&family=JetBrains+Mono:wght@500;700&display=swap">' +
+      '<meta name="generator" content="ClassAtelier · slides (paleta ' + esc(P.name) + ')">' +
+      "<style>" + css(P) + "</style></head><body>" +
+      '<main id="stage" aria-live="polite">' + parts.join("\n") + "</main>" +
+      '<div id="notes" role="region" aria-label="Notas do apresentador"></div>' +
+      '<div id="hud"><span id="count"></span><button id="prev" aria-label="Slide anterior">‹</button><button id="next" aria-label="Próximo slide">›</button><button id="tnotes" title="Notas do apresentador (N)">Notas</button><button id="tfull" title="Tela cheia (F)">Tela cheia</button><button id="tprint" title="Imprimir ou salvar em PDF, um slide por página">PDF</button></div>' +
+      "<script>" + SCRIPT + "</script></body></html>";
+  }
+
+  const api = { PALETTES, paletteById, planLesson, budget, frameText, fallbackSlides, buildDeck, renderDeckHTML };
+  if (typeof module !== "undefined" && module.exports) module.exports = api; else root.ClassSlides = api;
+})(typeof window !== "undefined" ? window : this);

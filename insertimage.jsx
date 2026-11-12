@@ -379,5 +379,7 @@
       </div>
     );
   }
-  Object.assign(window, { InsertImageDialog, CaptionsFetcher, askCaptions, SubtitleFile, SummaryBox, AccessBox, askSummary });
+  // Acesso ao ClassAuthor para outros módulos (ex.: slides.jsx): endereço, código e chave própria.
+  const aulaAccess = { get: () => accessStore.get(), persist: () => accessStore.persist(), keyHeaders, DEFAULT_BASE };
+  Object.assign(window, { InsertImageDialog, CaptionsFetcher, askCaptions, SubtitleFile, SummaryBox, AccessBox, askSummary, aulaAccess });
 })();

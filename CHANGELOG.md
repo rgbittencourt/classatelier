@@ -4,12 +4,18 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.18.3** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.19.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.19.0 · 12/11/2026 · Botão Slides
+
+- Novo botão **Slides**, na barra de cima: gera uma apresentação profissional da aula aberta, escolhendo só a **paleta** (Descanso, Floresta ou Grafite) e o **tamanho** (Automático, Enxuto ou Completo). A IA do ClassAuthor (rota `/api/slides`, ClassAuthor 1.17.0) escolhe o conteúdo de cada seção dentro de um catálogo fechado de tipos de slide, com notas do apresentador; capa, pergunta, roteiro, objetivos, síntese, referências e créditos entram sozinhos.
+- Sai um arquivo `.html` único, com navegação por teclado, notas (N), tela cheia (F) e impressão de um slide por página (PDF). Com a pasta do projeto ligada, a cópia vai para a nova subpasta `slides/`.
+- Trocar a paleta depois de gerar refaz o visual na hora, sem gastar IA. Novos arquivos: `slides-render.js` (paletas, divisão em seções e desenho) e `slides.jsx` (diálogo).
 
 ### 1.18.3 · 12/11/2026 · Títulos longos na lista de endereços
 
