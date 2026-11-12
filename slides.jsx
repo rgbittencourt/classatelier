@@ -103,7 +103,7 @@
         })();
         setStep(1, "run");
         try {
-          const r = await withRetry(() => askSlides({ mode: "outline", lessonTitle: plan.title, count: content, sections: plan.sections.map((s) => ({ title: s.title, text: s.text, images: s.images.map((im) => ({ id: im.id, caption: im.caption || im.alt })) })) }));
+          const r = await withRetry(() => askSlides({ mode: "outline", lessonTitle: plan.title, count: content, sections: plan.sections.map((s) => ({ title: s.title, text: s.text, equations: s.equations || [], images: s.images.map((im) => ({ id: im.id, caption: im.caption || im.alt })) })) }));
           J = CS.jobsFromOutline(plan, r.outline, content);
           deckTitles = J.reduce((a, j) => a.concat(j.outline.map((o) => o.title)), []);
           setStep(1, "ok");

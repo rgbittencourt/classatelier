@@ -4,12 +4,18 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.22.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.23.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.23.0 · 12/11/2026 · Slides mais visuais, com todas as equações, e símbolos no PowerPoint
+
+- **Quatro tipos novos de slide**, desenhados pelo ClassAtelier: **conta resolvida** (dados → linhas da conta → resultado em destaque), **ciclo** (etapas em círculo, com setas), **escala** (régua ou espectro com marcas, como as bandas de P a Ka ou a escala em dB) e **gráfico de barras** (só com números que estão no texto). Também no PowerPoint.
+- **Todas as equações entram:** as equações da aula (blocos Equação) vão para o plano do deck com a regra de que cada uma ganha seu slide de fórmula, convertida para símbolos Unicode; quando o texto traz valores, entra também a conta resolvida. O plano passa a exigir que ao menos metade dos slides seja visual. Requer ClassAuthor 1.20.0.
+- **PowerPoint sem símbolos perdidos:** letras gregas, sobrescritos e subscritos (λ, σ⁰, Δ, vᵣ, 10⁻³), setas e sinais matemáticos vão em Cambria Math, que vem com o Office; a Space Grotesk não tem grego e o PowerPoint mostrava quadradinhos. Vale também para as tabelas.
 
 ### 1.22.0 · 12/11/2026 · Slides planejados pela aula inteira, PowerPoint e mais paletas
 

@@ -121,7 +121,7 @@
     const meta = (lesson && lesson.meta) || {};
     const plan = { title: plain(meta.title), eyebrow: "", lead: "", author: plain(meta.author), role: plain(meta.role || meta.institution), year: plain(meta.year), sections: [], references: [], synthesis: "", license: meta.license || "" };
     let cur = null, imgN = 0;
-    const open = (title) => { cur = { title: title || "", text: "", images: [] }; plan.sections.push(cur); };
+    const open = (title) => { cur = { title: title || "", text: "", images: [], equations: [] }; plan.sections.push(cur); };
     // Tópicos de conteúdo são contêineres: os títulos de seção que estão dentro deles também abrem seção.
     const flat = [];
     const walk = (list) => (list || []).forEach((b) => {
@@ -149,6 +149,7 @@
       if (head || !cur) open(head || "Abertura");
       const t = blockText(b, toText);
       if (t) cur.text += (cur.text ? "\n\n" : "") + t;
+      if (b.type === "equacao" && String(p.latex || "").trim()) cur.equations.push(String(p.latex).trim());
       const imgs = []; collectImages(b, imgs);
       imgs.forEach((im) => { imgN += 1; cur.images.push({ id: "img" + imgN, ...im }); });
     });
@@ -156,7 +157,7 @@
     const merged = [];
     plan.sections.forEach((s) => {
       if (!s.title) { const m = /^#{1,4}\s+(.+)$/m.exec(s.text); s.title = m ? plain(m[1]) : ""; }
-      if (merged.length && s.text.length < 160) { const prev = merged[merged.length - 1]; prev.text += "\n\n" + s.text; prev.images = prev.images.concat(s.images); }
+      if (merged.length && s.text.length < 160) { const prev = merged[merged.length - 1]; prev.text += "\n\n" + s.text; prev.images = prev.images.concat(s.images); prev.equations = prev.equations.concat(s.equations || []); }
       else merged.push(s);
     });
     merged.forEach((s, i) => { s.title = clip(s.title || "Seção " + (i + 1), 70); });
@@ -369,6 +370,32 @@
       case "table":
         return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><table><thead><tr>' + s.headers.map((h) => "<th>" + esc(h) + "</th>").join("") + "</tr></thead><tbody>" +
           s.rows.map((r) => "<tr>" + r.map((c) => "<td>" + esc(c) + "</td>").join("") + "</tr>").join("") + "</tbody></table></div></div>" };
+      case "calc": {
+        const given = (s.given || []).length ? '<div class="card cgiven"><p class="kicker">Dados</p>' + s.given.map((g) => '<div class="lg"><span class="sym">' + esc(g.sym) + "</span><span>" + esc(g.text) + "</span></div>").join("") + "</div>" : "";
+        return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><div class="row calc">' + given +
+          '<div class="card csteps"><p class="kicker">Conta</p>' + s.steps.map((x, i) => '<p class="cline' + (i === s.steps.length - 1 ? " last" : "") + '">' + esc(x) + "</p>").join("") + "</div>" + arrow +
+          '<div class="card ink cres"><p class="kicker">Resultado</p><p class="value">' + esc(s.result) + "</p>" + (s.unit ? '<p class="vlabel">' + esc(s.unit) + "</p>" : "") + "</div></div></div></div>" };
+      }
+      case "cycle": {
+        const n = s.steps.length, R = 250, cx = 832, cy = 300;
+        const pos = s.steps.map((_, i) => { const a = -Math.PI / 2 + (2 * Math.PI * i) / n; return [cx + R * 1.55 * Math.cos(a), cy + R * Math.sin(a)]; });
+        const arcs = s.steps.map((_, i) => { const a1 = -Math.PI / 2 + (2 * Math.PI * (i + 0.28)) / n, a2 = -Math.PI / 2 + (2 * Math.PI * (i + 0.72)) / n; const p1 = [cx + R * 1.55 * Math.cos(a1), cy + R * Math.sin(a1)], p2 = [cx + R * 1.55 * Math.cos(a2), cy + R * Math.sin(a2)]; return '<path d="M' + p1[0].toFixed(0) + "," + p1[1].toFixed(0) + " A" + (R * 1.55).toFixed(0) + "," + R + " 0 0,1 " + p2[0].toFixed(0) + "," + p2[1].toFixed(0) + '" fill="none" stroke="' + P.accent + '" stroke-width="5" marker-end="url(#ah)"/>'; }).join("");
+        return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><div class="cyc"><svg viewBox="0 0 1664 600" aria-hidden="true"><defs><marker id="ah" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="' + P.accent + '"/></marker></defs>' + arcs + "</svg>" +
+          s.steps.map((st, i) => '<div class="cnode' + (i === 0 ? " ink" : "") + '" style="left:' + (pos[i][0] / 16.64).toFixed(2) + "%;top:" + (pos[i][1] / 6).toFixed(2) + '%"><p class="stepn">' + (i + 1) + "</p><h3>" + esc(st.title) + "</h3>" + (st.text ? "<p>" + esc(st.text) + "</p>" : "") + "</div>").join("") + "</div></div></div>" };
+      }
+      case "scale": {
+        const n = s.marks.length;
+        return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><div class="scl"><div class="sbar"></div>' +
+          s.marks.map((m, i) => '<div class="smark" style="left:' + ((100 * (i + 0.5)) / n).toFixed(2) + '%"><p class="slabel">' + esc(m.label) + '</p><span class="stick"></span>' + (m.value ? '<p class="svalue">' + esc(m.value) + "</p>" : "") + (m.text ? '<p class="stext">' + esc(m.text) + "</p>" : "") + "</div>").join("") +
+          '<p class="send l">' + esc(s.from || "") + '</p><p class="send r">' + esc(s.to || "") + "</p></div>" + (s.note ? '<p class="callout">' + esc(s.note) + "</p>" : "") + "</div></div>" };
+      }
+      case "chart": {
+        const max = Math.max(...s.items.map((x) => Math.abs(x.value))) || 1;
+        const fmt = (v) => String(v).replace(".", ",");
+        return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><div class="chart">' +
+          s.items.map((x, i) => '<div class="crow"><span class="clabel">' + esc(x.label) + '</span><span class="ctrack"><span class="cbar' + (i === s.items.length - 1 ? " hi" : "") + '" style="width:' + Math.max(2, (100 * Math.abs(x.value)) / max).toFixed(1) + '%"></span></span><span class="cval">' + esc(fmt(x.value)) + (s.unit ? " " + esc(s.unit) : "") + "</span></div>").join("") +
+          "</div>" + (s.note ? '<p class="callout">' + esc(s.note) + "</p>" : "") + "</div></div>" };
+      }
       case "bignumber":
         return { cls: "", html: '<div class="frame">' + head(s.eyebrow, s.title) + '<div class="body"><div class="row center-items"><div class="card ink bign"><p class="value">' + esc(s.value) + '</p><p class="vlabel">' + esc(s.label) + "</p></div>" +
           (s.text ? '<p class="bigtext">' + esc(s.text) + "</p>" : "") + "</div></div></div>" };
@@ -446,6 +473,23 @@ p{font-size:max(24px,calc(28px*var(--k)));line-height:1.45}
 .kicker{font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:${P.muted}}
 .stepn{font-family:'JetBrains Mono','Courier New',monospace;font-weight:700;font-size:max(32px,calc(44px*var(--k)));color:${P.accent}}
 .card.ink .stepn{color:${P.accentLight}}
+.calc{align-items:stretch}.cgiven{flex:0.8!important}.csteps{flex:1.6!important;justify-content:center}.cres{flex:1!important;justify-content:center}
+.cline{font-family:'JetBrains Mono','Courier New',monospace;font-size:max(24px,calc(40px*var(--k)));line-height:1.3;color:${P.title};border-bottom:2px dashed ${P.line};padding-bottom:calc(10px*var(--k))}.cline.last{border-bottom:0;color:${P.accent};font-weight:700}
+.calc .arr{align-self:center}.cres .value{font-size:calc(96px*var(--k))}
+.cyc{position:relative;width:100%;height:600px}.cyc svg{position:absolute;inset:0;width:100%;height:100%}
+.cnode{position:absolute;transform:translate(-50%,-50%);width:400px;background:${P.card};border:1px solid ${P.line};border-radius:16px;padding:calc(24px*var(--k)) calc(28px*var(--k));text-align:center;display:flex;flex-direction:column;gap:6px}
+.cnode.ink{background:${P.dark};border-color:${P.dark};color:${P.onDark}}.cnode.ink h3{color:#F7F5F0}.cnode.ink .stepn{color:${P.accentLight}}
+.cnode h3{font-size:max(24px,calc(34px*var(--k)))}.cnode p{font-size:max(20px,calc(24px*var(--k)));line-height:1.35}.cnode .stepn{font-size:max(26px,calc(34px*var(--k)))}
+.scl{position:relative;height:440px;margin:0 10px}.sbar{position:absolute;left:0;right:0;top:170px;height:28px;border-radius:14px;background:linear-gradient(90deg,${P.second},${P.accent})}
+.smark{position:absolute;top:0;transform:translateX(-50%);width:200px;text-align:center;display:flex;flex-direction:column;align-items:center}
+.slabel{font-family:'JetBrains Mono','Courier New',monospace;font-weight:700;font-size:max(28px,calc(48px*var(--k)));color:${P.title};height:110px;display:flex;align-items:flex-end;line-height:1}
+.stick{display:block;width:4px;height:86px;background:${P.dark};margin:12px 0 0}.svalue{font-weight:700;font-size:max(22px,calc(30px*var(--k)));color:${P.accent};margin-top:10px}.stext{font-size:max(18px,calc(22px*var(--k)));color:${P.muted};line-height:1.3;margin-top:4px}
+.send{position:absolute;top:400px;font-size:22px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:${P.muted}}.send.l{left:0}.send.r{right:0;text-align:right}
+.scl .smark .svalue{margin-top:44px}
+.chart{display:flex;flex-direction:column;gap:calc(22px*var(--k))}.crow{display:flex;align-items:center;gap:28px}
+.clabel{flex:0 0 300px;text-align:right;font-family:'Space Grotesk',Arial,sans-serif;font-weight:600;font-size:max(22px,calc(32px*var(--k)));color:${P.title}}
+.ctrack{flex:1;height:calc(48px*var(--k));min-height:24px;background:${P.bg2};border-radius:8px;overflow:hidden}.cbar{display:block;height:100%;background:${P.second};border-radius:8px}.cbar.hi{background:${P.accent}}
+.cval{flex:0 0 220px;font-family:'JetBrains Mono','Courier New',monospace;font-weight:700;font-size:max(22px,calc(32px*var(--k)));color:${P.title}}
 .arr{flex:0 0 64px;height:32px;background:${P.second};clip-path:polygon(0 30%,60% 30%,60% 0,100% 50%,60% 100%,60% 70%,0 70%)}
 .grid{display:grid;gap:calc(28px*var(--k))}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}.g4{grid-template-columns:1fr 1fr 1fr 1fr}
 .g4 h3{font-size:max(24px,calc(32px*var(--k)))}

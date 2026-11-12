@@ -13,6 +13,28 @@
   const c = (hex) => String(hex || "#000000").replace("#", "").toUpperCase();
   const plain = (v) => String(v == null ? "" : v).replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/\s+/g, " ").trim();
 
+  // Letras gregas, sobrescritos, subscritos, setas e sinais matemáticos não existem em todas as
+  // fontes (a Space Grotesk não tem grego, por exemplo). Esses trechos vão em Cambria Math, que
+  // vem com o Office no Windows e no Mac, para nada virar quadradinho.
+  const SYMF = "Cambria Math";
+  const SYMRX = /([\u0370-\u03FF\u1D00-\u1DBF\u2070-\u209F\u2190-\u21FF\u2200-\u22FF\u2300-\u23FF\u27C0-\u27EF\u2A00-\u2AFF\u00B1\u00D7\u00F7\u2032\u2033\u221A\u2264\u2265\u2248\u2260\u221E]+)/;
+  function symRuns(input) {
+    const runs = typeof input === "string" ? [{ text: input, options: {} }] : (input || []);
+    const out = [];
+    runs.forEach((r) => {
+      const o = r.options || {};
+      const parts = String(r.text == null ? "" : r.text).split(SYMRX).filter((x) => x !== "");
+      if (!parts.length) { out.push({ text: "", options: o }); return; }
+      parts.forEach((t, i) => {
+        const last = i === parts.length - 1;
+        const opt = { ...o, breakLine: last ? o.breakLine : false };
+        if (SYMRX.test(t)) opt.fontFace = SYMF;
+        out.push({ text: t, options: opt });
+      });
+    });
+    return out;
+  }
+
   // Encolhe a letra até o texto caber na caixa (estimativa pela largura média dos caracteres).
   function fit(text, size, w, h, opt) {
     const o = opt || {};
@@ -105,7 +127,8 @@
       const eyeC = mode === "dark" ? P.accentLight : mode === "accent" ? P.onAccentMuted : P.accent;
       const mutedC = mode === "dark" ? P.onDarkMuted : mode === "accent" ? P.onAccentMuted : P.muted;
 
-      const T = (text, o) => sl.addText(text, { fontFace: FB, color: c(ink), margin: 0, valign: "top", ...o, color: c(o.color || ink) });
+      const AT = (t, o) => sl.addText(symRuns(t), o);
+      const T = (text, o) => AT(text, { fontFace: FB, color: c(ink), margin: 0, valign: "top", ...o, color: c(o.color || ink) });
       const eyebrow = (text, y) => { if (text) T(String(text).toUpperCase(), { x: X0, y, w: CW, h: 0.3, fontSize: pt(24), bold: true, color: eyeC, charSpacing: 3 }); };
       const head = (eb, title) => {
         eyebrow(eb, Y0);
@@ -126,7 +149,7 @@
         const hs = fit((k.title || "") + "\n" + (k.text || ""), k.titleSize || pt(40), w - 2 * pad, h - 2 * pad - (k.kicker ? 0.35 : 0) - (k.num ? 0.4 : 0), { min: 11, cw: 0.5, lh: 1.3 });
         if (k.title) runs.push({ text: k.title, options: { fontFace: FT, bold: true, fontSize: hs, color: c(k.dk ? P.accentLight : dark ? "#F7F5F0" : P.title), breakLine: Boolean(k.text), paraSpaceAfter: 6 } });
         if (k.text) runs.push({ text: k.text, options: { fontSize: Math.max(11, Math.min(pt(28), Math.round(hs * 0.66))), color: c(dark ? P.onDark : P.ink) } });
-        if (runs.length) sl.addText(runs, { x: x + pad, y: y + pad, w: w - 2 * pad, h: h - 2 * pad, fontFace: FB, valign: k.top ? "top" : "middle", margin: 0, lineSpacingMultiple: 1.1 });
+        if (runs.length) AT(runs, { x: x + pad, y: y + pad, w: w - 2 * pad, h: h - 2 * pad, fontFace: FB, valign: k.top ? "top" : "middle", margin: 0, lineSpacingMultiple: 1.1 });
       };
       const arrow = (x, y, w) => sl.addShape(SH.rightArrow, { x, y: y - 0.13, w, h: 0.26, fill: { color: c(P.accent) }, line: { color: c(P.accent), width: 0 } });
       const foot = () => {
@@ -198,7 +221,7 @@
         case "list": {
           const b = head(s.eyebrow, s.title); const items = s.items || [];
           const fs = fit(items.join("\n"), pt(32), CW - 0.4, b.h, { min: 12, lh: 1.6 });
-          sl.addText(items.map((t, i) => ({ text: t, options: { bullet: { code: "25AC", indent: 22 }, breakLine: i < items.length - 1, paraSpaceAfter: 10 } })), { x: X0, y: b.y, w: CW, h: b.h, fontFace: FB, fontSize: fs, color: c(P.title), valign: "middle", margin: 0 });
+          AT(items.map((t, i) => ({ text: t, options: { bullet: { code: "25AC", indent: 22 }, breakLine: i < items.length - 1, paraSpaceAfter: 10 } })), { x: X0, y: b.y, w: CW, h: b.h, fontFace: FB, fontSize: fs, color: c(P.title), valign: "middle", margin: 0 });
           break;
         }
         case "formula": {
@@ -240,8 +263,67 @@
         case "table": {
           const b = head(s.eyebrow, s.title); const hd = s.headers || []; const rows = s.rows || [];
           const fs = Math.max(11, Math.min(pt(28), Math.floor(pt(28) * Math.min(1, 7 / (rows.length + 1)))));
-          const data = [hd.map((t) => ({ text: t, options: { bold: true, color: "FFFFFF", fill: { color: c(P.dark) }, fontFace: FT } }))].concat(rows.map((r, i) => r.map((t) => ({ text: t, options: { color: c(P.ink), fill: { color: c(i % 2 ? P.bg : P.card) } } }))));
+          const cell = (t, o) => ({ text: symRuns(String(t || "")).map((r) => ({ text: r.text, options: { ...o, ...r.options } })), options: o });
+          const data = [hd.map((t) => cell(t, { bold: true, color: "FFFFFF", fill: { color: c(P.dark) }, fontFace: FT }))].concat(rows.map((r, i) => r.map((t) => cell(t, { color: c(P.ink), fill: { color: c(i % 2 ? P.bg : P.card) } }))));
           sl.addTable(data, { x: X0, y: b.y, w: CW, fontFace: FB, fontSize: fs, border: { type: "solid", pt: 0.75, color: c(P.line) }, margin: 0.08, valign: "middle", autoPage: false });
+          break;
+        }
+        case "calc": {
+          const b = head(s.eyebrow, s.title); const ch = Math.min(b.h, 3.3), y = b.y + (b.h - ch) / 2; const gap = 0.3, aw = 0.5;
+          const hasG = (s.given || []).length > 0; const gw = hasG ? CW * 0.22 : 0, rw = CW * 0.25, sw = CW - gw - rw - aw - gap * (hasG ? 3 : 2);
+          let x = X0;
+          if (hasG) {
+            box(x, y, gw, ch, P.card, P.line);
+            AT([{ text: "DADOS", options: { fontSize: pt(22), bold: true, color: c(P.muted), charSpacing: 2, breakLine: true, paraSpaceAfter: 8 } }].concat(...s.given.map((g, i) => [{ text: (g.sym || "") + "  ", options: { fontFace: FM, bold: true, fontSize: pt(36), color: c(P.accent) } }, { text: g.text || "", options: { fontSize: pt(24), color: c(P.ink), breakLine: i < s.given.length - 1, paraSpaceAfter: 6 } }])), { x: x + 0.22, y: y + 0.22, w: gw - 0.44, h: ch - 0.44, fontFace: FB, valign: "middle", margin: 0 });
+            x += gw + gap;
+          }
+          box(x, y, sw, ch, P.card, P.line);
+          const ls = fit(s.steps.reduce((a, t) => (t.length > a.length ? t : a), ""), pt(40), sw - 0.5, 0.6, { cw: 0.62, min: 12 });
+          AT([{ text: "CONTA", options: { fontFace: FB, fontSize: pt(22), bold: true, color: c(P.muted), charSpacing: 2, breakLine: true, paraSpaceAfter: 10 } }].concat(s.steps.map((t, i) => ({ text: t, options: { fontFace: FM, fontSize: ls, bold: i === s.steps.length - 1, color: c(i === s.steps.length - 1 ? P.accent : P.title), breakLine: i < s.steps.length - 1, paraSpaceAfter: 10 } }))), { x: x + 0.25, y: y + 0.22, w: sw - 0.5, h: ch - 0.44, valign: "middle", margin: 0 });
+          x += sw + gap / 2; arrow(x, y + ch / 2, aw); x += aw + gap / 2;
+          box(x, y, rw, ch, P.dark);
+          AT([{ text: "RESULTADO", options: { fontFace: FB, fontSize: pt(22), bold: true, color: c(P.accentLight), charSpacing: 2, breakLine: true, paraSpaceAfter: 6 } }, { text: s.result || "", options: { fontFace: FM, bold: true, fontSize: fit(s.result || "", pt(96), rw - 0.5, 1.2, { cw: 0.62, min: 20 }), color: c(P.accentLight), breakLine: Boolean(s.unit), paraSpaceAfter: 6 } }].concat(s.unit ? [{ text: s.unit, options: { fontFace: FB, fontSize: pt(26), color: c(P.onDark) } }] : []), { x: x + 0.25, y: y + 0.22, w: rw - 0.5, h: ch - 0.44, valign: "middle", margin: 0 });
+          break;
+        }
+        case "cycle": {
+          const b = head(s.eyebrow, s.title); const st = s.steps || []; const n = st.length;
+          const cx = X0 + CW / 2, cy = b.y + b.h / 2, rx = Math.min(CW / 2 - 1.5, 4.2), ry = b.h / 2 - 0.6; const nw = 3.1, nh = 1.4;
+          const P2 = st.map((_, i) => { const a = -Math.PI / 2 + (2 * Math.PI * i) / n; return [cx + rx * Math.cos(a), cy + ry * Math.sin(a)]; });
+          st.forEach((_, i) => {
+            const [x1, y1] = P2[i], [x2, y2] = P2[(i + 1) % n]; const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy) || 1;
+            const sh = Math.min(0.42, 0.5 * L) + 0.9; const ax = x1 + dx * (sh / L), ay = y1 + dy * (sh / L), bx = x2 - dx * (sh / L), by = y2 - dy * (sh / L);
+            if (Math.hypot(bx - ax, by - ay) > 0.15) sl.addShape(SH.line, { x: Math.min(ax, bx), y: Math.min(ay, by), w: Math.max(0.01, Math.abs(bx - ax)), h: Math.max(0.01, Math.abs(by - ay)), flipH: bx < ax, flipV: by < ay, line: { color: c(P.accent), width: 2.5, endArrowType: "triangle" } });
+          });
+          st.forEach((x, i) => card(P2[i][0] - nw / 2, P2[i][1] - nh / 2, nw, nh, { num: i + 1, title: x.title, text: x.text, ink: i === 0, titleSize: pt(32) }));
+          break;
+        }
+        case "scale": {
+          const b = head(s.eyebrow, s.title); const m = s.marks || []; const n = m.length; const by = b.y + 1.35, bh = 0.2, seg = 30;
+          const mix = (a, z, t) => { const A = c(a), Z = c(z); return [0, 2, 4].map((k) => Math.round(parseInt(A.substr(k, 2), 16) * (1 - t) + parseInt(Z.substr(k, 2), 16) * t).toString(16).padStart(2, "0")).join("").toUpperCase(); };
+          for (let k = 0; k < seg; k += 1) sl.addShape(SH.rect, { x: X0 + (CW * k) / seg, y: by, w: CW / seg + 0.01, h: bh, fill: { color: mix(P.second, P.accent, k / (seg - 1)) }, line: { type: "none" } });
+          m.forEach((mk, i) => {
+            const x = X0 + (CW * (i + 0.5)) / n, cw = Math.min(1.9, CW / n - 0.1);
+            T(mk.label, { x: x - cw / 2, y: by - 0.95, w: cw, h: 0.55, fontFace: FM, bold: true, fontSize: pt(48), color: P.title, align: "center", valign: "bottom" });
+            sl.addShape(SH.line, { x, y: by - 0.32, w: 0, h: 0.85, line: { color: c(P.dark), width: 2 } });
+            if (mk.value) T(mk.value, { x: x - cw / 2, y: by + 0.62, w: cw, h: 0.3, fontSize: pt(30), bold: true, color: P.accent, align: "center" });
+            if (mk.text) T(mk.text, { x: x - cw / 2, y: by + 0.95, w: cw, h: 0.6, fontSize: pt(22), color: P.muted, align: "center" });
+          });
+          if (s.from) T(String(s.from).toUpperCase(), { x: X0, y: by + 1.65, w: CW / 2, h: 0.25, fontSize: pt(22), bold: true, color: P.muted, charSpacing: 2 });
+          if (s.to) T(String(s.to).toUpperCase(), { x: X0 + CW / 2, y: by + 1.65, w: CW / 2, h: 0.25, fontSize: pt(22), bold: true, color: P.muted, charSpacing: 2, align: "right" });
+          if (s.note) { const y = b.y + b.h - 0.75; sl.addShape(SH.rect, { x: X0, y, w: CW, h: 0.7, fill: { color: c(P.warn) }, line: { type: "none" } }); sl.addShape(SH.rect, { x: X0, y, w: 8 / PX, h: 0.7, fill: { color: c(P.accent) }, line: { type: "none" } }); T(s.note, { x: X0 + 0.3, y, w: CW - 0.5, h: 0.7, valign: "middle", fontSize: fit(s.note, pt(28), CW - 0.5, 0.7, { min: 11 }), color: P.title }); }
+          break;
+        }
+        case "chart": {
+          const b = head(s.eyebrow, s.title); const it = s.items || []; const n = it.length; const hh = b.h - (s.note ? 0.9 : 0);
+          const rh = Math.min(0.62, hh / n), y0 = b.y + (hh - rh * n) / 2; const lw = 2.1, vw = 1.6, tw = CW - lw - vw - 0.4; const max = Math.max(...it.map((x) => Math.abs(x.value))) || 1;
+          it.forEach((x, i) => {
+            const y = y0 + i * rh, bh2 = rh * 0.62, yy = y + (rh - bh2) / 2;
+            T(x.label, { x: X0, y, w: lw, h: rh, fontFace: FT, bold: true, fontSize: pt(32), color: P.title, align: "right", valign: "middle" });
+            sl.addShape(SH.roundRect, { x: X0 + lw + 0.2, y: yy, w: tw, h: bh2, rectRadius: 0.05, fill: { color: c(P.bg2) }, line: { type: "none" } });
+            sl.addShape(SH.roundRect, { x: X0 + lw + 0.2, y: yy, w: Math.max(0.05, (tw * Math.abs(x.value)) / max), h: bh2, rectRadius: 0.05, fill: { color: c(i === n - 1 ? P.accent : P.second) }, line: { type: "none" } });
+            T(String(x.value).replace(".", ",") + (s.unit ? " " + s.unit : ""), { x: X0 + lw + tw + 0.4, y, w: vw, h: rh, fontFace: FM, bold: true, fontSize: pt(30), color: P.title, valign: "middle" });
+          });
+          if (s.note) { const y = b.y + b.h - 0.75; sl.addShape(SH.rect, { x: X0, y, w: CW, h: 0.7, fill: { color: c(P.warn) }, line: { type: "none" } }); sl.addShape(SH.rect, { x: X0, y, w: 8 / PX, h: 0.7, fill: { color: c(P.accent) }, line: { type: "none" } }); T(s.note, { x: X0 + 0.3, y, w: CW - 0.5, h: 0.7, valign: "middle", fontSize: fit(s.note, pt(28), CW - 0.5, 0.7, { min: 11 }), color: P.title }); }
           break;
         }
         case "bignumber": {
@@ -280,7 +362,7 @@
           const rx = X0 + lw + 0.35, rw = CW - lw - 0.35;
           box(rx, y, rw, ch, P.card, P.line);
           const hints = s.hints || [];
-          sl.addText([{ text: "POR ONDE COMEÇAR", options: { fontSize: pt(22), bold: true, color: c(P.muted), charSpacing: 2, breakLine: true, paraSpaceAfter: 8 } }].concat(hints.map((h, i) => ({ text: h, options: { bullet: { code: "25AC", indent: 18 }, fontSize: fit(hints.join("\n"), pt(30), rw - 0.8, ch - 1, { min: 11, lh: 1.5 }), color: c(P.title), breakLine: i < hints.length - 1, paraSpaceAfter: 6 } }))), { x: rx + 0.3, y: y + 0.3, w: rw - 0.6, h: ch - 0.6, fontFace: FB, valign: "middle", margin: 0 });
+          AT([{ text: "POR ONDE COMEÇAR", options: { fontSize: pt(22), bold: true, color: c(P.muted), charSpacing: 2, breakLine: true, paraSpaceAfter: 8 } }].concat(hints.map((h, i) => ({ text: h, options: { bullet: { code: "25AC", indent: 18 }, fontSize: fit(hints.join("\n"), pt(30), rw - 0.8, ch - 1, { min: 11, lh: 1.5 }), color: c(P.title), breakLine: i < hints.length - 1, paraSpaceAfter: 6 } }))), { x: rx + 0.3, y: y + 0.3, w: rw - 0.6, h: ch - 0.6, fontFace: FB, valign: "middle", margin: 0 });
           break;
         }
         case "referencias": {
@@ -291,7 +373,7 @@
           const fs = fit("x".repeat(longest), pt(24), colW, b.h + 0.4, { min: 7, lh: 1.45 });
           [items.slice(0, half), items.slice(half)].forEach((col, k) => {
             const runs = []; col.forEach((r, i) => { const rr = runsOf(r, { fontSize: fs, color: c(P.ink) }); if (rr.length) { rr[rr.length - 1].options.breakLine = i < col.length - 1; rr[rr.length - 1].options.paraSpaceAfter = 6; } runs.push(...rr); });
-            if (runs.length) sl.addText(runs, { x: X0 + k * (colW + 0.45), y: b.y - 0.35, w: colW, h: b.h + 0.4, fontFace: FB, valign: "top", margin: 0, lineSpacingMultiple: 1.1 });
+            if (runs.length) AT(runs, { x: X0 + k * (colW + 0.45), y: b.y - 0.35, w: colW, h: b.h + 0.4, fontFace: FB, valign: "top", margin: 0, lineSpacingMultiple: 1.1 });
           });
           break;
         }
