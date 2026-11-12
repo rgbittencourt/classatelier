@@ -797,6 +797,7 @@ function ghFriendly(status, data, path) {
   const msg = (data && data.message) || "";
   if (status === 401) return "O GitHub não aceitou o token (inválido, expirado ou digitado com espaço sobrando).";
   if (status === 403 && /rate limit/i.test(msg)) return "O GitHub pediu uma pausa por excesso de requisições. Tente de novo em alguns minutos.";
+  if (status === 403 && /\/pages$/.test(path)) return "o token não tem a permissão \"Pages\" (Read and write)";
   if (status === 403) return "O token não tem permissão para isso. Ele precisa de \"Contents: Read and write\" neste repositório (e \"Pages: Read and write\" para ligar o site).";
   if (status === 404) return "Não encontrei o repositório ou o token não enxerga ele. Confira o nome (conta/repositório) e se o token foi liberado para esse repositório.";
   if (status === 409) return "O GitHub recusou por conflito (" + msg + "). Tente publicar de novo.";
@@ -909,8 +910,12 @@ async function publishCourseToGitHub(lessons, opts, onProgress) {
     commitUrl = `https://github.com/${owner}/${repo}/commit/${commit.sha}`;
   }
 
+  // endereço do site (usado também para conferir se o Pages já está no ar)
+  const isUserSite = repo.toLowerCase() === (owner + ".github.io").toLowerCase();
+  const base = `https://${owner.toLowerCase()}.github.io/${isUserSite ? "" : repo + "/"}${prefix}`;
+
   // GitHub Pages
-  let pages = "ignorado";
+  let pages = "ignorado", pagesHint = "";
   try {
     try { await ghApi(token, "GET", `/repos/${owner}/${repo}/pages`); pages = "ativo"; }
     catch (e) {
@@ -921,12 +926,19 @@ async function publishCourseToGitHub(lessons, opts, onProgress) {
       } else if (e.status === 404) pages = "desligado";
       else throw e;
     }
-  } catch (e) { pages = "não consegui ligar (" + e.message + ")"; }
+  } catch (e) {
+    if (e.status === 403) {
+      // Token sem a permissão "Pages": não dá para conferir pela API. Os arquivos já foram enviados; olha se o site responde.
+      let online = false;
+      try { const r = await fetch(base + "index.html", { cache: "no-store" }); online = r.ok; } catch (err) { online = false; }
+      pages = online ? "ativo (o site já responde)" : "não confirmado (o token não tem a permissão \"Pages\")";
+      pagesHint = (online ? "Seus arquivos foram publicados e o site já abre. " : "Seus arquivos foram publicados no GitHub. Se o site ainda não abre, ligue o Pages em Settings → Pages do repositório (branch " + branch + ", pasta raiz). ")
+        + "Esse aviso só quer dizer que o token não tem a permissão \"Pages\": para o app conferir e ligar o site sozinho, edite o token em github.com/settings/personal-access-tokens e, em Repository permissions, acrescente \"Pages: Read and write\".";
+    } else pages = "não consegui ligar (" + e.message + ")";
+  }
 
-  const isUserSite = repo.toLowerCase() === (owner + ".github.io").toLowerCase();
-  const base = `https://${owner.toLowerCase()}.github.io/${isUserSite ? "" : repo + "/"}${prefix}`;
   const links = [{ label: "Página do curso", url: base + "index.html" }].concat(files.filter((f) => /^aula-\d+\.html$/.test(f.path)).map((f, i) => ({ label: (lessons[i] && lessons[i].meta && lessons[i].meta.title) || "Aula " + String(i + 1).padStart(2, "0"), url: base + f.path })));
-  return { sent, total: files.length, commitUrl, pages, links, repoUrl: `https://github.com/${owner}/${repo}`, branch };
+  return { sent, total: files.length, commitUrl, pages, pagesHint, links, repoUrl: `https://github.com/${owner}/${repo}`, branch };
 }
 
 // ── Pacote de entrega: tudo da aula em um único ZIP, com LEIA-ME que diz o que falta ──

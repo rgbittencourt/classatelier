@@ -4,12 +4,17 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.18.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.18.2** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.18.2 · 12/11/2026 · Publicar no GitHub: avisos mais claros
+
+- O aviso «GitHub Pages: não consegui ligar (O token não tem permissão para isso… Contents…)» enganava: aparecia quando o token (de escopo fino) **não tem a permissão «Pages»**, mas os arquivos já tinham sido publicados. Agora o app diz exatamente isso, **testa se o site já responde** e orienta: ligar em Settings → Pages ou acrescentar «Pages: Read and write» ao token.
+- «Publicado: 2 arquivo(s) enviado(s) de 57» passa a dizer «2 arquivo(s) novo(s) ou alterado(s) enviado(s); os outros 55 já estavam iguais no GitHub». O app só envia o que mudou.
 
 ### 1.18.1 · 12/11/2026 · Foto do autor no cabeçalho não distorce mais
 

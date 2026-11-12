@@ -1151,8 +1151,8 @@ function CourseDialog({ entries, onClose, onConfirm, onCheck, onMoodle }) {
               {busy && progress && <div style={{ fontSize: 12.5, color: "var(--tool-ink-2)" }}>{progress}</div>}
               {published && (
                 <div style={{ padding: "12px 14px", borderRadius: 10, background: "#e8f5ee", color: "#1b4d36", fontSize: 12.5, lineHeight: 1.55 }}>
-                  <div style={{ fontWeight: 700, marginBottom: 4 }}>{published.sent ? "Publicado: " + published.sent + " arquivo(s) enviado(s) de " + published.total + "." : "Nada mudou: tudo já estava publicado."}</div>
-                  <div style={{ marginBottom: 6 }}>GitHub Pages: {published.pages}. {/desligado|não consegui/.test(published.pages) ? "Em Settings → Pages do repositório, escolha a branch e a pasta raiz." : "O site pode levar alguns minutos para aparecer na primeira vez."}</div>
+                  <div style={{ fontWeight: 700, marginBottom: 4 }}>{published.sent ? "Publicado: " + published.sent + " arquivo(s) novo(s) ou alterado(s) enviado(s)" + (published.total > published.sent ? "; os outros " + (published.total - published.sent) + " já estavam iguais no GitHub." : ".") : "Nada mudou: tudo já estava publicado."}</div>
+                  <div style={{ marginBottom: 6 }}>GitHub Pages: {published.pages}. {published.pagesHint ? published.pagesHint : /desligado|não consegui/.test(published.pages) ? "Em Settings → Pages do repositório, escolha a branch e a pasta raiz." : "O site pode levar alguns minutos para aparecer na primeira vez."}</div>
                   {published.links.map((l) => (
                     <div key={l.url} style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 0" }}>
                       <span style={{ flexShrink: 0, fontWeight: 600 }}>{l.label}</span>
