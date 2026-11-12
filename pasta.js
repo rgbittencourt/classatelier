@@ -16,6 +16,7 @@
     ["site", "Site do curso inteiro (…-site.zip)"],
     ["pdf", "PDFs: na janela de impressão, escolha “Salvar como PDF” e salve aqui"],
     ["textos", "Texto da aula (…-texto.txt)"],
+    ["imagens", "Cópias dos originais das imagens inseridas nas aulas (S2-fig-1-napkin.png…); dentro de um projeto do ClassAuthor, vão para a pasta imagens/ dele"],
     ["outros", "Qualquer outro arquivo"]
   ];
 
@@ -54,6 +55,7 @@
     if (/-site\.zip$/.test(n)) return "site";
     if (/-html\.zip$|\.html?$/.test(n)) return "html";
     if (/\.json$/.test(n)) return "projetos";
+    if (/\.(png|jpe?g|webp|gif|svg)$/.test(n)) return "imagens";
     if (/\.pdf$/.test(n)) return "pdf";
     if (/\.txt$|\.md$/.test(n)) return "textos";
     if (/\.zip$/.test(n)) return "outros";
@@ -67,15 +69,21 @@
   function checkPermission(interactive) {
     if (!current) { state = "none"; return Promise.resolve(state); }
     var opts = { mode: "readwrite" };
-    return current.handle.queryPermission(opts).then(function (s) {
-      if (s !== "granted" && interactive) return current.handle.requestPermission(opts);
-      return s;
+    var handles = [current.handle].concat(current.root ? [current.root] : []);
+    var one = function (h) {
+      return h.queryPermission(opts).then(function (s) {
+        if (s !== "granted" && interactive) return h.requestPermission(opts);
+        return s;
+      });
+    };
+    return Promise.all(handles.map(one)).then(function (list) {
+      return list.every(function (s) { return s === "granted"; }) ? "granted" : "prompt";
     }).then(function (s) { state = s === "granted" ? "granted" : "prompt"; emit(); return state; }, function () { state = "prompt"; emit(); return state; });
   }
 
   function prepare(base, info) {
     var chain = Promise.resolve();
-    SUB.forEach(function (s) { chain = chain.then(function () { return base.getDirectoryHandle(s[0], { create: true }); }); });
+    SUB.forEach(function (s) { if (s[0] === "imagens" && info.inAuthor) return; chain = chain.then(function () { return base.getDirectoryHandle(s[0], { create: true }); }); });
     return chain.then(function () {
       return writeText(base, OWN_MARKER, JSON.stringify({ app: "classatelier", insideClassAuthorProject: info.inAuthor, createdAt: new Date().toISOString() }, null, 2));
     }).then(function () {
@@ -93,14 +101,14 @@
     return window.showDirectoryPicker({ id: "classauthor-projetos", mode: "readwrite", startIn: "documents" }).then(function (picked) {
       return Promise.all([has(picked, AUTHOR_MARKER), has(picked, OWN_MARKER)]).then(function (r) {
         var info = { inAuthor: r[0], authorName: r[0] ? picked.name : "" };
-        if (r[1]) return { base: picked, info: info };
-        if (r[0]) return picked.getDirectoryHandle("classatelier", { create: true }).then(function (d) { return { base: d, info: info }; });
+        if (r[1]) return { base: picked, info: info, root: r[0] ? picked : null };
+        if (r[0]) return picked.getDirectoryHandle("classatelier", { create: true }).then(function (d) { return { base: d, info: info, root: picked }; });
         if (picked.name.toLowerCase() === "classatelier") return { base: picked, info: info };
         return picked.getDirectoryHandle("classatelier", { create: true }).then(function (d) { return { base: d, info: info }; });
       });
     }).then(function (x) {
       return prepare(x.base, x.info).then(function () {
-        current = { handle: x.base, name: x.info.inAuthor ? x.info.authorName + "/" + x.base.name : x.base.name, inAuthor: x.info.inAuthor, authorName: x.info.authorName };
+        current = { handle: x.base, root: x.root || null, name: x.info.inAuthor ? x.info.authorName + "/" + x.base.name : x.base.name, inAuthor: x.info.inAuthor, authorName: x.info.authorName };
         state = "granted";
         return idb("readwrite", function (s) { return s.put(current, KEY); });
       });
@@ -112,11 +120,20 @@
   function save(blob, filename, subfolder) {
     if (!current || state !== "granted") return Promise.resolve(null);
     var folder = subfolder || subfolderFor(filename);
-    return current.handle.getDirectoryHandle(folder, { create: true })
+    var top = folder === "imagens" && current.inAuthor && current.root ? current.root : current.handle;
+    var shown = folder === "imagens" && current.inAuthor && current.root ? current.authorName : current.name;
+    return top.getDirectoryHandle(folder, { create: true })
       .then(function (d) { return d.getFileHandle(filename, { create: true }); })
       .then(function (f) { return f.createWritable(); })
       .then(function (w) { return w.write(blob).then(function () { return w.close(); }); })
-      .then(function () { return current.name + "/" + folder + "/" + filename; });
+      .then(function () { return shown + "/" + folder + "/" + filename; });
+  }
+
+  // Cópia do original de uma imagem inserida na aula. Devolve { ok, path } ou { ok:false, reason }.
+  function saveImage(blob, filename) {
+    if (!current) return Promise.resolve({ ok: false, reason: "no-folder" });
+    if (state !== "granted") return Promise.resolve({ ok: false, reason: "no-permission" });
+    return save(blob, filename, "imagens").then(function (path) { return { ok: true, path: path }; }, function (e) { return { ok: false, reason: "error", detail: String(e && e.message || e) }; });
   }
 
   // Salvamento automático do projeto aberto em projetos/ (a cada alteração, com 2 s de folga).
@@ -164,5 +181,5 @@
     return idb("readonly", function (s) { return s.get(KEY); }).then(function (v) { current = v || null; return checkPermission(false); }, function () { return "none"; }).then(status);
   }
 
-  window.PastaProjeto = { supported: supported, status: status, choose: choose, reconnect: reconnect, forget: forget, save: save, autosave: autosave, subfolderFor: subfolderFor, SUBFOLDERS: SUB, ready: load(), subscribe: function (fn) { listeners.push(fn); return function () { listeners = listeners.filter(function (x) { return x !== fn; }); }; } };
+  window.PastaProjeto = { supported: supported, status: status, choose: choose, reconnect: reconnect, forget: forget, save: save, saveImage: saveImage, autosave: autosave, subfolderFor: subfolderFor, SUBFOLDERS: SUB, ready: load(), subscribe: function (fn) { listeners.push(fn); return function () { listeners = listeners.filter(function (x) { return x !== fn; }); }; } };
 })();

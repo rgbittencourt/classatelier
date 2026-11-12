@@ -114,6 +114,21 @@ function normalizeTopicStructure(blocks) {
   });
   return out;
 }
+// Figuras sugeridas pelo ClassAuthor (meta.figureSuggestions) que ainda não têm imagem inserida nesta aula.
+function pendingFigureSuggestions(lesson) {
+  const list = lesson && lesson.meta && Array.isArray(lesson.meta.figureSuggestions) ? lesson.meta.figureSuggestions : [];
+  if (!list.length) return [];
+  const have = new Set();
+  const walk = (n) => {
+    if (Array.isArray(n)) { n.forEach(walk); return; }
+    if (!n || typeof n !== "object") return;
+    if (n.type === "imagem" && n.props && /^figure-/.test(String(n.props.slotId || "")) && n.props.src) have.add(String(n.props.slotId).slice(7));
+    Object.values(n).forEach(walk);
+  };
+  walk(lesson.blocks);
+  return list.filter((f) => f && f.id && !have.has(f.id));
+}
+
 function extractProjectPayload(data) {
   const candidates = [
     data,
@@ -457,13 +472,35 @@ function ClassAtelierApp() {
     const context = sp ? (plainText(sp.before).slice(-700) + " … " + plainText(sp.after).slice(0, 500)) : plainText(prose && prose.props && prose.props.body).slice(0, 1200);
     setImageDlg({ blockId, sp, context });
   };
+  // Cópia do arquivo original em imagens/ da pasta do projeto, com aviso se não der.
+  const saveImageCopy = (img) => {
+    const P = window.PastaProjeto;
+    if (!img.file) return;
+    const meta = lesson.meta || {};
+    const t = new Date(), pad = (n) => String(n).padStart(2, "0");
+    const stamp = t.getFullYear() + pad(t.getMonth() + 1) + pad(t.getDate()) + "-" + pad(t.getHours()) + pad(t.getMinutes()) + pad(t.getSeconds());
+    const ext = (/svg/.test(img.file.type) ? "svg" : /png/.test(img.file.type) ? "png" : /jpe?g/.test(img.file.type) ? "jpg" : /webp/.test(img.file.type) ? "webp" : /gif/.test(img.file.type) ? "gif" : ((img.file.name || "").split(".").pop() || "png")).toLowerCase();
+    const m = img.figureId ? /^w(\d+)-f(\d+)$/.exec(img.figureId) : null;
+    const name = m ? "S" + Number(m[1]) + "-fig-" + Number(m[2]) + "-" + (img.figureKind || "foto") + "." + ext
+      : (Number(meta.weekNumber) > 0 ? "S" + Number(meta.weekNumber) + "-" : "") + "imagem-" + stamp + "." + ext;
+    const done = (text) => setTimeout(() => showToast(text), 300);
+    if (!P || !P.saveImage) { done("Imagem inserida. Cópia do original NÃO guardada: este navegador não grava em pasta."); return; }
+    P.saveImage(img.file, name).then((r) => {
+      if (r.ok) done("Imagem inserida. Cópia do original salva em " + r.path);
+      else if (r.reason === "no-folder") done("Imagem inserida. Sem pasta do projeto ligada: o original NÃO foi copiado para imagens/. Ligue a pasta em «Pasta do projeto» e insira de novo para guardar a cópia.");
+      else if (r.reason === "no-permission") done("Imagem inserida. A pasta do projeto está sem permissão: o original NÃO foi copiado. Reconecte a pasta e insira de novo.");
+      else done("Imagem inserida, mas não consegui gravar a cópia em imagens/ (" + (r.detail || "erro") + ").");
+    });
+  };
   const confirmImage = (img) => {
     if (!imageDlg) return;
     const child = window.newChildBlock("imagem");
     child.props = { ...child.props, src: img.src, alt: img.alt, decorative: !!img.decorative, caption: img.caption || "", credit: img.credit || "" };
+    if (img.figureId) child.props.slotId = "figure-" + img.figureId; // liga a imagem à figura sugerida (o ClassAuthor tira da lista)
     const ok = insertChildInProse(imageDlg.blockId, child, imageDlg.sp);
     setImageDlg(null);
-    if (!ok) showToast("Não achei o parágrafo onde a imagem deveria entrar. Selecione-o de novo e repita.");
+    if (!ok) { showToast("Não achei o parágrafo onde a imagem deveria entrar. Selecione-o de novo e repita."); return; }
+    saveImageCopy(img);
   };
 
   // «Quebrar parágrafo no cursor»: o parágrafo vira dois, no ponto do cursor (o segundo sem capitular).
@@ -828,7 +865,7 @@ function ClassAtelierApp() {
       <input ref={fileInputRef} type="file" accept=".json,application/json" onChange={onProjectFile} style={{ display: "none" }} />
       {scormOpen && <ScormDialog lesson={lesson} onClose={() => setScormOpen(false)} onConfirm={exportSCORM} onCheck={(title, load) => setScormCheck({ title, load })} />}
       {moodle && <window.MoodleDialog links={moodle.links} lesson={moodle.links && moodle.links.length ? null : lesson} onClose={() => setMoodle(null)} />}
-      {imageDlg && <window.InsertImageDialog title={lesson.meta && lesson.meta.title} context={imageDlg.context} onInsert={confirmImage} onClose={() => setImageDlg(null)} />}
+      {imageDlg && <window.InsertImageDialog title={lesson.meta && lesson.meta.title} context={imageDlg.context} suggestions={pendingFigureSuggestions(lesson)} onInsert={confirmImage} onClose={() => setImageDlg(null)} />}
       {republishOpen && <window.RepublishDialog lesson={lesson} onClose={() => setRepublishOpen(false)} />}
       {versionsOpen && <window.VersionsDialog lessonId={curRef.current.id} lesson={lesson} onClose={() => setVersionsOpen(false)} onRestore={restoreVersion} onApplyBlock={applyVersionBlock} />}
       {scormCheck && <ScormCheckDialog title={scormCheck.title} load={scormCheck.load} onClose={() => setScormCheck(null)} />}

@@ -95,11 +95,15 @@
     return data;
   }
 
-  function InsertImageDialog({ title, context, onInsert, onClose }) {
+  function InsertImageDialog({ title, context, suggestions, onInsert, onClose }) {
     const [tab, setTab] = useState("arquivo");
     const [img, setImg] = useState(null); // { src, alt, caption, credit, ai }
     const [decor, setDecor] = useState(false);
     const [prompt, setPrompt] = useState("");
+    const sugg = Array.isArray(suggestions) ? suggestions : [];
+    const [figId, setFigId] = useState("");
+    const [copied, setCopied] = useState(false);
+    const fig = sugg.find((f) => f.id === figId) || null;
     const { base, code, remember, aiKey, setBase, setCode, setRemember, setAiKey } = useAccess();
     const [busy, setBusy] = useState("");
     const [err, setErr] = useState("");
@@ -109,7 +113,7 @@
     const set = (k, v) => setImg((x) => ({ ...x, [k]: v }));
     const pick = async (file) => {
       setErr("");
-      try { const src = await readImage(file); setImg({ src, alt: "", caption: "", credit: "", ai: false }); }
+      try { const src = await readImage(file); setImg({ src, alt: fig ? (fig.description || "") : "", caption: fig ? (fig.caption || "") : "", credit: "", ai: false, file }); }
       catch (e) { setErr(e.message); }
     };
     const create = async () => {
@@ -119,12 +123,20 @@
       try {
         const r = await askFigure({ base, code: code.trim(), aiKey, prompt: prompt.trim(), context, title });
         accessStore.persist();
-        setImg({ src: r.src, alt: r.alt || "", caption: r.caption || "", credit: r.credit || "", ai: true });
+        let file = null; try { file = await (await fetch(r.src)).blob(); } catch (e) { /* sem cópia do SVG */ }
+        setImg({ src: r.src, alt: r.alt || "", caption: r.caption || "", credit: r.credit || "", ai: true, file });
       } catch (e) { setErr(e.message); }
       finally { setBusy(""); }
     };
     const ready = img && img.src && (decor || String(img.alt || "").trim());
-    const insert = () => { if (ready) onInsert({ src: img.src, alt: decor ? "" : img.alt.trim(), decorative: decor, caption: img.caption || "", credit: img.credit || "" }); };
+    const insert = () => { if (ready) onInsert({ src: img.src, alt: decor ? "" : img.alt.trim(), decorative: decor, caption: img.caption || "", credit: img.credit || "", file: img.file || null, figureId: fig ? fig.id : "", figureKind: fig ? fig.kind : "" }); };
+    const kindName = { foto: "Foto", napkin: "Napkin", diagrama: "Diagrama" };
+    const figText = (f) => (f.kind === "napkin" ? (f.napkinText || f.description) : (f.prompt || f.description)) || "";
+    const chooseFig = (id) => {
+      setFigId(id); setCopied(false);
+      const f = sugg.find((x) => x.id === id);
+      if (f && img) setImg((x) => ({ ...x, alt: x.alt || f.description || "", caption: x.caption || f.caption || "" }));
+    };
 
     const lab = { display: "block", fontSize: 12, fontWeight: 650, margin: "0 0 4px", color: "var(--tool-ink-2)" };
     const inp = { width: "100%", boxSizing: "border-box", border: "1px solid var(--tool-line-2)", borderRadius: 8, padding: "8px 10px", fontSize: 13, fontFamily: "inherit" };
@@ -142,6 +154,19 @@
             </div>
             <button onClick={onClose} aria-label="Fechar" style={{ border: 0, background: "none", fontSize: 24, lineHeight: 1, cursor: "pointer", color: "var(--tool-ink-2)" }}>×</button>
           </header>
+          {sugg.length > 0 && (<div data-ii="figbox" style={{ margin: "0 20px 12px", padding: "10px 12px", border: "1px solid #e1d6b8", borderRadius: 9, background: "#fffaf0" }}>
+            <label style={lab}>Esta imagem é uma figura sugerida pelo ClassAuthor? ({sugg.length} ainda não inserida{sugg.length > 1 ? "s" : ""})</label>
+            <select value={figId} onChange={(e) => chooseFig(e.target.value)} data-ii="fig" style={inp}>
+              <option value="">Não, é uma imagem avulsa</option>
+              {sugg.map((f) => <option key={f.id} value={f.id}>{kindName[f.kind] || "Imagem"} · seção {f.sectionNumber}{f.sectionTitle ? " — " + f.sectionTitle : ""}: {String(f.description || "").slice(0, 70)}</option>)}
+            </select>
+            {fig && (<div style={{ marginTop: 8 }}>
+              <p style={{ margin: "0 0 4px", fontSize: 12, color: "var(--tool-ink-2)", lineHeight: 1.45 }}>{fig.kind === "napkin" ? "Texto para colar no Napkin (napkin.ai):" : "Pedido para o ChatGPT ou outro gerador de imagens:"}</p>
+              <textarea readOnly rows={3} value={figText(fig)} data-ii="figtext" style={{ ...inp, resize: "vertical", background: "#fff" }} />
+              <button type="button" data-ii="figcopy" onClick={async () => { try { await navigator.clipboard.writeText(figText(fig)); setCopied(true); } catch (e) { /* sem permissão */ } }} style={{ ...btn, marginTop: 6, padding: "5px 10px", fontSize: 12 }}>{copied ? "Copiado!" : "Copiar"}</button>
+              <p style={{ margin: "6px 0 0", fontSize: 11.5, color: "var(--tool-ink-3)", lineHeight: 1.45 }}>Depois de criar a imagem, escolha o arquivo abaixo. O texto alternativo e a legenda já vêm preenchidos, e uma cópia do original vai para a pasta <strong>imagens/</strong> do projeto.</p>
+            </div>)}
+          </div>)}
           <div role="tablist" style={{ display: "flex", gap: 6, padding: "0 20px", borderBottom: "1px solid var(--tool-line)" }}>
             {tabBtn("arquivo", "Escolher imagem")}{tabBtn("ia", "Criar com IA")}
           </div>
