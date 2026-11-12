@@ -489,6 +489,7 @@ function TIcon({ name, size = 16, color = "currentColor", stroke = 1.9 }) {
     up: <><polyline points="18 15 12 9 6 15"/></>,
     down: <><polyline points="6 9 12 15 18 9"/></>,
     present: <polygon points="7 4 20 12 7 20 7 4"/>,
+    slides: <><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8M7 8h6M7 11h10"/></>,
     eye: <><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></>,
     pencil: <><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></>,
     download: <><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>,

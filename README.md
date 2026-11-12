@@ -17,7 +17,23 @@ O SCORM pode ser configurado como **1.2** — padrão de maior compatibilidade �
 
 ## Versão do aplicativo
 
-ClassAtelier **1.18.3** (Versionamento Semântico). O histórico está em [`CHANGELOG.md`](CHANGELOG.md). O ClassAcervo tem repositório e versão próprios (ver a seção abaixo).
+ClassAtelier **1.24.0** (Versionamento Semântico). O histórico está em [`CHANGELOG.md`](CHANGELOG.md). O ClassAcervo tem repositório e versão próprios (ver a seção abaixo).
+
+## Slides
+
+O botão **Slides** (barra de cima, ao lado de Apresentar) gera uma apresentação profissional a partir da aula aberta, do jeito que ela está no editor. Você escolhe só a **paleta de cores** (12 opções: Descanso, Floresta, Grafite, Oceano, Vinho, Lavanda, Areia, Ipê, Alto contraste, Turquesa, Rubi e Nórdico) e a **quantidade de slides de conteúdo**: Automático (pelo tamanho do texto), Enxuto (12), Completo (32) ou **Quantos eu quiser** (digite o número). O total é sempre **8 fixos + os de conteúdo**.
+
+- A aula é dividida em seções (cada Tópico, Título de seção ou Divisor começa uma). Para cada seção, a IA do ClassAuthor (o mesmo endereço e código de acesso das figuras) escolhe o conteúdo dos slides dentro de um catálogo fechado: frase de impacto, cartões, comparação, etapas, ciclo, fórmula, conta resolvida, escala (régua ou espectro), gráfico de barras, diagrama (eco, ondas, curva, reflexão, geometria de visada, camadas e Bragg), número de destaque, tabela, linha do tempo, pergunta para refletir, atenção, citação e as figuras da própria aula. Toda equação da aula ganha seu slide de fórmula. Cada slide traz notas do apresentador; as perguntas «Para refletir» levam a resposta detalhada nas notas.
+- Os 8 fixos, sempre nesta ordem: Capa, A Pergunta da Aula e Roteiro e Objetivos de Aprendizagem no começo; Síntese, A Pergunta que Fica, Referências (do bloco Referências) e Créditos no fim.
+- **Notas do apresentador completas em todo slide.** Todo slide com pergunta ou reflexão (incluindo a pergunta da aula e a pergunta que fica) traz nas notas a **RESPOSTA** detalhada; se a IA esquecer alguma, o ClassAtelier pede a resposta à parte. O botão **Baixar notas (.txt)** salva o roteiro inteiro do apresentador.
+- Seções grandes são divididas em partes (no máximo 8 slides por chamada à IA); se vierem menos slides que o pedido, o ClassAtelier pede os que faltam, sem repetir assunto.
+- O desenho é sempre o mesmo: tipografia Space Grotesk, IBM Plex Sans e JetBrains Mono, grade 1920 × 1080 e cinco tamanhos de letra. Textos longos encolhem um pouco para caber.
+- **Antes de escrever, a IA planeja o deck inteiro**: lê a aula toda, distribui os slides pedidos entre as seções (glossário e revisão ficam com no máximo 1) e monta o arco de cada seção (exemplo, conceito, conta resolvida, erro comum, reflexão), sem repetir conceito. Depois, cada parte é escrita seguindo esse plano e vendo a lista do deck inteiro. Os títulos de seção que ficam dentro de um Tópico de conteúdo também contam como seções.
+- **Baixar PowerPoint (.pptx)**: o mesmo deck, editável, com a paleta, as fontes (Space Grotesk, IBM Plex Sans e JetBrains Mono; gratuitas no Google Fonts, e o PowerPoint troca por parecidas se não estiverem instaladas) e as notas do apresentador.
+- O resultado é um arquivo **.html** único: setas ou espaço avançam, **N** mostra as notas, **F** põe em tela cheia e o botão **PDF** (ou Ctrl+P) imprime um slide por página. Com a pasta do projeto ligada, uma cópia vai para `slides/`.
+- **Trocar a paleta depois de gerar não chama a IA de novo.** Se uma parte falhar duas vezes, ela recebe slides simples montados sem IA (na mesma quantidade), e o aviso diz qual.
+- Em «Acesso ao ClassAuthor», o link **Como gerar a chave de IA?** mostra o passo a passo para criar a sua chave na Anthropic (Claude) ou na OpenAI (ChatGPT), com links para as páginas oficiais.
+- Para criar outra paleta, copie um item de `PALETTES` em `slides-render.js` e troque as cores.
 
 ## Biblioteca e pacote do curso
 

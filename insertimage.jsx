@@ -259,8 +259,67 @@
     );
   }
   // ── Acesso ao ClassAuthor: preenchido uma vez, vale para tudo que usa o ClassAuthor ──
+  // Passo a passo para criar a própria chave de IA (Anthropic ou OpenAI), com os links oficiais.
+  const KEY_GUIDES = {
+    anthropic: {
+      name: "Claude (Anthropic)", prefix: "sk-ant-", url: "https://platform.claude.com/settings/keys", billing: "https://platform.claude.com/settings/billing",
+      steps: [
+        ["Abra o console de desenvolvedor", "Acesse platform.claude.com (o antigo console.anthropic.com leva para o mesmo lugar) e entre com seu e-mail ou conta Google. É uma conta separada da assinatura do Claude no app: ter o Claude Pro não dá créditos de API."],
+        ["Coloque créditos", "Em Settings → Billing, cadastre um cartão e compre créditos (o valor mínimo é pequeno). Sem crédito, a chave existe mas o ClassAuthor recebe erro ao usar."],
+        ["Crie a chave", "Em Settings → API keys, clique em «Create key», dê um nome (por exemplo, ClassAtelier), escolha a validade (se pedir) e confirme."],
+        ["Copie na hora", "A chave começa com sk-ant- e aparece uma única vez. Copie e guarde num lugar seguro; se perder, é só apagar e criar outra."],
+        ["Cole aqui", "Volte a esta janela e cole no campo «Sua chave de IA». Pronto: as gerações passam a ser cobradas na sua conta."]
+      ]
+    },
+    openai: {
+      name: "ChatGPT (OpenAI)", prefix: "sk-", url: "https://platform.openai.com/api-keys", billing: "https://platform.openai.com/settings/organization/billing/overview",
+      steps: [
+        ["Abra a plataforma de desenvolvedor", "Acesse platform.openai.com e entre com a mesma conta do ChatGPT ou crie uma. A cobrança da API é separada: o ChatGPT Plus não inclui créditos de API."],
+        ["Coloque créditos", "Em Settings → Billing, adicione um cartão e compre créditos. Sem saldo, a chave é recusada."],
+        ["Crie a chave", "Em API keys, clique em «Create new secret key», dê um nome (por exemplo, ClassAtelier) e confirme."],
+        ["Copie na hora", "A chave começa com sk- e só é mostrada uma vez. Copie e guarde; se perder, crie outra."],
+        ["Cole aqui", "Volte a esta janela e cole no campo «Sua chave de IA»."]
+      ]
+    }
+  };
+  function KeyHelp({ onClose }) {
+    const [tab, setTab] = useState("anthropic");
+    const g = KEY_GUIDES[tab];
+    useEffect(() => { const k = (e) => { if (e.key === "Escape") { e.stopImmediatePropagation(); onClose(); } }; window.addEventListener("keydown", k, true); return () => window.removeEventListener("keydown", k, true); }, []);
+    const tb = (id) => ({ border: tab === id ? "2px solid var(--tool-accent)" : "1px solid var(--tool-line-2)", background: "#fff", borderRadius: 8, padding: tab === id ? "6px 11px" : "7px 12px", fontSize: 12.5, fontWeight: 650, cursor: "pointer", fontFamily: "inherit" });
+    return (
+      <div style={{ position: "fixed", inset: 0, zIndex: 10050, background: "rgba(20,20,28,.5)", display: "grid", placeItems: "center", padding: 16 }} onMouseDown={(e) => { e.stopPropagation(); onClose(); }}>
+        <section role="dialog" aria-modal="true" aria-label="Como gerar a chave de IA" data-ac="keyhelp" onMouseDown={(e) => e.stopPropagation()} style={{ width: "min(600px, 96vw)", maxHeight: "90vh", overflow: "auto", background: "#fff", borderRadius: 14, padding: "16px 20px 18px", boxShadow: "0 24px 70px rgba(0,0,0,.3)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: 10 }}>
+            <div><h2 style={{ margin: 0, fontSize: 17 }}>Como gerar a sua chave de IA</h2>
+              <p style={{ margin: "4px 0 0", fontSize: 12.5, color: "var(--tool-ink-3)", lineHeight: 1.45 }}>Só é preciso se você não tem o código de acesso do ClassAuthor. Escolha um dos dois serviços; não precisa dos dois.</p></div>
+            <button type="button" aria-label="Fechar" onClick={onClose} style={{ ...tb(""), padding: "4px 10px", fontSize: 16, lineHeight: 1 }}>×</button>
+          </div>
+          <div role="tablist" style={{ display: "flex", gap: 8, margin: "12px 0" }}>
+            <button type="button" role="tab" aria-selected={tab === "anthropic"} data-ac="kh-anthropic" onClick={() => setTab("anthropic")} style={tb("anthropic")}>{KEY_GUIDES.anthropic.name}</button>
+            <button type="button" role="tab" aria-selected={tab === "openai"} data-ac="kh-openai" onClick={() => setTab("openai")} style={tb("openai")}>{KEY_GUIDES.openai.name}</button>
+          </div>
+          <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: 10 }}>
+            {g.steps.map(([t, d], i) => (
+              <li key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                <span style={{ flex: "0 0 26px", height: 26, borderRadius: 13, background: "var(--tool-accent)", color: "#fff", display: "grid", placeItems: "center", fontSize: 13, fontWeight: 800 }}>{i + 1}</span>
+                <div><div style={{ fontSize: 13, fontWeight: 700 }}>{t}</div><div style={{ fontSize: 12.5, color: "var(--tool-ink-2)", lineHeight: 1.5 }}>{d}</div></div>
+              </li>
+            ))}
+          </ol>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 14 }}>
+            <a href={g.url} target="_blank" rel="noopener noreferrer" style={{ background: "var(--tool-accent)", color: "#fff", borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 650, textDecoration: "none" }}>Abrir a página de chaves ↗</a>
+            <a href={g.billing} target="_blank" rel="noopener noreferrer" style={{ border: "1px solid var(--tool-line-2)", color: "inherit", borderRadius: 8, padding: "7px 13px", fontSize: 13, fontWeight: 650, textDecoration: "none" }}>Abrir a página de créditos ↗</a>
+          </div>
+          <p style={{ margin: "12px 0 0", fontSize: 11.5, color: "var(--tool-ink-3)", lineHeight: 1.45 }}>Segurança: a chave é como uma senha. Não a envie por e-mail nem a publique. Aqui ela fica só neste navegador e vai direto ao ClassAuthor a cada geração. Os menus desses sites mudam de vez em quando; se um nome não bater, procure por «API keys».</p>
+        </section>
+      </div>
+    );
+  }
+
   function AccessBox() {
     const { base, code, remember, aiKey, setBase, setCode, setRemember, setAiKey } = useAccess();
+    const [help, setHelp] = useState(false);
     const [open] = useState(() => !(accessStore.get().code || accessStore.get().aiKey));
     const inp = { width: "100%", boxSizing: "border-box", padding: "7px 9px", border: "1px solid var(--tool-line-2)", borderRadius: 7, fontSize: 12.5, fontFamily: "inherit", background: "#fff" };
     const lab = { display: "block", fontSize: 11.5, fontWeight: 600, margin: "0 0 3px" };
@@ -270,7 +329,9 @@
         <p style={{ fontSize: 11.5, margin: "6px 0 8px", color: "var(--tool-ink-3)", lineHeight: 1.45 }}>Preencha uma vez: vale para buscar legendas, gerar o resumo com IA e criar figuras com IA. Buscar legendas não usa IA e não tem custo; o resumo e as figuras têm.</p>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <div><label style={lab}>Código de acesso do ClassAuthor</label><input type="password" data-ac="code" value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" spellCheck="false" style={inp} /></div>
-          <div><label style={lab}>Sem o código? Sua chave de IA (o custo é da sua conta)</label><input type="password" data-ac="key" value={aiKey} onChange={(e) => setAiKey(e.target.value)} autoComplete="off" spellCheck="false" placeholder="Opcional (sk-ant-… ou sk-…)" style={inp} /></div>
+          <div><label style={lab}>Sem o código? Sua chave de IA (o custo é da sua conta)</label><input type="password" data-ac="key" value={aiKey} onChange={(e) => setAiKey(e.target.value)} autoComplete="off" spellCheck="false" placeholder="Opcional (sk-ant-… ou sk-…)" style={inp} />
+            <button type="button" data-ac="keyhelp-open" onClick={() => setHelp(true)} style={{ marginTop: 5, border: 0, background: "none", padding: 0, color: "var(--tool-accent)", fontSize: 12, fontWeight: 650, cursor: "pointer", fontFamily: "inherit", textDecoration: "underline" }}>Como gerar a chave de IA? (passo a passo)</button>
+            {help && <KeyHelp onClose={() => setHelp(false)} />}</div>
           <label style={{ display: "flex", gap: 7, fontSize: 11.5, color: "var(--tool-ink-3)" }}><input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} /> Lembrar o código neste navegador</label>
           <div><label style={lab}>Endereço do ClassAuthor</label><input data-ac="base" value={base} onChange={(e) => setBase(e.target.value)} autoComplete="off" spellCheck="false" style={inp} /></div>
         </div>
@@ -379,5 +440,7 @@
       </div>
     );
   }
-  Object.assign(window, { InsertImageDialog, CaptionsFetcher, askCaptions, SubtitleFile, SummaryBox, AccessBox, askSummary });
+  // Acesso ao ClassAuthor para outros módulos (ex.: slides.jsx): endereço, código e chave própria.
+  const aulaAccess = { get: () => accessStore.get(), persist: () => accessStore.persist(), keyHeaders, DEFAULT_BASE };
+  Object.assign(window, { InsertImageDialog, CaptionsFetcher, askCaptions, SubtitleFile, SummaryBox, AccessBox, askSummary, aulaAccess });
 })();

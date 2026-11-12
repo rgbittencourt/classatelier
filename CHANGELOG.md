@@ -4,12 +4,49 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.18.3** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.24.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.24.0 · 12/11/2026 · Diagramas nos slides
+
+- Novo tipo de slide **diagrama**, desenhado pelo ClassAtelier a partir de peças prontas, nas cores da paleta: **eco** (o pulso vai, bate no alvo e volta, com a medida), **ondas** (até 3 comprimentos de onda comparados, com o λ marcado), **curva** (gráfico qualitativo com até 3 séries e marcas no eixo), **reflexão** (superfície lisa, especular, × rugosa, difusa), **geometria de visada** (plataforma, nadir, feixe oblíquo e ângulo), **camadas** (atravessadas por um feixe que enfraquece) e **Bragg** (ondas do mar com λ_B e o feixe em ângulo). Novo arquivo `slides-diagram.js`. Requer ClassAuthor 1.21.0.
+- No PowerPoint, o diagrama entra como imagem PNG nítida (com fundo transparente).
+
+### 1.23.0 · 12/11/2026 · Slides mais visuais, com todas as equações, e símbolos no PowerPoint
+
+- **Quatro tipos novos de slide**, desenhados pelo ClassAtelier: **conta resolvida** (dados → linhas da conta → resultado em destaque), **ciclo** (etapas em círculo, com setas), **escala** (régua ou espectro com marcas, como as bandas de P a Ka ou a escala em dB) e **gráfico de barras** (só com números que estão no texto). Também no PowerPoint.
+- **Todas as equações entram:** as equações da aula (blocos Equação) vão para o plano do deck com a regra de que cada uma ganha seu slide de fórmula, convertida para símbolos Unicode; quando o texto traz valores, entra também a conta resolvida. O plano passa a exigir que ao menos metade dos slides seja visual. Requer ClassAuthor 1.20.0.
+- **PowerPoint sem símbolos perdidos:** letras gregas, sobrescritos e subscritos (λ, σ⁰, Δ, vᵣ, 10⁻³), setas e sinais matemáticos vão em Cambria Math, que vem com o Office; a Space Grotesk não tem grego e o PowerPoint mostrava quadradinhos. Vale também para as tabelas.
+
+### 1.22.0 · 12/11/2026 · Slides planejados pela aula inteira, PowerPoint e mais paletas
+
+- **Conteúdo melhor:** antes de escrever, a IA lê a aula inteira e planeja os N slides de uma vez (seção, tipo, título e ideia de cada um), sem repetir conceito; glossário e revisão ficam com no máximo 1 slide; nada repete a pergunta da aula. Cada parte é escrita seguindo o plano e vendo os títulos do deck inteiro. Analogias, exemplos próximos e contas resolvidas passam a ser permitidos (fatos, números e autores continuam só os do texto). Requer ClassAuthor 1.19.0.
+- **Seções certas:** as aulas vindas do ClassAuthor têm um único Tópico de conteúdo com todos os títulos dentro; antes isso virava uma seção só (roteiro com 1 item e slides repetidos). Agora cada título de nível 2 dentro do Tópico abre uma seção; subtítulos (nível 3) ficam dentro dela.
+- **Baixar PowerPoint (.pptx)**: deck editável, com paleta, fontes, figuras (convertidas para PNG) e notas do apresentador. Usa o PptxGenJS 3.12.0 (`vendor/pptxgen.bundle.js`, MIT), carregado só quando clicado; novo arquivo `slides-pptx.js`.
+- Mais três paletas: **Turquesa** (verde-azulado e âmbar), **Rubi** (carvão e vermelho) e **Nórdico** (azul-ardósia e verde-menta). São 12 no total.
+
+### 1.21.0 · 12/11/2026 · Seis paletas novas para os slides
+
+- Além de Descanso, Floresta e Grafite: **Oceano** (azul-petróleo e coral), **Vinho** (bordô e dourado), **Lavanda** (roxo e verde-água), **Areia** (café e laranja queimado), **Ipê** (magenta e verde-folha) e **Alto contraste** (preto, azul e amarelo, para projetor fraco ou sala clara). Todas passam no contraste mínimo de leitura (WCAG AA) nos textos.
+- As paletas aparecem numa grade mais compacta na janela de slides.
+
+### 1.20.0 · 12/11/2026 · Slides na quantidade pedida, com respostas nas notas
+
+- **Quantidade exata de slides.** Além de Automático, Enxuto (12 de conteúdo) e Completo (32), a opção **Quantos eu quiser** aceita o número de slides de conteúdo. O total é sempre esse número **+ 8 fixos**, e a janela mostra a conta antes de gerar e no resultado.
+- Os 8 fixos agora saem sempre, mesmo se a IA falhar na moldura: Capa, A Pergunta da Aula, Roteiro, Objetivos de Aprendizagem, Síntese, **A Pergunta que Fica** (novo slide, com caminhos para pensar e orientação de resposta nas notas), Referências e Créditos. As referências ficam num slide só (a letra encolhe se forem muitas).
+- Seções grandes viram partes de até 8 slides por chamada; se a IA devolver menos, o ClassAtelier pede o que falta sem repetir assunto; se falhar, completa com slides simples na mesma quantidade.
+- **Notas completas e respostas.** Todo slide sai com notas detalhadas; todo slide com pergunta ou reflexão leva a **RESPOSTA** detalhada nas notas (pedida à parte quando faltar). Novo botão **Baixar notas (.txt)**. Requer ClassAuthor 1.18.0.
+- **Como gerar a chave de IA?** Novo link em «Acesso ao ClassAuthor» (vale para slides, figuras e resumo de vídeo), com o passo a passo da Anthropic e da OpenAI e links para as páginas oficiais de chaves e de créditos.
+
+### 1.19.0 · 12/11/2026 · Botão Slides
+
+- Novo botão **Slides**, na barra de cima: gera uma apresentação profissional da aula aberta, escolhendo só a **paleta** (Descanso, Floresta ou Grafite) e o **tamanho** (Automático, Enxuto ou Completo). A IA do ClassAuthor (rota `/api/slides`, ClassAuthor 1.17.0) escolhe o conteúdo de cada seção dentro de um catálogo fechado de tipos de slide, com notas do apresentador; capa, pergunta, roteiro, objetivos, síntese, referências e créditos entram sozinhos.
+- Sai um arquivo `.html` único, com navegação por teclado, notas (N), tela cheia (F) e impressão de um slide por página (PDF). Com a pasta do projeto ligada, a cópia vai para a nova subpasta `slides/`.
+- Trocar a paleta depois de gerar refaz o visual na hora, sem gastar IA. Novos arquivos: `slides-render.js` (paletas, divisão em seções e desenho) e `slides.jsx` (diálogo).
 
 ### 1.18.3 · 12/11/2026 · Títulos longos na lista de endereços
 
