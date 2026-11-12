@@ -32,7 +32,37 @@
       dark: "#1E2328", dark2: "#2A3138", title: "#1E2328", ink: "#3F4752", muted: "#5D6673",
       accent: "#2F5FA8", accentLight: "#8DB4F0", accentSoft: "#E1E9F6", warn: "#FDF0E3",
       second: "#4A5A6A", secondSoft: "#E6EAEF", onDark: "#CDD3DA", onDarkMuted: "#97A1AD", onAccent: "#F7FAFE", onAccentMuted: "#DCE6F5"
-    }
+    },
+    { id: "oceano", name: "Oceano", hint: "Azul-petróleo e coral, tons de mar",
+    bg: "#F2F5F6", bg2: "#E2ECEF", card: "#FAFCFC", line: "#D3DEE2", rule: "#CCD8DC",
+    dark: "#0A2A36", dark2: "#12404F", title: "#0A2A36", ink: "#34484F", muted: "#586B72",
+    accent: "#A63B39", accentLight: "#F09A8C", accentSoft: "#F6DEDA", warn: "#FBEAE7",
+    second: "#1F6F8B", secondSoft: "#DDEBF0", onDark: "#C5D8DE", onDarkMuted: "#8AA6AF", onAccent: "#FFF6F4", onAccentMuted: "#FBE6E2" },
+    { id: "vinho", name: "Vinho", hint: "Bordô e dourado, tom acadêmico",
+    bg: "#F6F2EE", bg2: "#EEE5E1", card: "#FCFAF8", line: "#E0D5CE", rule: "#D9CCC4",
+    dark: "#3A1220", dark2: "#521B2E", title: "#3A1220", ink: "#4A3A3F", muted: "#6E5D62",
+    accent: "#8C5A0E", accentLight: "#E6BC6A", accentSoft: "#F3E6CC", warn: "#F9EFDD",
+    second: "#7A2E45", secondSoft: "#F0E0E5", onDark: "#E8D3D9", onDarkMuted: "#B793A0", onAccent: "#FFF9EE", onAccentMuted: "#F5E5C8" },
+    { id: "lavanda", name: "Lavanda", hint: "Roxo profundo e verde-água",
+    bg: "#F5F3F8", bg2: "#E9E5F1", card: "#FCFBFE", line: "#DCD6E6", rule: "#D4CDE0",
+    dark: "#23173F", dark2: "#33245A", title: "#23173F", ink: "#403A4F", muted: "#635C73",
+    accent: "#6B3FA0", accentLight: "#B79BE0", accentSoft: "#E9E0F5", warn: "#F3EDFA",
+    second: "#1E7A72", secondSoft: "#DDEFEC", onDark: "#D4CCE6", onDarkMuted: "#9C91B8", onAccent: "#FAF7FF", onAccentMuted: "#E3D8F4" },
+    { id: "areia", name: "Areia", hint: "Café e laranja queimado, tons de terra",
+    bg: "#F7F2EA", bg2: "#EFE6D8", card: "#FCF9F4", line: "#E3D8C6", rule: "#DBCDB7",
+    dark: "#2B1D12", dark2: "#3F2B1B", title: "#2B1D12", ink: "#4A3F35", muted: "#6E6255",
+    accent: "#A8431A", accentLight: "#F0A274", accentSoft: "#F6E0D2", warn: "#FBEDE3",
+    second: "#546E33", secondSoft: "#E7EEDC", onDark: "#E3D6C6", onDarkMuted: "#AE9A84", onAccent: "#FFF8F2", onAccentMuted: "#F7DFCF" },
+    { id: "ipe", name: "Ipê", hint: "Magenta de ipê e verde-folha",
+    bg: "#F8F3F4", bg2: "#F0E6EA", card: "#FDFAFB", line: "#E5D6DC", rule: "#DDCCD3",
+    dark: "#2A1426", dark2: "#3E1E39", title: "#2A1426", ink: "#47394A", muted: "#6B5C6C",
+    accent: "#A82D68", accentLight: "#F08DBB", accentSoft: "#F7DDE9", warn: "#FBEBF2",
+    second: "#4F7A28", secondSoft: "#E5EEDA", onDark: "#E6D3E2", onDarkMuted: "#B394AD", onAccent: "#FFF6FA", onAccentMuted: "#F8D9E7" },
+    { id: "contraste", name: "Alto contraste", hint: "Preto, azul e amarelo, para projetor fraco",
+    bg: "#FFFFFF", bg2: "#EEF1F5", card: "#FFFFFF", line: "#C9D0D9", rule: "#BFC7D1",
+    dark: "#0B0D12", dark2: "#1B2230", title: "#0B0D12", ink: "#1F2630", muted: "#3F4856",
+    accent: "#0A4FB8", accentLight: "#FFD23F", accentSoft: "#E1ECFB", warn: "#FFF4CC",
+    second: "#8A1C1C", secondSoft: "#F8E1E1", onDark: "#E6EAF0", onDarkMuted: "#AAB4C2", onAccent: "#FFFFFF", onAccentMuted: "#DCE8FB" }
   ];
   const paletteById = (id) => PALETTES.find((p) => p.id === id) || PALETTES[0];
 

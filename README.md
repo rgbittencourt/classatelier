@@ -17,11 +17,11 @@ O SCORM pode ser configurado como **1.2** — padrão de maior compatibilidade �
 
 ## Versão do aplicativo
 
-ClassAtelier **1.20.0** (Versionamento Semântico). O histórico está em [`CHANGELOG.md`](CHANGELOG.md). O ClassAcervo tem repositório e versão próprios (ver a seção abaixo).
+ClassAtelier **1.21.0** (Versionamento Semântico). O histórico está em [`CHANGELOG.md`](CHANGELOG.md). O ClassAcervo tem repositório e versão próprios (ver a seção abaixo).
 
 ## Slides
 
-O botão **Slides** (barra de cima, ao lado de Apresentar) gera uma apresentação profissional a partir da aula aberta, do jeito que ela está no editor. Você escolhe só a **paleta de cores** (Descanso, Floresta ou Grafite) e a **quantidade de slides de conteúdo**: Automático (pelo tamanho do texto), Enxuto (12), Completo (32) ou **Quantos eu quiser** (digite o número). O total é sempre **8 fixos + os de conteúdo**.
+O botão **Slides** (barra de cima, ao lado de Apresentar) gera uma apresentação profissional a partir da aula aberta, do jeito que ela está no editor. Você escolhe só a **paleta de cores** (Descanso, Floresta, Grafite, Oceano, Vinho, Lavanda, Areia, Ipê ou Alto contraste) e a **quantidade de slides de conteúdo**: Automático (pelo tamanho do texto), Enxuto (12), Completo (32) ou **Quantos eu quiser** (digite o número). O total é sempre **8 fixos + os de conteúdo**.
 
 - A aula é dividida em seções (cada Tópico, Título de seção ou Divisor começa uma). Para cada seção, a IA do ClassAuthor (o mesmo endereço e código de acesso das figuras) escolhe o conteúdo dos slides dentro de um catálogo fechado: frase de impacto, cartões, comparação, etapas, fórmula, número de destaque, tabela, linha do tempo, pergunta para refletir, atenção, citação e as figuras da própria aula. Cada slide traz notas do apresentador; as perguntas «Para refletir» levam a resposta detalhada nas notas.
 - Os 8 fixos, sempre nesta ordem: Capa, A Pergunta da Aula e Roteiro e Objetivos de Aprendizagem no começo; Síntese, A Pergunta que Fica, Referências (do bloco Referências) e Créditos no fim.
