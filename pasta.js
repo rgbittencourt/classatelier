@@ -54,8 +54,8 @@
     if (/-entrega\.zip$/.test(n)) return "entrega";
     if (/-scorm\.zip$/.test(n)) return "scorm";
     if (/-site\.zip$/.test(n)) return "site";
-    if (/-html\.zip$|\.html?$/.test(n)) return "html";
-    if (/\.json$/.test(n)) return "projetos";
+    if (/-html\.zip$|\.html?$/i.test(n)) return "html";
+    if (/\.json$/i.test(n)) return "projetos";
     if (/\.(png|jpe?g|webp|gif|svg)$/.test(n)) return "imagens";
     if (/\.pdf$/.test(n)) return "pdf";
     if (/\.txt$|\.md$/.test(n)) return "textos";

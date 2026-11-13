@@ -13,8 +13,8 @@
 (function () {
   var BASE = window.AULA_BASE || "";
   // Versão do ClassAtelier (Versionamento Semântico; histórico em CHANGELOG.md).
-  window.CLASSATELIER_VERSION = "1.25.1";
-  var BUILD_REV = "20261113-v1.25.1";
+  window.CLASSATELIER_VERSION = "1.26.0";
+  var BUILD_REV = "20261113-v1.26.0d";
   var theme = window.resolveAulaTheme();
   window.AULA_ACTIVE_THEME = theme;
 
@@ -52,6 +52,7 @@
   // 3b) KaTeX (bloco Equação): CSS e script locais; as aulas exportadas levam a própria cópia
   w('<link rel="stylesheet" href="' + attr(rev(BASE + "vendor/katex/katex.min.css")) + '" />');
   w('<script src="' + attr(rev(BASE + "vendor/katex/katex.min.js")) + '"><\/script>');
+  w('<script src="' + attr(rev(BASE + "vendor/katex/mhchem.min.js")) + '"><\/script>');   // notação química \ce{…}
 
   // 4) "Pele" da ferramenta a partir do tema (sobrescreve os defaults do index.html)
   var t = theme.tool || {};
@@ -77,6 +78,9 @@
 
   // 6b) Leitor de legendas .srt/.vtt (só do editor; a aula exportada recebe as falas prontas)
   w('<script src="' + attr(rev(BASE + "legendas.js")) + '"><\/script>');
+  // 6b2) Catálogo da paleta de equações (matemática, física, química e bioquímica); só do editor
+  w('<script src="' + attr(rev(BASE + "equacao-catalogo.js")) + '"><\/script>');
+  w('<script src="' + attr(rev(BASE + "equacao-quimica.js")) + '"><\/script>');
   // 6c) Motor das referências ABNT (NBR 6023), cópia do ClassAuthor
   w('<script src="' + attr(rev(BASE + "abnt.js")) + '"><\/script>');
   // 6d) Gerador de slides: paletas, divisão da aula em seções e desenho do HTML (botão «Slides»)

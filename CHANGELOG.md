@@ -4,12 +4,28 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.25.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.26.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.26.0 · 13/11/2026 · Editor de equações ampliado: Matemática e Física, Química e Bioquímica
+
+O painel do bloco **Equação** continua escrevendo LaTeX (as equações já salvas abrem e editam como antes), mas agora tem **dois botões que abrem as paletas**: **Matemática e Física** e **Química e Bioquímica**. O painel começa enxuto; a paleta só aparece quando você a abre.
+
+- **Modelos com campos.** Clicar num botão tracejado insere uma estrutura editável no cursor; **Tab** vai de campo em campo, **Shift+Tab** volta, **Alt+→** (ou Tab no último campo) sai da estrutura, **Esc** encerra. Se houver um trecho selecionado, ele entra no primeiro campo (selecione `a+b`, clique em raiz e saem `√(a+b)`). Modelos dentro de modelos (fração com raiz no numerador) funcionam, e o Tab continua nos campos que faltavam. **Desfazer** e **Refazer** (e Ctrl+Z / Ctrl+Y) acompanham cada inserção.
+- **Busca** por nome ou símbolo nas duas paletas (`derivada parcial`, `pertence`, `sigma`, `norma`, `integral dupla`, `ATP`…), **prévia** do botão sob o mouse ou o foco, nomes acessíveis em português («Inserir modelo: Fração empilhada») e setas do teclado entre os botões de cada grupo.
+- **Matemática e Física:** grupos Estruturas (frações e raízes aninhadas, expoentes e índices, delimitadores que crescem com a expressão, intervalos, marcas sobre expressões com chaves e anotação, binomial, avaliação nos limites), Gregas (24 minúsculas e 24 MAIÚSCULAS em ordem alfabética, mais as formas alternativas ϵ ϑ **ϰ** ϖ ϱ ς («sigma final») ϕ **ϴ** num grupo menor), Funções e operadores nomeados, Cálculo (limites comuns, laterais e no infinito; derivadas ordinárias, parciais, de ordem superior e mistas; ∑ ∏ ⋃ ⋂; integrais ∫ ∬ ∭ ∮ ∯ e aninhadas; ∇, divergência, rotacional, laplaciano), Símbolos, Conjuntos, Lógica (∃!, ⊢ «dedutibilidade», ⊨ «consequência semântica»…), Notação científica e unidades, e Física, estatística e álgebra linear (grupos avançados, recolhidos).
+- **Construtor de matriz, sistema e função por partes:** matriz com parênteses ou colchetes, vetor-coluna, vetor-linha, determinante, sistema com chave, função por partes (valor e condição) e equações alinhadas em «=» ou em outro sinal. **+/− linha e coluna** sem perder as outras células, e **Ler a tabela do cursor** para editar depois uma que já está no texto.
+- **Letras gregas parecidas com latinas** (Α Β Ε Ζ Η Ι Κ Μ Ν Ο Ρ Τ Υ Χ e ο) entram como letra grega e continuam gregas ao salvar, reabrir e exportar; Σ≠∑, Π≠∏, Δ≠∆ e ϵ≠∈ ficam distintos.
+- **Química e Bioquímica** (notação `\ce{…}` do mhchem, que acompanha o KaTeX e entra nos pacotes exportados): grupos **Fórmulas** (símbolos de elementos em letra reta, `Co` ≠ `CO`, índices, parênteses e colchetes, cargas com magnitude antes do sinal, isótopos com massa e número atômico em campos separados, hidratos, coeficiente + fórmula + estado), **Reações** (setas de reação, equilíbrio e ressonância, anotação acima e abaixo da seta, modelos de equação molecular, iônica, iônica líquida e semirreações, etapas encadeadas e equações alinhadas), **Orgânica** (ligações simples, duplas e triplas em linha, fórmulas condensadas, grupos funcionais) e **Bioquímica** (ATP, ADP, AMP, Pᵢ, PPᵢ, NAD⁺, NADH, NADP⁺, NADPH, FAD, FADH₂, CoA, acetil-CoA; reações enzimáticas; fosforilação, hidrólise e oxirredução marcadas como «representação abreviada»; cinética de Michaelis–Menten e Lineweaver–Burk; Kₐ, pKₐ, K_eq, pH e Henderson–Hasselbalch). Química e matemática se combinam na mesma fórmula (`[S]` numa fração mantém a tipografia da espécie).
+- **Construtor de reação:** reagentes e produtos com coeficiente, fórmula e estado ((s) (l) (g) (aq)) em campos separados, setas rotuladas com texto acima e abaixo (Δ e hν em um clique), etapas encadeadas, e **Ler a reação do cursor** / **Atualizar** para editar uma reação já escrita.
+- **Fórmula compacta (estilo de linha de texto):** nova opção do bloco, com frações, somatórios e limites menores, como numa frase. Fórmula escrita no meio de um parágrafo continua sendo um bloco (limite conhecido).
+- **Exemplos prontos** de matemática, química e bioquímica.
+- **Abrir:** o seletor de arquivos do botão **Abrir** continua filtrando só o que serve (`.json` ou `.JSON`, em qualquer caixa, e `.html`) e também reconhece uma **aula exportada em HTML** (arquivo único), que guarda a aula dentro. Arquivo que não é aula (um PDF, por exemplo) avisa com uma mensagem clara dizendo o que procurar.
+- **Limites desta versão:** a edição continua em campo de texto LaTeX com campos guiados (não é edição direta sobre a fórmula desenhada); desenho de moléculas, verificação de balanceamento e balanceamento automático ficam para uma etapa própria; o `\ce{…}` não entende tudo o que a química escreve, e o que o renderizador recusar aparece como «Fórmula com erro de sintaxe» com o texto digitado preservado. Sintaxes que o KaTeX não tem (`\increment`, `\lcm`, `\sideset`…) não estão nos botões. Testes automáticos em `tests/equacoes.test.js`.
 
 ### 1.25.1 · 13/11/2026 · Sublinhado e superlinhado que se combinam
 
