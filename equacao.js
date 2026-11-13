@@ -30,11 +30,15 @@
   injectCss();
 
   // Devolve { html } ou { error }. Nunca lança.
-  function renderEquation(latex) {
+  function renderEquation(latex, opts) {
     var src = String(latex == null ? "" : latex).trim();
     if (!src) return { empty: true };
     if (!window.katex) return { loading: true };
-    try { return { html: window.katex.renderToString(src, KATEX_OPTS) }; }
+    try {
+      var o = KATEX_OPTS;
+      if (opts && opts.compact) { o = {}; for (var k in KATEX_OPTS) o[k] = KATEX_OPTS[k]; o.displayMode = false; }
+      return { html: window.katex.renderToString(src, o) };
+    }
     catch (e) { return { error: String((e && e.message) || e).replace(/^KaTeX parse error:\s*/i, "") }; }
   }
 
@@ -80,7 +84,7 @@
     var h = React.createElement;
     var useState = React.useState, useEffect = React.useEffect;
     var tick = useState(0), setTick = tick[1];
-    var r = renderEquation(props.latex);
+    var r = renderEquation(props.latex, { compact: !!props.compact });
     // O KaTeX pode chegar depois (CDN): tenta de novo por alguns segundos.
     useEffect(function () {
       if (!r.loading) return;
@@ -106,7 +110,7 @@
         m.style.fontSize = (base * scale) + "em";
       }
     };
-    React.useLayoutEffect(fit, [r.html, size, autoFit, props.number]);
+    React.useLayoutEffect(fit, [r.html, size, autoFit, props.number, props.compact]);
     useEffect(function () {
       var f = figRef.current; if (!f || !window.ResizeObserver || !autoFit) return;
       var w = f.clientWidth, ro = new ResizeObserver(function () { if (f.clientWidth !== w) { w = f.clientWidth; fit(); } });

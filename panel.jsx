@@ -607,144 +607,409 @@ function TimelineEditor({ p, setP }) {
 }
 
 
-// ── Equação: fórmula em LaTeX (KaTeX) com atalhos para quem não conhece a sintaxe ──
-const EQ_STRUCT = [
-  ["a/b", "\\frac{¤}{}", "Fração"], ["√", "\\sqrt{¤}", "Raiz quadrada"], ["ⁿ√", "\\sqrt[¤]{}", "Raiz de índice n"],
-  ["xⁿ", "^{¤}", "Potência (expoente)"], ["xₙ", "_{¤}", "Índice (subscrito)"], ["Σ", "\\sum_{i=1}^{n} ¤", "Somatório"],
-  ["∫", "\\int_{a}^{b} ¤\\,dx", "Integral"], ["lim", "\\lim_{x \\to ¤}", "Limite"], ["v⃗", "\\vec{¤}", "Vetor"],
-  ["x̄", "\\bar{¤}", "Barra (média)"], ["∂", "\\frac{\\partial ¤}{\\partial x}", "Derivada parcial"], ["abc", "\\text{¤}", "Texto dentro da fórmula"],
-  ["( )", "\\left( ¤ \\right)", "Parênteses que crescem"],
-];
-// Alfabeto grego completo, em dois quadros (minúsculas e maiúsculas). As maiúsculas iguais às
-// latinas (A, B, E…) não têm comando próprio no LaTeX: entram como letra reta (\mathrm).
-const EQ_GREEK_LOWER = [
-  ["α", "\\alpha ", "alfa"], ["β", "\\beta ", "beta"], ["γ", "\\gamma ", "gama"], ["δ", "\\delta ", "delta"], ["ε", "\\varepsilon ", "épsilon"], ["ϵ", "\\epsilon ", "épsilon (variante)"],
-  ["ζ", "\\zeta ", "zeta"], ["η", "\\eta ", "eta"], ["θ", "\\theta ", "teta"], ["ϑ", "\\vartheta ", "teta (variante)"], ["ι", "\\iota ", "iota"], ["κ", "\\kappa ", "capa"],
-  ["λ", "\\lambda ", "lambda"], ["μ", "\\mu ", "mi"], ["ν", "\\nu ", "ni"], ["ξ", "\\xi ", "csi"], ["ο", "o", "ômicron"], ["π", "\\pi ", "pi"], ["ϖ", "\\varpi ", "pi (variante)"],
-  ["ρ", "\\rho ", "rô"], ["ϱ", "\\varrho ", "rô (variante)"], ["σ", "\\sigma ", "sigma"], ["ς", "\\varsigma ", "sigma final"], ["τ", "\\tau ", "tau"], ["υ", "\\upsilon ", "ípsilon"],
-  ["φ", "\\varphi ", "fi"], ["ϕ", "\\phi ", "fi (variante)"], ["χ", "\\chi ", "qui"], ["ψ", "\\psi ", "psi"], ["ω", "\\omega ", "ômega"],
-];
-const EQ_GREEK_UPPER = [
-  ["Α", "\\mathrm{A}", "Alfa"], ["Β", "\\mathrm{B}", "Beta"], ["Γ", "\\Gamma ", "Gama"], ["Δ", "\\Delta ", "Delta"], ["Ε", "\\mathrm{E}", "Épsilon"], ["Ζ", "\\mathrm{Z}", "Zeta"],
-  ["Η", "\\mathrm{H}", "Eta"], ["Θ", "\\Theta ", "Teta"], ["Ι", "\\mathrm{I}", "Iota"], ["Κ", "\\mathrm{K}", "Capa"], ["Λ", "\\Lambda ", "Lambda"], ["Μ", "\\mathrm{M}", "Mi"],
-  ["Ν", "\\mathrm{N}", "Ni"], ["Ξ", "\\Xi ", "Csi"], ["Ο", "\\mathrm{O}", "Ômicron"], ["Π", "\\Pi ", "Pi"], ["Ρ", "\\mathrm{P}", "Rô"], ["Σ", "\\Sigma ", "Sigma"],
-  ["Τ", "\\mathrm{T}", "Tau"], ["Υ", "\\Upsilon ", "Ípsilon"], ["Φ", "\\Phi ", "Fi"], ["Χ", "\\mathrm{X}", "Qui"], ["Ψ", "\\Psi ", "Psi"], ["Ω", "\\Omega ", "Ômega"],
-];
-const EQ_SYMS = [
-  ["±", "\\pm "], ["×", "\\times "], ["·", "\\cdot "], ["÷", "\\div "], ["≤", "\\leq "], ["≥", "\\geq "], ["≠", "\\neq "], ["≈", "\\approx "],
-  ["∞", "\\infty "], ["→", "\\rightarrow "], ["⇒", "\\Rightarrow "], ["°", "^{\\circ}"], ["∝", "\\propto "], ["∈", "\\in "],
-];
-const EQ_SETS = [
-  ["∪", "\\cup ", "União"], ["∩", "\\cap ", "Interseção"], ["∖", "\\setminus ", "Diferença (A menos B)"], ["△", "\\triangle ", "Diferença simétrica"],
-  ["Ā", "\\overline{¤}", "Complementar (barra)"], ["Aᶜ", "^{c}", "Complementar (expoente c)"], ["∅", "\\emptyset ", "Conjunto vazio"],
-  ["∈", "\\in ", "Pertence"], ["∉", "\\notin ", "Não pertence"], ["⊂", "\\subset ", "Contido (próprio)"], ["⊆", "\\subseteq ", "Contido ou igual"],
-  ["⊄", "\\not\\subset ", "Não contido"], ["⊃", "\\supset ", "Contém (próprio)"], ["⊇", "\\supseteq ", "Contém ou igual"], ["A×B", "\\times ", "Produto cartesiano"],
-  ["{ }", "\\left\\{ ¤ \\right\\}", "Conjunto entre chaves"], ["{x|}", "\\left\\{ x \\mid ¤ \\right\\}", "Conjunto por propriedade"], ["|A|", "\\left| ¤ \\right|", "Cardinalidade"],
-  ["⋃", "\\bigcup_{i=1}^{n} ¤", "União de vários conjuntos"], ["⋂", "\\bigcap_{i=1}^{n} ¤", "Interseção de vários conjuntos"], ["𝒫", "\\mathcal{P}(¤)", "Conjunto das partes"],
-  ["ℕ", "\\mathbb{N}", "Naturais"], ["ℤ", "\\mathbb{Z}", "Inteiros"], ["ℚ", "\\mathbb{Q}", "Racionais"], ["ℝ", "\\mathbb{R}", "Reais"], ["ℂ", "\\mathbb{C}", "Complexos"],
-];
-const EQ_LOGIC = [
-  ["∧", "\\land ", "E (conjunção)"], ["∨", "\\lor ", "OU (disjunção)"], ["¬", "\\neg ", "Negação"], ["⊕", "\\oplus ", "OU exclusivo (XOR)"],
-  ["→", "\\rightarrow ", "Implicação"], ["↔", "\\leftrightarrow ", "Bicondicional"], ["⇒", "\\Rightarrow ", "Implica (⇒)"], ["⇔", "\\Leftrightarrow ", "Se e somente se (⇔)"],
-  ["≡", "\\equiv ", "Equivalente"], ["∀", "\\forall ", "Para todo"], ["∃", "\\exists ", "Existe"], ["∄", "\\nexists ", "Não existe"],
-  ["⊤", "\\top ", "Verdadeiro"], ["⊥", "\\bot ", "Falso"], ["∴", "\\therefore ", "Portanto"], ["∵", "\\because ", "Pois"],
-  ["⊢", "\\vdash ", "Prova (deriva)"], ["⊨", "\\models ", "Satisfaz (modela)"], ["↑", "\\uparrow ", "NAND (barra de Sheffer)"], ["↓", "\\downarrow ", "NOR (seta de Peirce)"],
-  ["p̄", "\\overline{¤}", "Negação (barra em cima)"],
-];
-const EQ_EXAMPLES = [
-  ["Teorema de Pitágoras", "a^{2} + b^{2} = c^{2}"],
-  ["Fórmula de Bhaskara", "x = \\frac{-b \\pm \\sqrt{b^{2} - 4ac}}{2a}"],
-  ["Velocidade média", "v_m = \\frac{\\Delta s}{\\Delta t}"],
-  ["2ª lei de Newton", "\\vec{F} = m\\,\\vec{a}"],
-  ["Energia cinética", "E_c = \\frac{1}{2}\\, m\\, v^{2}"],
-  ["Lei de Ohm", "V = R \\cdot I"],
-  ["Gravitação universal", "F = G\\,\\frac{m_1\\, m_2}{r^{2}}"],
-  ["Equivalência massa-energia", "E = mc^{2}"],
-  ["Derivada (definição)", "\\frac{dy}{dx} = \\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}"],
-  ["Teorema fundamental do cálculo", "\\int_{a}^{b} f(x)\\,dx = F(b) - F(a)"],
-  ["Média aritmética", "\\bar{x} = \\frac{1}{n} \\sum_{i=1}^{n} x_i"],
-  ["Conjuntos: união e interseção", "\\left| A \\cup B \\right| = \\left| A \\right| + \\left| B \\right| - \\left| A \\cap B \\right|"],
-  ["Conjuntos: diferença", "A \\setminus B = \\left\\{ x \\mid x \\in A \\land x \\notin B \\right\\}"],
-  ["Conjuntos: De Morgan", "\\overline{A \\cup B} = \\overline{A} \\cap \\overline{B}"],
-  ["Lógica: De Morgan", "\\neg (p \\land q) \\equiv \\neg p \\lor \\neg q"],
-  ["Lógica: condicional", "p \\rightarrow q \\equiv \\neg p \\lor q"],
-  ["Lógica: quantificadores", "\\forall x \\in A,\\ \\exists y \\in B : P(x, y)"],
-];
-function GreekPicker({ insert, btn }) {
+// ── Equação: fórmula em LaTeX (KaTeX) com duas paletas — «Matemática e Física» e «Química e Bioquímica» ──
+// Os catálogos ficam em equacao-catalogo.js (window.EQ) e equacao-quimica.js (window.EQ.CHEM). A fórmula
+// continua sendo texto LaTeX (equações antigas abrem e editam como antes); a paleta só ajuda a escrevê-la:
+// modelos com campos (Tab pula de campo em campo), busca, prévia e construtores de matriz e de reação.
+const EQ_BTN = { border: "1px solid var(--tool-line-2)", background: "#fff", borderRadius: 7, padding: "4px 7px", minWidth: 34, minHeight: 32, fontSize: 13, cursor: "pointer", color: "var(--tool-ink)", fontFamily: "inherit", display: "inline-flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden", lineHeight: 1.25, scrollMarginTop: 72, scrollMarginBottom: 12 };
+const EQ_TPL_BTN = { ...EQ_BTN, border: "1px dashed var(--tool-accent, #C4553A)", background: "var(--tool-surface, #faf8f3)", paddingRight: 11 };
+const EQ_SUBH = { flexBasis: "100%", fontSize: 10.5, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--tool-ink-3)", margin: "8px 0 0" };
+
+function eqKatex(latex) {
+  try { return window.katex ? window.katex.renderToString(latex, { throwOnError: true, displayMode: false, output: "html", strict: "ignore", trust: false }) : null; } catch (e) { return null; }
+}
+function eqFace(it) {
+  let f = it.face || (it.ce !== undefined ? "\\ce{" + it.ce.split("¤").join("$\\square$") + "}" : it.latex);
+  return f.split("‹").join("").split("›").join("").split("¤").join("\\square ");
+}
+function eqCode(it) {
+  const raw = it.ce !== undefined ? "\\ce{" + it.ce + "}" : it.latex;
+  return window.EQ.expand(raw, "").text;
+}
+function EqFace({ html, fallback }) {
+  return html ? <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: html }} /> : <span aria-hidden="true" style={{ fontSize: 11 }}>{fallback}</span>;
+}
+function EqBtn({ it, onInsert, onPreview, tab }) {
+  const html = React.useMemo(() => eqKatex(eqFace(it)), [it]);
+  const tpl = it.kind === "tpl";
+  return (
+    <button type="button" data-eq-item={it.label} data-eq-kind={tpl ? "modelo" : "simbolo"} tabIndex={tab}
+      aria-label={(tpl ? "Inserir modelo: " : "Inserir símbolo: ") + it.label}
+      title={it.label + (tpl ? " (modelo com campos)" : "")}
+      onClick={() => onInsert(it)} onMouseEnter={() => onPreview(it)} onFocus={() => onPreview(it)} style={tpl ? EQ_TPL_BTN : EQ_BTN}>
+      <EqFace html={html} fallback={it.label} />
+      {tpl && <span aria-hidden="true" style={{ position: "absolute", top: 2, right: 3, width: 4, height: 4, borderRadius: 1, background: "var(--tool-accent, #C4553A)" }} />}
+    </button>
+  );
+}
+// Grupo recolhível. Uma parada de Tab por grupo; as setas andam entre os botões (grade de ferramentas).
+function EqGroup({ group, onInsert, onPreview, forceOpen }) {
+  const [active, setActive] = React.useState(0);
+  const box = React.useRef(null);
+  const onKey = (e) => {
+    if (!["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
+    const bs = Array.from(box.current.querySelectorAll("button[data-eq-item]")); const i = bs.indexOf(document.activeElement);
+    if (i < 0) return;
+    let n = i;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") n = Math.min(bs.length - 1, i + 1);
+    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") n = Math.max(0, i - 1);
+    else if (e.key === "Home") n = 0; else n = bs.length - 1;
+    e.preventDefault(); bs[n].focus(); setActive(n);
+  };
+  let idx = -1;
+  return (
+    <details open={forceOpen || group.open || undefined} data-eq-group={group.id} style={{ border: "1px solid var(--tool-line)", borderRadius: 9, margin: "0 0 8px", background: "#fff" }}>
+      <summary style={{ cursor: "pointer", padding: "8px 10px", fontSize: 12.5, fontWeight: 650, color: "var(--tool-ink)" }}>{group.label}{group.adv ? <span style={{ fontWeight: 500, color: "var(--tool-ink-3)" }}> · avançado</span> : null}</summary>
+      <div ref={box} role="toolbar" aria-label={group.label} onKeyDown={onKey} style={{ display: "flex", flexWrap: "wrap", gap: 5, padding: "0 10px 10px" }}>
+        {group.items.map((it, k) => {
+          if (it.sub) return <div key={"s" + k} style={EQ_SUBH}>{it.sub}</div>;
+          idx++; const my = idx;
+          return <EqBtn key={k} it={it} tab={my === active ? 0 : -1} onInsert={(x) => { setActive(my); onInsert(x); }} onPreview={onPreview} />;
+        })}
+      </div>
+    </details>
+  );
+}
+
+function GreekPicker({ onInsert, onPreview }) {
   const KEY = "classatelier.eq.greekCase";
   const [upper, setUpper] = React.useState(() => { try { return localStorage.getItem(KEY) === "upper"; } catch (e) { return false; } });
   const pick = (v) => { setUpper(v); try { localStorage.setItem(KEY, v ? "upper" : "lower"); } catch (e) { /* sem armazenamento */ } };
-  const list = upper ? EQ_GREEK_UPPER : EQ_GREEK_LOWER;
+  const list = upper ? window.EQ.GREEK_UPPER : window.EQ.GREEK_LOWER;
   const seg = (on) => ({ border: 0, borderRadius: 6, padding: "4px 10px", fontSize: 12, fontWeight: 650, cursor: "pointer", fontFamily: "inherit", background: on ? "#fff" : "transparent", color: on ? "var(--tool-ink)" : "var(--tool-ink-3)", boxShadow: on ? "0 1px 2px rgba(0,0,0,.12)" : "none" });
+  const item = (r, alt) => ({ kind: "sym", latex: r[1], label: "Letra grega " + (alt ? "alternativa " : upper ? "maiúscula " : "minúscula ") + r[2] + " (" + r[0] + ")", face: r[1], glyph: r[0] });
+  const gb = { ...EQ_BTN, fontSize: 15, fontFamily: "'Times New Roman', Georgia, serif" };
   return (
-    <Field label="Letras gregas">
-      <div role="radiogroup" aria-label="Maiúsculas ou minúsculas" style={{ display: "inline-flex", gap: 2, padding: 2, borderRadius: 8, background: "var(--tool-surface)", border: "1px solid var(--tool-line)", marginBottom: 7 }}>
-        <button type="button" role="radio" aria-checked={!upper} data-eq="greek-lower" onClick={() => pick(false)} style={seg(!upper)}>α  minúsculas</button>
-        <button type="button" role="radio" aria-checked={upper} data-eq="greek-upper" onClick={() => pick(true)} style={seg(upper)}>Ω  MAIÚSCULAS</button>
+    <details open data-eq-group="gregas" style={{ border: "1px solid var(--tool-line)", borderRadius: 9, margin: "0 0 8px", background: "#fff" }}>
+      <summary style={{ cursor: "pointer", padding: "8px 10px", fontSize: 12.5, fontWeight: 650 }}>Gregas</summary>
+      <div style={{ padding: "0 10px 10px" }}>
+        <div role="radiogroup" aria-label="Maiúsculas ou minúsculas" style={{ display: "inline-flex", gap: 2, padding: 2, borderRadius: 8, background: "var(--tool-surface)", border: "1px solid var(--tool-line)", marginBottom: 7 }}>
+          <button type="button" role="radio" aria-checked={!upper} data-eq="greek-lower" onClick={() => pick(false)} style={seg(!upper)}>α  minúsculas</button>
+          <button type="button" role="radio" aria-checked={upper} data-eq="greek-upper" onClick={() => pick(true)} style={seg(upper)}>Ω  MAIÚSCULAS</button>
+        </div>
+        <div data-eq="greek-grid" role="group" aria-label={upper ? "Letras gregas maiúsculas" : "Letras gregas minúsculas"} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(34px, 1fr))", gap: 5 }}>
+          {list.map((r) => { const it = item(r); return <button key={r[0]} type="button" data-eq-item={it.label} aria-label={"Inserir " + it.label} title={r[2] + " — " + r[1].trim()} onClick={() => onInsert(it)} onMouseEnter={() => onPreview(it)} onFocus={() => onPreview(it)} style={gb}>{r[0]}</button>; })}
+        </div>
+        <div style={{ ...EQ_SUBH, margin: "10px 0 5px" }}>Formas alternativas</div>
+        <div data-eq="greek-alt" role="group" aria-label="Formas alternativas das letras gregas" style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+          {window.EQ.GREEK_ALT.map((r) => { const it = item(r, true); return (
+            <button key={r[0]} type="button" data-eq-item={it.label} aria-label={"Inserir " + it.label} title={r[2] + " — " + r[1].trim()} onClick={() => onInsert(it)} onMouseEnter={() => onPreview(it)} onFocus={() => onPreview(it)} style={{ ...gb, fontSize: 12.5, gap: 6, padding: "3px 8px" }}>
+              <span style={{ fontSize: 15 }}>{r[0]}</span><span style={{ fontFamily: "inherit", color: "var(--tool-ink-2)" }}>{r[2]}</span>
+            </button>); })}
+        </div>
       </div>
-      <div data-eq="greek-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(34px, 1fr))", gap: 5 }}>
-        {list.map(([l, s, name]) => <button key={l + s} type="button" title={name + " — " + s.trim()} aria-label={"Inserir " + name} onClick={() => insert(s)} style={{ ...btn, fontSize: 15, fontFamily: "'Times New Roman', Georgia, serif" }}>{l}</button>)}
+    </details>
+  );
+}
+
+// ── Construtor de matriz, vetor, determinante, sistema, função por partes e equações alinhadas ──
+function TableBuilder({ taRef, replaceRange, insertAtCaret, found, setStatus }) {
+  const EQ = window.EQ;
+  const [tb, setTb] = React.useState(() => EQ.newTable("pmatrix"));
+  const t = EQ.tableType(tb.type), rows = tb.cells.length, cols = tb.cells[0] ? tb.cells[0].length : 1;
+  const set = (i, j, v) => setTb({ ...tb, cells: tb.cells.map((r, a) => r.map((c, b) => (a === i && b === j ? v : c))) });
+  const html = React.useMemo(() => { try { return window.katex ? window.katex.renderToString(EQ.buildTable(tb), { throwOnError: true, displayMode: false, output: "html", strict: "ignore" }) : null; } catch (e) { return null; } }, [tb]);
+  const sm = { ...EQ_BTN, minHeight: 28, minWidth: 0, padding: "3px 8px", fontSize: 12, fontWeight: 600 };
+  const inp = { width: "100%", boxSizing: "border-box", border: "1px solid var(--tool-line-2)", borderRadius: 6, padding: "4px 5px", fontSize: 12, fontFamily: "var(--font-mono, ui-monospace, Menlo, monospace)", minWidth: 0 };
+  const heads = tb.type === "piecewise" ? ["Valor", "Condição"] : tb.type === "aligned" ? ["Antes do sinal", "Sinal e o que vem depois"] : null;
+  return (
+    <details data-eq-group="tabelas" style={{ border: "1px solid var(--tool-line)", borderRadius: 9, margin: "0 0 8px", background: "#fff" }}>
+      <summary style={{ cursor: "pointer", padding: "8px 10px", fontSize: 12.5, fontWeight: 650 }}>Matriz, sistema, função por partes e equações alinhadas</summary>
+      <div style={{ padding: "0 10px 10px" }}>
+        <select aria-label="Tipo de tabela de fórmulas" data-tb="type" value={tb.type} onChange={(e) => setTb(EQ.changeTableType(tb, e.target.value))} style={{ ...ps.input, marginBottom: 7 }}>
+          {EQ.TABLE_TYPES.map((x) => <option key={x.id} value={x.id}>{x.label}</option>)}
+        </select>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 7 }}>
+          <button type="button" data-tb="add-row" disabled={rows >= t.rows[1]} onClick={() => setTb(EQ.resizeTable(tb, rows + 1, cols))} style={sm}>+ linha</button>
+          <button type="button" data-tb="del-row" disabled={rows <= t.rows[0]} onClick={() => setTb(EQ.resizeTable(tb, rows - 1, cols))} style={sm}>− linha</button>
+          <button type="button" data-tb="add-col" disabled={cols >= t.cols[1]} onClick={() => setTb(EQ.resizeTable(tb, rows, cols + 1))} style={sm}>+ coluna</button>
+          <button type="button" data-tb="del-col" disabled={cols <= t.cols[0]} onClick={() => setTb(EQ.resizeTable(tb, rows, cols - 1))} style={sm}>− coluna</button>
+        </div>
+        {heads && <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: 5, marginBottom: 3, fontSize: 11, color: "var(--tool-ink-3)", fontWeight: 600 }}>{heads.map((h) => <span key={h}>{h}</span>)}</div>}
+        <div data-tb="grid" role="group" aria-label="Células" style={{ display: "grid", gridTemplateColumns: "repeat(" + cols + ", minmax(0,1fr))", gap: 5 }}>
+          {tb.cells.map((r, i) => r.map((c, j) => <input key={i + "-" + j} value={c} spellCheck={false} aria-label={"Linha " + (i + 1) + ", coluna " + (j + 1)} data-tb-cell={i + "-" + j} onChange={(e) => set(i, j, e.target.value)} style={inp} />))}
+        </div>
+        {tb.type === "piecewise" && <div style={{ marginTop: 6 }}><Toggle value={tb.se !== false} onChange={(v) => setTb({ ...tb, se: v })} label="Escrever «se» antes de cada condição" /></div>}
+        {tb.type === "aligned" && (
+          <label style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 6, fontSize: 12 }}>Alinhar em
+            <select aria-label="Sinal de alinhamento" data-tb="op" value={tb.op} onChange={(e) => setTb({ ...tb, op: e.target.value })} style={{ ...ps.input, width: "auto" }}>{EQ.ALIGN_OPS.map((o) => <option key={o[0]} value={o[0]}>{o[0]}</option>)}</select>
+          </label>
+        )}
+        <div aria-hidden="true" style={{ margin: "8px 0", padding: "6px 8px", border: "1px solid var(--tool-line)", borderRadius: 7, background: "var(--tool-surface)", overflowX: "auto", minHeight: 30 }} dangerouslySetInnerHTML={{ __html: html || "" }} />
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          <button type="button" data-tb="insert" onClick={() => insertAtCaret(EQ.buildTable(tb))} style={{ ...sm, borderColor: "var(--tool-accent)", color: "var(--tool-accent)" }}>Inserir no cursor</button>
+          <button type="button" data-tb="load" disabled={!found.table} onClick={() => { const tbl = EQ.parseTable(found.table); if (tbl) { setTb(tbl); setStatus("Tabela do cursor carregada no construtor."); } }} style={sm}>Ler a tabela do cursor</button>
+          <button type="button" data-tb="update" disabled={!found.table} onClick={() => { replaceRange(found.table.start, found.table.end, EQ.buildTable(tb)); setStatus("Tabela atualizada no texto."); }} style={sm}>Atualizar a tabela do cursor</button>
+        </div>
+        <p style={hint}>Posicione o cursor dentro de uma matriz, sistema ou função por partes já escrita e use «Ler a tabela do cursor»: dá para acrescentar ou tirar linhas e colunas sem perder as outras células.</p>
       </div>
-    </Field>
+    </details>
+  );
+}
+
+// ── Construtor de reação: reagentes, produtos, setas (com anotações) e etapas encadeadas ──
+function ReactionBuilder({ replaceRange, insertAtCaret, found, setStatus }) {
+  const CH = window.EQ.CHEM;
+  const [rx, setRx] = React.useState(() => CH.newReaction());
+  const html = React.useMemo(() => eqKatex(CH.buildReaction(rx)), [rx]);
+  const sm = { ...EQ_BTN, minHeight: 28, minWidth: 0, padding: "3px 8px", fontSize: 12, fontWeight: 600 };
+  const inp = { boxSizing: "border-box", border: "1px solid var(--tool-line-2)", borderRadius: 6, padding: "4px 5px", fontSize: 12, fontFamily: "var(--font-mono, ui-monospace, Menlo, monospace)", minWidth: 0 };
+  const setSp = (i, k, patch) => setRx({ ...rx, sides: rx.sides.map((s, a) => (a === i ? s.map((x, b) => (b === k ? { ...x, ...patch } : x)) : s)) });
+  const addSp = (i) => setRx({ ...rx, sides: rx.sides.map((s, a) => (a === i ? [...s, CH.newSpecies()] : s)) });
+  const delSp = (i, k) => setRx({ ...rx, sides: rx.sides.map((s, a) => (a === i ? s.filter((_, b) => b !== k) : s)) });
+  const setAr = (i, patch) => setRx({ ...rx, arrows: rx.arrows.map((x, a) => (a === i ? { ...x, ...patch } : x)) });
+  const addStep = () => setRx({ sides: [...rx.sides, [CH.newSpecies()]], arrows: [...rx.arrows, { type: "->", above: "", below: "" }] });
+  const delStep = () => setRx({ sides: rx.sides.slice(0, -1), arrows: rx.arrows.slice(0, -1) });
+  const sideName = (i) => (i === 0 ? "Reagentes" : i === rx.sides.length - 1 ? "Produtos" : "Etapa " + i);
+  return (
+    <details data-eq-group="reacao" style={{ border: "1px solid var(--tool-line)", borderRadius: 9, margin: "0 0 8px", background: "#fff" }}>
+      <summary style={{ cursor: "pointer", padding: "8px 10px", fontSize: 12.5, fontWeight: 650 }}>Montar uma reação (reagentes, produtos e setas)</summary>
+      <div style={{ padding: "0 10px 10px" }} data-rx="root">
+        {rx.sides.map((side, i) => (
+          <div key={i}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--tool-ink-3)", margin: "8px 0 4px" }}>{sideName(i)}</div>
+            {side.map((sp, k) => (
+              <div key={k} style={{ display: "grid", gridTemplateColumns: "34px minmax(0,1fr) 78px 26px", gap: 4, marginBottom: 4 }}>
+                <input value={sp.coef} spellCheck={false} placeholder="coef." aria-label={sideName(i) + ", espécie " + (k + 1) + ": coeficiente"} data-rx-coef={i + "-" + k} onChange={(e) => setSp(i, k, { coef: e.target.value })} style={inp} />
+                <input value={sp.formula} spellCheck={false} placeholder="fórmula, ex.: SO4^2-" aria-label={sideName(i) + ", espécie " + (k + 1) + ": fórmula"} data-rx-formula={i + "-" + k} onChange={(e) => setSp(i, k, { formula: e.target.value })} style={inp} />
+                <select value={sp.state} aria-label={sideName(i) + ", espécie " + (k + 1) + ": estado físico"} data-rx-state={i + "-" + k} onChange={(e) => setSp(i, k, { state: e.target.value })} style={{ ...inp, padding: "3px 2px" }}>{CH.STATES.map((s) => <option key={s[0]} value={s[0]}>{s[1]}</option>)}</select>
+                <button type="button" aria-label={"Remover a espécie " + (k + 1) + " de " + sideName(i)} disabled={side.length <= 1} onClick={() => delSp(i, k)} style={{ ...sm, padding: 0, minWidth: 0 }}>−</button>
+              </div>
+            ))}
+            <button type="button" data-rx-add={i} onClick={() => addSp(i)} style={sm}>+ espécie</button>
+            {i < rx.arrows.length && (
+              <div style={{ margin: "8px 0 2px", padding: "6px 8px", border: "1px dashed var(--tool-line-2)", borderRadius: 8, background: "var(--tool-surface)" }}>
+                <select value={rx.arrows[i].type} aria-label={"Seta " + (i + 1) + ": tipo"} data-rx-arrow={i} onChange={(e) => setAr(i, { type: e.target.value })} style={{ ...ps.input, marginBottom: 4 }}>{CH.ARROWS.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}</select>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+                  <input value={rx.arrows[i].above} spellCheck={false} placeholder="acima da seta" aria-label={"Seta " + (i + 1) + ": texto acima"} data-rx-above={i} onChange={(e) => setAr(i, { above: e.target.value })} style={inp} />
+                  <input value={rx.arrows[i].below} spellCheck={false} placeholder="abaixo da seta" aria-label={"Seta " + (i + 1) + ": texto abaixo"} data-rx-below={i} onChange={(e) => setAr(i, { below: e.target.value })} style={inp} />
+                </div>
+                <div style={{ display: "flex", gap: 5, marginTop: 4 }}>
+                  <button type="button" onClick={() => setAr(i, { above: "$\\Delta$" })} style={sm} title="Calor (Δ) acima da seta">Δ acima</button>
+                  <button type="button" onClick={() => setAr(i, { above: "$h\\nu$" })} style={sm} title="Luz (hν) acima da seta">hν acima</button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+        <div style={{ display: "flex", gap: 6, margin: "8px 0" }}>
+          <button type="button" data-rx="add-step" onClick={addStep} style={sm}>+ etapa (outra seta)</button>
+          <button type="button" data-rx="del-step" disabled={rx.sides.length <= 2} onClick={delStep} style={sm}>− etapa</button>
+        </div>
+        <div aria-hidden="true" style={{ margin: "0 0 8px", padding: "6px 8px", border: "1px solid var(--tool-line)", borderRadius: 7, background: "var(--tool-surface)", overflowX: "auto", minHeight: 30 }} dangerouslySetInnerHTML={{ __html: html || "" }} />
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          <button type="button" data-rx="insert" onClick={() => insertAtCaret(CH.buildReaction(rx))} style={{ ...sm, borderColor: "var(--tool-accent)", color: "var(--tool-accent)" }}>Inserir no cursor</button>
+          <button type="button" data-rx="load" disabled={!found.ce} onClick={() => { const r = found.ce && CH.parseReaction(found.ce.body); if (r) { setRx(r); setStatus("Reação do cursor carregada no construtor."); } else setStatus("Esse \\ce{…} não é uma reação com seta: edite no campo de fórmula."); }} style={sm}>Ler a reação do cursor</button>
+          <button type="button" data-rx="update" disabled={!found.ce} onClick={() => { replaceRange(found.ce.open, found.ce.end + 1, CH.buildReaction(rx)); setStatus("Reação atualizada no texto."); }} style={sm}>Atualizar a reação do cursor</button>
+        </div>
+        <p style={hint}>Coeficiente, fórmula e estado são campos separados. Cargas e elétrons vão na fórmula: Fe^3+, SO4^2-, e-. Várias setas formam etapas encadeadas (E + S ⇌ ES → E + P).</p>
+      </div>
+    </details>
   );
 }
 
 function EquationPanel({ p, setP, onRenumber }) {
-  const ref = React.useRef(null);
+  const EQ = window.EQ, CH = EQ && EQ.CHEM;
+  const ref = React.useRef(null), touched = React.useRef(false), sess = React.useRef(null);
+  const [mode, setMode] = React.useState(null); // null = paletas fechadas (o painel começa enxuto)
+  const [query, setQuery] = React.useState("");
+  const [hover, setHover] = React.useState(null);
+  const [status, setStatus] = React.useState("");
+  const [found, setFound] = React.useState({ table: null, ce: null });
+  const [inSession, setInSession] = React.useState(false);
   const plain = (s) => String(s == null ? "" : s).replace(/<[^>]+>/g, "");
-  const insert = (snippet) => {
-    const ta = ref.current, cur = p.latex || "";
-    const at = ta ? ta.selectionStart : cur.length, end = ta ? ta.selectionEnd : cur.length;
-    const mark = snippet.indexOf("¤");
-    const text = snippet.replace("¤", ta && end > at ? cur.slice(at, end) : "");
-    const next = cur.slice(0, at) + text + cur.slice(end);
-    setP({ latex: next });
-    const pos = at + (mark >= 0 ? mark + (end > at ? end - at : 0) : text.length);
-    setTimeout(() => { if (ta) { ta.focus(); ta.setSelectionRange(pos, pos); } }, 0);
+  const pickMode = (m) => { setMode(mode === m ? null : m); setQuery(""); setHover(null); };
+  if (!EQ || !CH) return <p style={hint}>Paleta de equações indisponível (equacao-catalogo.js não carregou). A fórmula continua editável no campo acima.</p>;
+
+  // Escreve no campo respeitando o histórico (Ctrl+Z, Ctrl+Y e os botões Desfazer/Refazer).
+  const writeRange = (from, to, text) => {
+    const ta = ref.current; if (!ta) return;
+    ta.focus(); ta.setSelectionRange(from, to);
+    let done = false;
+    try { done = document.execCommand("insertText", false, text); } catch (e) { done = false; }
+    if (!done || ta.value.slice(from, from + text.length) !== text) { const cur = ta.value; const next = cur.slice(0, from) + text + cur.slice(to); ta.value = next; setP({ latex: next }); }
   };
-  const btn = { border: "1px solid var(--tool-line-2)", background: "#fff", borderRadius: 7, padding: "5px 0", minWidth: 34, fontSize: 13, cursor: "pointer", color: "var(--tool-ink)", fontFamily: "inherit" };
+  const refreshFound = () => {
+    const ta = ref.current; if (!ta) return;
+    const pos = ta.selectionStart, text = ta.value;
+    const table = EQ.findTable(text, pos);
+    const c = EQ.insideCe(text, pos);
+    setFound({ table: table && EQ.parseTable(table) ? table : null, ce: c ? { open: c.start - (text.slice(0, c.start).match(/\\ce\s*\{$/) || ["{"])[0].length, end: c.end, body: text.slice(c.start, c.end) } : null });
+  };
+  const endSession = () => { sess.current = null; setInSession(false); };
+  const startSession = (fields, text, from) => {
+    const ta = ref.current; if (!ta) return;
+    const end = from + text.length, outer = sess.current;
+    if (fields.length) {
+      const fresh = fields.map((f) => ({ a: f.a + from, b: f.b + from }));
+      // Modelo inserido dentro de um campo de outro modelo: os campos novos vêm primeiro e, ao terminar, o Tab
+      // continua nos campos que faltavam do modelo de fora (frações e raízes aninhadas).
+      let all = fresh, ends = [end];
+      if (outer) {
+        let k = -1;
+        outer.fields.forEach((f, i) => { if (f.a <= from && end <= f.b && (k < 0 || f.b - f.a < outer.fields[k].b - outer.fields[k].a)) k = i; });
+        if (k >= 0) { all = outer.fields.slice(0, k).concat(fresh, outer.fields.slice(k + 1)); ends = outer.ends.concat([end]).sort((x, y) => x - y); }
+      }
+      sess.current = { fields: all, ends, last: ta.value }; setInSession(true);
+      const f0 = fresh[0]; ta.setSelectionRange(f0.a, f0.b);
+    } else if (outer && inSessionRange(outer, from)) {
+      ta.setSelectionRange(end, end);   // símbolo solto dentro de um campo: o preenchimento continua
+    } else { endSession(); ta.setSelectionRange(end, end); }
+    refreshFound();
+  };
+  const inSessionRange = (s, pos) => {
+    const all = s.fields.map((f) => f.a).concat(s.ends), hi = Math.max.apply(null, s.fields.map((f) => f.b).concat(s.ends)), lo = Math.min.apply(null, all);
+    return pos >= lo - 1 && pos <= hi;
+  };
+  const selectionNow = () => {
+    const ta = ref.current; const text = ta.value; let a = ta.selectionStart, b = ta.selectionEnd;
+    if (!touched.current) { a = b = text.length; }
+    return { ta, text, a, b };
+  };
+  const insertSnippet = (snippet, opts) => {
+    const { text, a, b } = selectionNow();
+    const ex = EQ.expand(snippet, opts && opts.noSelection ? "" : text.slice(a, b));
+    writeRange(a, b, ex.text); touched.current = true;
+    startSession(ex.fields, ex.text, a);
+  };
+  const ARROW = /^(<=>>|<<=>|<=>|<->|<-|->)/;
+  const insertItem = (it) => {
+    const { text, a, b } = selectionNow();
+    const inCe = EQ.insideCe(text, a);
+    let from = a, to = b, sel = text.slice(a, b), snippet;
+    if (it.ce !== undefined) {
+      snippet = inCe ? it.ce : "\\ce{" + it.ce + "}";
+      if (inCe && ARROW.test(it.ce) && !/^\[/.test(it.ce.slice(2))) { snippet = (text.charAt(a - 1) === " " || a === inCe.start ? "" : " ") + it.ce + " "; }
+    } else {
+      snippet = it.latex;
+      if (inCe) { from = to = inCe.end + 1; sel = ""; }
+    }
+    const ex = EQ.expand(snippet, sel);
+    writeRange(from, to, ex.text); touched.current = true;
+    startSession(ex.fields, ex.text, from);
+    setStatus(ex.fields.length ? "Modelo inserido. Preencha os campos: Tab vai para o próximo." : "Inserido.");
+  };
+  const insertRaw = (latex) => { const { a, b } = selectionNow(); writeRange(a, b, latex); touched.current = true; endSession(); setStatus("Inserido no cursor."); };
+  const replaceRange = (from, to, latex) => { writeRange(from, to, latex); endSession(); setTimeout(refreshFound, 0); };
+
+  const onChange = (e) => {
+    const v = e.target.value;
+    const sc = sess.current;
+    if (sc) { sc.fields = EQ.adjustFields(sc.fields, sc.last, v); sc.ends = sc.ends.map((e) => EQ.adjustPos(e, sc.last, v)); sc.last = v; }
+    setP({ latex: v });
+  };
+  // Sai de um nível: vai para o fim do modelo mais interno que contém o cursor.
+  const leaveLevel = () => {
+    const s = sess.current, ta = ref.current; if (!s) return false;
+    const pos = ta.selectionEnd, e = s.ends.filter((x) => x >= pos).sort((x, y) => x - y)[0];
+    if (e === undefined) { const q = EQ.exitGroup(ta.value, pos); endSession(); if (q >= 0) { ta.setSelectionRange(q, q); return true; } return false; }
+    s.ends = s.ends.filter((x) => x > e); ta.setSelectionRange(e, e);
+    if (!s.ends.length) { endSession(); setStatus("Fim do modelo. Continue escrevendo."); } else setStatus("Saiu de uma estrutura; ainda dentro de outra.");
+    return true;
+  };
+  const goField = (dir) => {
+    const s = sess.current, ta = ref.current; if (!s) return false;
+    const pos = ta.selectionStart, fs = s.fields; let cur = -1;
+    for (let i = 0; i < fs.length; i++) if (fs[i].a <= pos && pos <= fs[i].b) { cur = i; break; }
+    let target;
+    if (dir > 0) target = cur >= 0 ? cur + 1 : fs.findIndex((f) => f.a >= pos);
+    else target = cur >= 0 ? cur - 1 : (() => { let t = -1; fs.forEach((f, i) => { if (f.b < pos) t = i; }); return t; })();
+    if (dir > 0 && (target < 0 || target >= fs.length)) return leaveLevel();
+    if (dir < 0 && target < 0) { endSession(); return false; }
+    ta.setSelectionRange(fs[target].a, fs[target].b); setStatus("Campo " + (target + 1) + " de " + fs.length + "."); return true;
+  };
+  const onKeyDown = (e) => {
+    if (e.key === "Tab" && !e.ctrlKey && !e.metaKey && !e.altKey && sess.current) { if (goField(e.shiftKey ? -1 : 1)) e.preventDefault(); return; }
+    if (e.key === "Escape" && sess.current) { endSession(); setStatus("Preenchimento encerrado."); return; }
+    if (e.altKey && e.key === "ArrowRight") {
+      if (sess.current) { if (leaveLevel()) e.preventDefault(); return; }
+      const ta = ref.current, q = EQ.exitGroup(ta.value, ta.selectionEnd);
+      if (q >= 0) { e.preventDefault(); ta.setSelectionRange(q, q); setStatus("Saiu da estrutura."); }
+    }
+  };
+  const onSel = () => {
+    const ta = ref.current; if (!ta) return;
+    const s = sess.current;
+    if (s && !inSessionRange(s, ta.selectionStart)) endSession();
+    refreshFound();
+  };
+  const hist = (cmd) => { const ta = ref.current; if (!ta) return; ta.focus(); try { document.execCommand(cmd); } catch (e) { /* sem histórico */ } };
+
+  const groups = mode === "mat" ? EQ.GROUPS : CH.GROUPS;
+  const results = query.trim() ? EQ.search(query).map((x) => ({ ...x, pal: "mat" })).concat(search_chem(query)) : null;
+  function search_chem(q) {
+    const norm = EQ.norm, words = norm(q).trim().split(/\s+/);
+    const out = [];
+    CH.GROUPS.forEach((g) => g.items.forEach((it) => { if (it.sub) return; const hay = norm(it.label + " " + it.tags + " " + g.label) + " " + (it.ce || it.latex || "").toLowerCase(); if (words.every((w) => hay.indexOf(w) >= 0)) out.push({ group: g.id, groupLabel: g.label, item: it, pal: "quim" }); }));
+    return out;
+  }
+  const segBtn = (on) => ({ flex: 1, border: "1px solid " + (on ? "var(--tool-accent, #C4553A)" : "var(--tool-line-2)"), background: on ? "var(--tool-accent-soft, #fbeae4)" : "#fff", color: "var(--tool-ink)", borderRadius: 8, padding: "8px 6px", fontSize: 12.5, fontWeight: on ? 700 : 600, cursor: "pointer", fontFamily: "inherit" });
   const err = (() => { const r = window.renderEquation ? window.renderEquation(p.latex) : null; return r && r.error ? r.error : ""; })();
+  const prevHtml = hover ? eqKatex(eqFace(hover)) : null;
+  const allExamples = [["Matemática e Física", EQ.EXAMPLES], ["Química e Bioquímica", CH.EXAMPLES]];
+  const tbtn = { ...EQ_BTN, minHeight: 28, minWidth: 0, padding: "3px 10px", fontSize: 12, fontWeight: 600 };
   return (<>
     <Field label="Fórmula (LaTeX)">
-      <textarea ref={ref} spellCheck={false} value={p.latex || ""} onChange={(e) => setP({ latex: e.target.value })} placeholder="Ex.: E = mc^{2}" rows={4}
+      <textarea ref={ref} data-eq="latex" spellCheck={false} value={p.latex || ""} onChange={onChange} onKeyDown={onKeyDown} onSelect={onSel} onKeyUp={onSel} onClick={onSel} onFocus={() => { touched.current = true; }} placeholder="Ex.: E = mc^{2}   ou   \ce{H2O}" rows={4} aria-describedby="eq-hint"
         style={{ ...ps.area, fontFamily: "var(--font-mono, JetBrains Mono, ui-monospace, Menlo, monospace)", fontSize: 12.5, minHeight: 84 }} />
-      {err ? <p style={{ ...hint, color: "#9a2f1b" }}>Erro na fórmula: {err}</p> : <p style={hint}>A fórmula aparece pronta na página. Use os atalhos abaixo ou digite em LaTeX.</p>}
-    </Field>
-    <Field label="Estruturas">
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-        {EQ_STRUCT.map(([l, s, t]) => <button key={t} type="button" title={t} aria-label={t} onClick={() => insert(s)} style={btn}>{l}</button>)}
+      <div style={{ display: "flex", gap: 6, margin: "6px 0 0" }}>
+        <button type="button" data-eq="undo" onClick={() => hist("undo")} style={tbtn}>↶ Desfazer</button>
+        <button type="button" data-eq="redo" onClick={() => hist("redo")} style={tbtn}>↷ Refazer</button>
       </div>
+      {err ? <p style={{ ...hint, color: "#9a2f1b" }} role="alert">Erro na fórmula: {err} Seu texto foi mantido: corrija o trecho acima ou use «Desfazer».</p> : <p id="eq-hint" style={hint}>{inSession ? "Preenchendo o modelo: Tab vai ao próximo campo, Shift+Tab volta, Alt+→ sai da estrutura, Esc encerra." : "A fórmula aparece pronta na página. Clique num modelo para inserir no cursor; com um trecho selecionado, ele entra no primeiro campo."}</p>}
+      <div role="status" aria-live="polite" data-eq="status" style={{ ...hint, minHeight: 16 }}>{status}</div>
     </Field>
-    <GreekPicker insert={insert} btn={btn} />
-    <Field label="Símbolos">
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-        {EQ_SYMS.map(([l, s]) => <button key={l} type="button" title={s.trim()} aria-label={"Inserir " + s.trim()} onClick={() => insert(s)} style={btn}>{l}</button>)}
+    <div role="group" aria-label="Paleta" style={{ display: "flex", gap: 6, margin: "0 0 8px" }}>
+      <button type="button" data-eq-mode="mat" aria-pressed={mode === "mat"} aria-expanded={mode === "mat"} onClick={() => pickMode("mat")} style={segBtn(mode === "mat")}>∑  Matemática e Física</button>
+      <button type="button" data-eq-mode="quim" aria-pressed={mode === "quim"} aria-expanded={mode === "quim"} onClick={() => pickMode("quim")} style={segBtn(mode === "quim")}>⚗  Química e Bioquímica</button>
+    </div>
+    {mode && (<>
+    <input type="search" data-eq="search" value={query} onChange={(e) => setQuery(e.target.value)} aria-label="Buscar na paleta por nome ou símbolo" placeholder="Buscar: derivada parcial, pertence, sigma, norma, ATP…" style={{ ...ps.input, marginBottom: 7 }} />
+    <div data-eq="preview" aria-hidden="true" style={{ position: "sticky", top: 0, zIndex: 2, height: 58, boxSizing: "border-box", overflow: "hidden", margin: "0 0 8px", padding: "7px 9px", border: "1px solid var(--tool-line)", borderRadius: 8, background: "var(--tool-surface, #faf8f3)", display: "flex", gap: 10, alignItems: "center" }}>
+      {hover ? (<>
+        <div style={{ flex: "none", maxWidth: "45%", overflow: "hidden", fontSize: 15 }}><EqFace html={prevHtml} fallback={hover.label} /></div>
+        <div style={{ minWidth: 0, fontSize: 11.5, lineHeight: 1.35 }}><b>{hover.label}</b><div style={{ color: "var(--tool-ink-3)", fontFamily: "var(--font-mono, ui-monospace, Menlo, monospace)", overflowWrap: "anywhere" }}>{eqCode(hover).slice(0, 90)}</div></div>
+      </>) : <span style={{ fontSize: 11.5, color: "var(--tool-ink-3)" }}>Passe o mouse ou o foco sobre um botão para ver a prévia. Botões com borda tracejada inserem modelos com campos.</span>}
+    </div>
+    {results ? (
+      <div data-eq="results" style={{ marginBottom: 8 }}>
+        <p style={hint}>{results.length ? results.length + " resultado(s)" : "Nada encontrado para «" + query + "»."}</p>
+        <div role="toolbar" aria-label="Resultados da busca" style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 6 }}>
+          {results.slice(0, 80).map((r, i) => <EqBtn key={r.group + i} it={r.item} tab={0} onInsert={insertItem} onPreview={setHover} />)}
+        </div>
       </div>
-    </Field>
-    <Field label="Operações de conjuntos">
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-        {EQ_SETS.map(([l, s, t]) => <button key={t} type="button" title={t} aria-label={t} onClick={() => insert(s)} style={btn}>{l}</button>)}
-      </div>
-    </Field>
-    <Field label="Operadores lógicos">
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-        {EQ_LOGIC.map(([l, s, t]) => <button key={t} type="button" title={t} aria-label={t} onClick={() => insert(s)} style={btn}>{l}</button>)}
-      </div>
-    </Field>
+    ) : mode === "mat" ? (<>
+      {groups.slice(0, 1).map((g) => <EqGroup key={g.id} group={g} onInsert={insertItem} onPreview={setHover} />)}
+      <GreekPicker onInsert={insertItem} onPreview={setHover} />
+      {groups.slice(1).map((g) => <EqGroup key={g.id} group={g} onInsert={insertItem} onPreview={setHover} />)}
+      <TableBuilder taRef={ref} replaceRange={replaceRange} insertAtCaret={insertRaw} found={found} setStatus={setStatus} />
+    </>) : (<>
+      <p style={{ ...hint, margin: "0 0 8px" }}>A notação química usa <code>\ce{"{…}"}</code> e funciona dentro de qualquer fórmula: dá para pôr <code>\ce{"{[S]}"}</code> numa fração, por exemplo. Desenho de moléculas (anéis, ramificações, estereoquímica) não faz parte desta paleta.</p>
+      {groups.map((g) => (
+        <React.Fragment key={g.id}>
+          <EqGroup group={g} onInsert={insertItem} onPreview={setHover} />
+          {g.id === "q-reacoes" && <ReactionBuilder replaceRange={replaceRange} insertAtCaret={insertRaw} found={found} setStatus={setStatus} />}
+        </React.Fragment>
+      ))}
+    </>)}
+    </>)}
+    {!mode && <p style={{ ...hint, margin: "0 0 10px" }}>Abra uma paleta para inserir símbolos, estruturas com campos (frações, integrais, matrizes) ou notação química. Dá para escrever direto em LaTeX no campo acima.</p>}
     <Field label="Exemplos prontos">
-      <select value="" onChange={(e) => { const ex = EQ_EXAMPLES[Number(e.target.value)]; if (ex) setP({ latex: ex[1] }); }} style={ps.input}>
+      <select value="" aria-label="Substituir a fórmula por um exemplo" onChange={(e) => { const [gi, ei] = e.target.value.split(":").map(Number); const ex = allExamples[gi] && allExamples[gi][1][ei]; if (ex) { writeRange(0, (ref.current ? ref.current.value : "").length, ex[1]); endSession(); } }} style={ps.input}>
         <option value="">Substituir por um exemplo…</option>
-        {EQ_EXAMPLES.map((ex, i) => <option key={ex[0]} value={i}>{ex[0]}</option>)}
+        {allExamples.map(([lab, list], gi) => <optgroup key={lab} label={lab}>{list.map((ex, i) => <option key={ex[0]} value={gi + ":" + i}>{ex[0]}</option>)}</optgroup>)}
       </select>
     </Field>
     <div style={{ borderTop: "1px solid var(--tool-line)", margin: "4px 0 14px" }} />
     <Field label={"Tamanho da letra da fórmula: " + (Number(p.size) || 100) + "%"}>
       <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
-        {[["Pequena", 75], ["Normal", 100], ["Grande", 130]].map(([l, v]) => <button key={v} type="button" onClick={() => setP({ size: v })} aria-pressed={(Number(p.size) || 100) === v} style={{ ...btn, flex: 1, padding: "6px 4px", fontWeight: (Number(p.size) || 100) === v ? 700 : 400, borderColor: (Number(p.size) || 100) === v ? "var(--tool-accent)" : undefined }}>{l}</button>)}
+        {[["Pequena", 75], ["Normal", 100], ["Grande", 130]].map(([l, v]) => <button key={v} type="button" onClick={() => setP({ size: v })} aria-pressed={(Number(p.size) || 100) === v} style={{ ...EQ_BTN, flex: 1, padding: "6px 4px", fontWeight: (Number(p.size) || 100) === v ? 700 : 500 }}>{l}</button>)}
       </div>
       <input type="range" min="40" max="160" step="5" value={Number(p.size) || 100} onChange={(e) => setP({ size: Number(e.target.value) })} aria-label="Tamanho da letra da fórmula, em porcentagem" style={{ width: "100%" }} />
     </Field>
     <Field><Toggle value={p.framed !== false} onChange={(v) => setP({ framed: v })} label="Mostrar moldura (caixa com borda)" /></Field>
+    <Field><Toggle value={!!p.compact} onChange={(v) => setP({ compact: v })} label="Fórmula compacta (estilo de linha de texto)" /></Field>
+    <p style={hint}>Compacta desenha frações, somatórios e limites como numa frase (menores, com os limites ao lado). Desligada, a fórmula sai em estilo de destaque, em bloco.</p>
     <Field><Toggle value={p.autoFit !== false} onChange={(v) => setP({ autoFit: v })} label="Reduzir sozinha para caber (sem barra de rolagem)" /></Field>
     <p style={hint}>Com o ajuste ligado, uma fórmula comprida diminui só o necessário para caber na largura da página. Desligue para manter exatamente o tamanho escolhido.</p>
     <Field><Toggle value={p.showNumber !== false} onChange={(v) => setP({ showNumber: v })} label="Mostrar número da equação" /></Field>
@@ -752,7 +1017,7 @@ function EquationPanel({ p, setP, onRenumber }) {
       <Field label="Número da equação">
         <TextInput value={plain(p.number)} onChange={(v) => setP({ number: v })} placeholder="(1)" />
         <p style={hint}>Escreva no formato que quiser: (1), (1.1), Eq. 1… Também dá para clicar no número, na página, e digitar. Uma equação nova recebe sozinha o número seguinte ao da anterior.</p>
-        <button type="button" onClick={onRenumber} style={{ ...btn, width: "100%", marginTop: 8, padding: "7px 10px", fontSize: 12.5 }}>Renumerar todas as equações em sequência</button>
+        <button type="button" onClick={onRenumber} style={{ ...EQ_BTN, width: "100%", marginTop: 8, padding: "7px 10px", fontSize: 12.5 }}>Renumerar todas as equações em sequência</button>
         <p style={hint}>Segue o formato da primeira equação da aula e reescreve o número de todas as outras.</p>
       </Field>
     )}
