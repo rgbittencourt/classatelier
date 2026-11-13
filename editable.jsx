@@ -63,6 +63,29 @@ function applyEmphasis(cmd) {
   if (host) fireInput(host);
 }
 
+// Superlinhado (traço acima do texto): não existe comando nativo, então vira um <span> com
+// text-decoration: overline. Clicar de novo dentro de um trecho superlinhado desfaz.
+function applyOverline() {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return;
+  const range = sel.getRangeAt(0);
+  const host = closestEditable(range.commonAncestorContainer);
+  if (!host) return;
+  const start = range.startContainer.nodeType === 1 ? range.startContainer : range.startContainer.parentElement;
+  const cur = start && start.closest(".sobrelinha");
+  if (cur && host.contains(cur)) { unwrap(cur); fireInput(host); return; }
+  if (sel.isCollapsed) return;
+  const el = document.createElement("span");
+  el.className = "sobrelinha"; el.style.textDecoration = "overline";
+  try {
+    el.appendChild(range.extractContents());
+    el.querySelectorAll(".sobrelinha").forEach((n) => { if (n !== el) unwrap(n); });
+    range.insertNode(el);
+    sel.removeAllRanges(); const r = document.createRange(); r.selectNodeContents(el); sel.addRange(r);
+  } catch (e) { /* seleção entre blocos: ignora */ }
+  fireInput(host);
+}
+
 function applyLink() {
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
@@ -93,7 +116,7 @@ function clearMarks() {
   const frag = range.cloneContents();
   const tmp = document.createElement("div");
   tmp.appendChild(frag);
-  tmp.querySelectorAll("mark, .scribble, b, strong, i, em, a, .termo").forEach(unwrap);
+  tmp.querySelectorAll("mark, .scribble, b, strong, i, em, u, s, strike, del, sup, sub, .sobrelinha, a, .termo").forEach(unwrap);
   range.deleteContents();
   range.insertNode(document.createRange().createContextualFragment(tmp.innerHTML));
   sel.removeAllRanges();
@@ -266,6 +289,11 @@ function MarkToolbar() {
       <span style={{ width: 1, height: 18, background: "rgba(255,255,255,0.22)", margin: "0 3px" }} />
       <button title="Negrito" onClick={() => applyEmphasis("bold")} style={{ ...tbBtn, fontWeight: 800 }}>B</button>
       <button title="Itálico" onClick={() => applyEmphasis("italic")} style={{ ...tbBtn, fontStyle: "italic", fontFamily: "var(--font-serif)" }}>i</button>
+      <button title="Sublinhado" aria-label="Sublinhado" data-tb="underline" onClick={() => applyEmphasis("underline")} style={{ ...tbBtn, textDecoration: "underline" }}>U</button>
+      <button title="Superlinhado (traço acima)" aria-label="Superlinhado" data-tb="overline" onClick={applyOverline} style={{ ...tbBtn, textDecoration: "overline" }}>O</button>
+      <button title="Tachado" aria-label="Tachado" data-tb="strike" onClick={() => applyEmphasis("strikeThrough")} style={{ ...tbBtn, textDecoration: "line-through", fontSize: 12 }}>abc</button>
+      <button title="Sobrescrito (expoente: x²)" aria-label="Sobrescrito" data-tb="sup" onClick={() => applyEmphasis("superscript")} style={tbBtn}><span>x<sup style={{ fontSize: 9 }}>2</sup></span></button>
+      <button title="Subscrito (índice: H₂O)" aria-label="Subscrito" data-tb="sub" onClick={() => applyEmphasis("subscript")} style={tbBtn}><span>x<sub style={{ fontSize: 9 }}>2</sub></span></button>
       {box.allowLists && <>
         <span style={{ width: 1, height: 18, background: "rgba(255,255,255,0.22)", margin: "0 3px" }} />
         <button title="Lista com marcadores" aria-label="Lista com marcadores" onClick={() => applyEmphasis("insertUnorderedList")} style={tbBtn}>
@@ -297,4 +325,4 @@ const listIconStyle = {
 const listLabelStyle = { fontSize: 8, fontStyle: "normal", lineHeight: 1, textAlign: "right" };
 const listLineStyle = { display: "block", width: 13, height: 1, background: "currentColor", opacity: 0.9 };
 
-Object.assign(window, { Editable, MarkToolbar, AULA_MARKS, applyMark, applyLink, applyTermo });
+Object.assign(window, { Editable, MarkToolbar, AULA_MARKS, applyMark, applyLink, applyTermo, applyOverline });

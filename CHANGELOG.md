@@ -4,12 +4,18 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.24.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.25.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.25.0 · 13/11/2026 · Letras gregas, equação sem moldura e mais formatação de texto
+
+- **Equação nova sai sem moldura.** O padrão do bloco Equação passa a ser sem a caixa com borda (a opção continua no painel). Equações que já existem nas aulas não mudam.
+- **Quadro de letras gregas** no painel da Equação, com o alfabeto completo e um botão para alternar entre **minúsculas** (com as variantes ε/ϵ, θ/ϑ, π/ϖ, ρ/ϱ, σ/ς, φ/ϕ) e **MAIÚSCULAS**; a escolha fica lembrada neste navegador. As letras gregas saíram da lista «Símbolos».
+- **Texto:** a barra que aparece ao selecionar um trecho ganhou **sublinhado**, **superlinhado** (traço acima), **tachado**, **sobrescrito** (x²) e **subscrito** (H₂O). «Limpar marcas» também remove esses.
 
 ### 1.24.0 · 12/11/2026 · Diagramas nos slides
 
