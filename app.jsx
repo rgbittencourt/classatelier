@@ -757,7 +757,14 @@ function ClassAtelierApp() {
     const r = new FileReader();
     r.onload = () => {
       try {
-        const data = JSON.parse(String(r.result));
+        let text = String(r.result).replace(/^\uFEFF/, "");
+        // Aula exportada em HTML (arquivo único): a aula vem guardada dentro, num <script id="aula-lesson">.
+        if (/^\s*</.test(text)) {
+          const el = new DOMParser().parseFromString(text, "text/html").getElementById("aula-lesson");
+          if (!el) throw new Error("este HTML não é uma aula exportada pelo ClassAtelier.");
+          text = el.textContent;
+        }
+        const data = JSON.parse(text);
         const project = extractProjectPayload(data);
         switchTo(project, newLessonId(), { app: "file", key: f.name }).then(() => showToast("Projeto aberto. A aula anterior ficou na Biblioteca."));
       } catch (err) { alert("Não consegui abrir o projeto: " + err.message); }
@@ -864,7 +871,7 @@ function ClassAtelierApp() {
       {slidesOpen && window.SlidesDialog && <window.SlidesDialog lesson={lesson} onClose={() => setSlidesOpen(false)} />}
       {toast && <div role="status" style={{ position: "fixed", left: "50%", bottom: 24, transform: "translateX(-50%)", zIndex: 10000, maxWidth: 520, padding: "12px 18px", borderRadius: 12, background: "#14213D", color: "#fff", fontSize: 13, lineHeight: 1.5, boxShadow: "0 18px 44px rgba(20,33,61,.3)" }}>{toast}</div>}
       <window.MarkToolbar />
-      <input ref={fileInputRef} type="file" accept=".json,application/json" onChange={onProjectFile} style={{ display: "none" }} />
+      <input ref={fileInputRef} type="file" onChange={onProjectFile} style={{ display: "none" }} />
       {scormOpen && <ScormDialog lesson={lesson} onClose={() => setScormOpen(false)} onConfirm={exportSCORM} onCheck={(title, load) => setScormCheck({ title, load })} />}
       {moodle && <window.MoodleDialog links={moodle.links} lesson={moodle.links && moodle.links.length ? null : lesson} onClose={() => setMoodle(null)} />}
       {imageDlg && <window.InsertImageDialog title={lesson.meta && lesson.meta.title} context={imageDlg.context} suggestions={pendingFigureSuggestions(lesson)} onInsert={confirmImage} onClose={() => setImageDlg(null)} />}
@@ -1215,7 +1222,7 @@ function Topbar({ onPresent, onSlides, onInsertCode, onLibrary, onCourse, lesson
         {onInsertCode && <button data-act="insert-code-toolbar" onMouseDown={(e) => e.preventDefault()} onClick={onInsertCode} title="Inserir bloco de código: no cursor do parágrafo, depois do bloco selecionado ou no fim da aula" aria-label="Inserir bloco de código" style={{ ...ghostBtn, width: "auto", padding: "0 8px", font: "700 13px ui-monospace, Menlo, monospace" }}>{"</>"}</button>}
         <button className="tb-sec" onClick={onClear} disabled={!canClear} title="Limpar página" style={{ ...ghostBtn, opacity: canClear ? 1 : 0.4, color: canClear ? "var(--coral-deep)" : "var(--tool-ink-3)" }}><window.TIcon name="trash" size={15} /></button>
         <button onClick={onLibrary} title="Biblioteca: todas as aulas guardadas neste navegador (as semanas do ClassAuthor entram aqui)" style={textBtn}><window.TIcon name="library" size={15} /><span className="tb-label">Biblioteca</span></button>
-        <button className="tb-sec" onClick={onOpenProject} title="Abrir projeto (…-ClassAtelier.json)" style={textBtn}><window.TIcon name="folder" size={15} /><span className="tb-label">Abrir</span></button>
+        <button className="tb-sec" onClick={onOpenProject} title="Abrir projeto (…-ClassAtelier.json) ou aula exportada em HTML" style={textBtn}><window.TIcon name="folder" size={15} /><span className="tb-label">Abrir</span></button>
         <button onClick={onDownloadProject} title="Salvar projeto: baixa o arquivo para continuar depois ou em outro computador" style={textBtn}><window.TIcon name="save" size={15} /><span className="tb-label">Salvar</span></button>
         <PastaButton />
         <button className="tb-sec" onClick={onVersions} title="Histórico de versões: volte a uma versão anterior da aula ou recupere um bloco apagado" style={textBtn}><window.TIcon name="history" size={15} /><span className="tb-label">Histórico</span></button>
