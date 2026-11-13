@@ -873,7 +873,7 @@ function ClassAtelierApp() {
       {slidesOpen && window.SlidesDialog && <window.SlidesDialog lesson={lesson} onClose={() => setSlidesOpen(false)} />}
       {toast && <div role="status" style={{ position: "fixed", left: "50%", bottom: 24, transform: "translateX(-50%)", zIndex: 10000, maxWidth: 520, padding: "12px 18px", borderRadius: 12, background: "#14213D", color: "#fff", fontSize: 13, lineHeight: 1.5, boxShadow: "0 18px 44px rgba(20,33,61,.3)" }}>{toast}</div>}
       <window.MarkToolbar />
-      <input ref={fileInputRef} type="file" onChange={onProjectFile} style={{ display: "none" }} />
+      <input ref={fileInputRef} type="file" accept=".json,.JSON,.html,.htm,application/json,text/html" onChange={onProjectFile} style={{ display: "none" }} />
       {scormOpen && <ScormDialog lesson={lesson} onClose={() => setScormOpen(false)} onConfirm={exportSCORM} onCheck={(title, load) => setScormCheck({ title, load })} />}
       {moodle && <window.MoodleDialog links={moodle.links} lesson={moodle.links && moodle.links.length ? null : lesson} onClose={() => setMoodle(null)} />}
       {imageDlg && <window.InsertImageDialog title={lesson.meta && lesson.meta.title} context={imageDlg.context} suggestions={pendingFigureSuggestions(lesson)} onInsert={confirmImage} onClose={() => setImageDlg(null)} />}
