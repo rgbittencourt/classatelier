@@ -1,0 +1,988 @@
+access: acesso acessibilidade
+across: através
+ad: anúncio propaganda
+address: endereço
+africa: áfrica
+align: alinhar alinhamento
+all: todos tudo
+americas: américas
+anchor: âncora
+angle: ângulo
+angles: ângulos
+angry: bravo raiva irritado zangado
+ankh: ankh cruz egípcia
+apple: maçã fruta
+archive: arquivo arquivar
+archway: arco passagem
+area: área
+arrival: chegada
+arrow: seta flecha
+arrows: setas flechas
+asia: ásia
+asl: libras língua de sinais
+asterisk: asterisco
+astronaut: astronauta espaço
+at: arroba
+atlas: atlas mapa
+atom: átomo ciência
+audio: áudio som
+austral: austral moeda
+avalanche: avalanche
+award: prêmio conquista
+baby: bebê criança
+back: voltar trás costas
+backward: para trás retroceder
+bacon: bacon
+bacteria: bactéria germe
+bacterium: bactéria germe
+badge: crachá distintivo emblema
+bag: bolsa sacola mala
+bahai: bahá'í religião
+baht: baht moeda
+balanced: equilibrado
+ball: bola
+ban: proibido bloquear
+bandage: curativo bandagem atadura
+bangladeshi: bangladesh
+bank: banco finanças
+bar: barra bar
+barcode: código de barras
+barrier: barreira
+bars: barras menu
+baseball: beisebol
+basket: cesta
+basketball: basquete
+bat: morcego taco
+bath: banho banheira
+battery: bateria pilha energia
+beach: praia
+beam: raio feixe
+bed: cama dormir
+beer: cerveja bebida
+bell: sino notificação alerta
+berry: frutinha baga
+between: entre
+bezier: curva bezier
+bible: bíblia religião
+bicycle: bicicleta bike
+biking: pedalar ciclismo
+bill: nota conta cédula
+bills: notas contas dinheiro
+binoculars: binóculos observar
+biohazard: risco biológico
+bird: pássaro ave
+bishop: bispo xadrez
+bitcoin: bitcoin criptomoeda
+bite: mordida
+blank: vazio em branco
+blender: liquidificador
+blog: blog
+board: quadro placa
+bold: negrito
+bolt: raio energia relâmpago velocidade
+bomb: bomba
+bone: osso
+bong: bong
+book: livro leitura material
+bookmark: marcador favorito salvar
+booth: cabine
+border: borda contorno
+bore: furo
+bottle: garrafa
+bound: preso
+bowl: tigela
+bowling: boliche
+box: caixa
+boxes: caixas
+bracket: colchete
+braille: braile acessibilidade
+brain: cérebro mente inteligência
+branch: ramo ramificação branch
+brazilian: brasileiro brasil
+bread: pão
+breastfeeding: amamentação
+bricks: tijolos
+bridge: ponte
+briefcase: maleta pasta trabalho negócios
+broadcast: transmissão
+broom: vassoura
+brush: pincel escova
+bubbles: bolhas
+bucket: balde
+bug: inseto bug erro
+bugs: insetos bugs
+building: prédio edifício organização
+bulk: em massa
+bullhorn: megafone anúncio
+bullseye: alvo meta objetivo
+burger: hambúrguer lanche
+burner: boca fogão
+burst: explosão
+bus: ônibus
+business: negócios empresa
+button: botão
+c: c
+cable: cabo
+cake: bolo
+calculator: calculadora cálculo
+calendar: calendário data agenda
+camera: câmera foto
+campground: acampamento
+can: lata
+candles: velas
+candy: doce bala
+cane: bengala
+cannabis: cannabis
+cap: boné
+capsules: cápsulas remédio
+captioning: legenda
+car: carro automóvel
+caravan: caravana trailer
+card: cartão
+cardboard: papelão
+caret: seta cursor
+carriage: carruagem
+carrot: cenoura
+carry: carregar
+cart: carrinho compras
+cash: dinheiro
+cat: gato
+cedi: cedi moeda
+cell: célula celular
+cells: células
+cent: centavo
+center: centro centralizar
+certificate: certificado
+chair: cadeira
+chalkboard: lousa quadro-negro professor
+champagne: champanhe brinde
+charging: carregando
+chart: gráfico
+check: correto verificar concluído sim confirmar
+checkered: xadrez quadriculado
+cheese: queijo
+chess: xadrez
+chevron: seta divisa
+child: criança
+children: crianças
+chimney: chaminé
+church: igreja
+circle: círculo
+citrus: cítrico
+city: cidade
+clapperboard: claquete cinema
+clapping: palmas aplauso
+clip: clipe
+clipboard: prancheta
+clock: relógio tempo hora
+clone: clonar duplicar
+closed: fechado
+cloud: nuvem
+clover: trevo
+code: código programação
+coins: moedas
+colon: dois pontos
+column: coluna
+columns: colunas
+combatant: combatente
+combined: combinado
+comment: comentário fala balão
+comments: comentários conversa
+commit: commit
+compact: compacto
+compare: comparar
+compass: bússola
+compress: comprimir reduzir
+computer: computador
+concierge: recepção
+confined: confinado
+contract: contrato reduzir
+cookie: biscoito cookie
+copy: copiar
+copyright: direitos autorais
+couch: sofá
+cough: tosse
+covid: covid
+cow: vaca
+cowboy: vaqueiro
+crack: rachadura
+cream: creme sorvete
+credit: crédito
+crescent: crescente
+crop: cortar recortar
+cross: cruz
+crossbones: ossos cruzados
+crosshairs: mira
+crow: corvo
+crown: coroa
+crutch: muleta
+cruzeiro: cruzeiro moeda
+cry: chorar
+csv: csv planilha
+cube: cubo
+cubes: cubos
+cursor: cursor
+curve: curva
+curved: curvo
+d: d
+dashed: tracejado
+database: banco de dados
+david: davi estrela
+day: dia
+days: dias
+deaf: surdo surdez
+delete: apagar excluir deletar
+democrat: democrata
+departure: partida
+description: descrição
+desktop: computador de mesa
+detergent: detergente
+dharmachakra: roda do darma
+diagram: diagrama
+diamond: diamante losango
+dice: dados jogo
+digging: cavar
+digital: digital
+disc: disco
+disease: doença
+dish: prato
+disk: disco
+display: tela exibição
+divide: dividir divisão
+dizzy: tonto
+dna: dna biologia genética
+doctor: médico doutor
+dog: cachorro cão
+dollar: dólar dinheiro
+dolly: carrinho de carga
+dome: domo cúpula
+dong: dong moeda
+door: porta
+dot: ponto
+dots: pontos
+double: duplo
+dove: pomba paz
+down: baixo para baixo
+download: baixar download
+drafting: desenho técnico
+dragon: dragão
+draw: desenhar
+dress: vestido
+drip: gotejar
+drive: unidade dirigir
+droplet: gota
+dropper: conta-gotas
+drowning: afogamento
+drum: tambor bateria
+drumstick: coxa de frango baqueta
+dumbbell: haltere academia peso
+dumpster: caçamba lixo
+dungeon: masmorra
+e: e
+ear: orelha ouvido
+earth: terra planeta mundo
+egg: ovo
+eject: ejetar
+elevator: elevador
+ellipsis: reticências mais opções
+empty: vazio
+end: fim final
+envelope: envelope carta email
+envelopes: envelopes cartas
+equal: igual
+equals: igual
+eraser: borracha apagar
+ethernet: ethernet rede cabo
+euro: euro dinheiro
+europe: europa
+excel: excel planilha
+exclamation: exclamação atenção
+expand: expandir ampliar
+explosion: explosão
+export: exportar
+extinguisher: extintor
+eye: olho ver visualizar
+eyes: olhos
+face: rosto cara
+falling: caindo queda
+fan: ventilador
+fancy: elegante
+fast: rápido
+faucet: torneira
+fax: fax
+feather: pena
+ferry: balsa
+field: campo
+fighter: lutador caça
+file: arquivo documento
+fill: preencher
+film: filme
+filter: filtro filtrar
+finger: dedo
+fingerprint: impressão digital biometria
+fins: nadadeiras
+fire: fogo chama quente
+fish: peixe
+fist: punho
+five: cinco
+flag: bandeira marco meta
+flame: chama fogo
+flask: frasco laboratório ciência experimento
+flatbed: carroceria
+flip: virar inverter
+flood: enchente inundação
+floppy: disquete salvar
+florin: florim moeda
+flushed: corado envergonhado
+flying: voando voo
+folder: pasta diretório
+font: fonte letra tipografia
+food: comida alimento
+football: futebol americano
+fork: garfo bifurcação
+forward: avançar encaminhar
+four: quatro
+franc: franco moeda
+frog: sapo
+front: frente
+frown: triste desgostoso
+full: cheio completo
+futbol: futebol bola
+g: g
+gamepad: controle videogame jogo
+gantt: gantt cronograma
+gas: gás
+gate: portão
+gauge: medidor velocímetro
+gavel: martelo juiz lei decisão
+gear: engrenagem configuração
+gears: engrenagens sistema processo
+gem: gema joia
+genderless: sem gênero
+ghost: fantasma
+gift: presente
+gifts: presentes
+glass: copo vidro
+glasses: óculos
+globe: mundo globo internet global
+golf: golfe
+gopuram: templo
+graduate: formando graduado
+graduation: formatura educação diploma
+greater: maior
+grimace: careta
+grin: sorriso
+grip: pegada
+ground: chão solo
+group: grupo
+guarani: guarani moeda
+guitar: guitarra violão
+gun: arma pistola
+h: h
+half: metade meio
+halved: dividido ao meio
+hamsa: hamsa
+hammer: martelo
+hand: mão
+handcuffs: algemas
+hands: mãos
+handshake: aperto de mão acordo parceria
+hanging: pendurado
+hanukiah: hanukiá
+harassing: assédio
+hard: duro disco rígido
+hashtag: hashtag jogo da velha
+hat: chapéu
+head: cabeça
+heading: título cabeçalho
+headphones: fone de ouvido áudio podcast
+headset: headset atendimento
+heart: coração saúde amor
+hearts: corações
+heavy: pesado
+height: altura
+helicopter: helicóptero
+helmet: capacete
+high: alto
+highlighter: marca-texto marcador destacar
+hiking: caminhada trilha
+hill: colina
+hippo: hipopótamo
+hockey: hóquei
+holding: segurando
+hole: buraco
+holly: azevinho
+horizontal: horizontal
+horse: cavalo
+hospital: hospital
+hot: quente
+hotdog: cachorro-quente
+hotel: hotel
+hourglass: ampulheta tempo espera
+house: casa início lar
+hryvnia: grívnia moeda
+hurricane: furacão
+i: i
+ice: gelo
+icicles: pingentes de gelo
+icons: ícones
+id: identidade identificação
+igloo: iglu
+image: imagem foto figura
+images: imagens fotos
+import: importar
+inbox: caixa de entrada
+indent: recuo
+indian: indiano índia
+industry: indústria fábrica
+infinity: infinito
+info: informação
+injured: ferido
+interpreting: interpretação libras
+invoice: fatura nota fiscal
+italic: itálico
+j: j
+jar: pote
+jedi: jedi
+jet: jato
+joint: junta articulação
+journal: diário jornal revista
+jug: jarra
+justify: justificar
+k: k
+kaaba: caaba
+key: chave acesso
+keyboard: teclado
+keyhole: fechadura
+khanda: khanda
+king: rei
+kip: kip moeda
+kiss: beijo
+kit: kit estojo
+kitchen: cozinha
+kiwi: kiwi
+knight: cavaleiro cavalo xadrez
+l: l
+ladder: escada
+land: terra
+landmark: marco monumento instituição
+language: idioma língua linguagem
+laptop: notebook laptop
+large: grande
+lari: lari moeda
+laugh: riso gargalhada
+layer: camada
+leaf: folha natureza sustentabilidade
+leaning: inclinado
+left: esquerda
+lemon: limão
+less: menos menor
+life: vida
+light: luz leve
+lightbulb: lâmpada ideia dica
+lightning: raio relâmpago
+line: linha
+lines: linhas
+link: link conexão corrente url
+lira: lira moeda
+list: lista
+listen: ouvir escutar
+litecoin: litecoin
+lizard: lagarto
+location: local localização
+lock: cadeado privacidade segurança trancar
+locust: gafanhoto
+long: longo
+loop: laço repetir
+low: baixo
+luggage: bagagem mala
+lungs: pulmões
+m: m
+magic: mágica magia
+magnet: ímã
+magnifying: lupa ampliar
+manat: manat moeda
+map: mapa
+marker: marcador caneta
+mars: marte
+martini: martíni coquetel
+mask: máscara
+masks: máscaras teatro
+mattress: colchão
+maximize: maximizar
+meatball: almôndega
+medal: medalha conquista
+medical: médico medicina saúde
+meh: indiferente
+memory: memória
+menorah: menorá
+mercury: mercúrio
+merge: mesclar unir
+message: mensagem conversa
+meteor: meteoro
+microchip: chip microchip
+microphone: microfone voz áudio
+microscope: microscópio
+middle: meio
+military: militar
+mill: moinho
+mine: mina
+minimize: minimizar
+minus: menos subtrair
+mitten: luva
+mobile: celular móvel
+money: dinheiro
+monster: monstro
+monument: monumento
+moon: lua noite
+mortar: almofariz argamassa
+mosque: mesquita
+mosquito: mosquito dengue
+motorcycle: moto motocicleta
+mound: monte
+mountain: montanha
+mouse: mouse rato
+move: mover
+moving: movendo mudança
+mug: caneca
+music: música
+n: n
+naira: naira moeda
+net: rede
+network: rede
+neuter: neutro
+newspaper: jornal notícia
+next: próximo
+nfi: n
+ngo: ong
+nib: ponta caneta
+ninja: ninja
+nodes: nós
+none: nenhum
+nordic: nórdico
+not: não
+notch: entalhe
+note: nota anotação
+notes: notas anotações
+nurse: enfermeira enfermeiro
+o: o
+object: objeto
+observation: observação
+oceania: oceania
+of: de
+off: desligado
+oil: óleo petróleo
+ol: lista numerada
+om: om
+on: ligado
+one: um
+open: aberto abrir
+outdent: recuo menor
+p: p
+packing: embalagem
+paddle: remo
+pager: pager
+paint: tinta pintura
+paintbrush: pincel pintura
+palette: paleta cores
+pallet: palete
+panel: painel
+panorama: panorama
+paper: papel
+paperclip: clipe anexo arquivo
+paragraph: parágrafo
+parachute: paraquedas
+parking: estacionamento
+passport: passaporte
+paste: colar
+patches: remendos
+pause: pausa pausar
+paw: pata animal
+pawn: peão xadrez
+pdf: pdf
+peace: paz
+pen: caneta editar escrever
+pencil: lápis escrever editar
+people: pessoas
+pepper: pimenta
+percent: porcentagem
+person: pessoa
+peseta: peseta moeda
+peso: peso moeda
+pestle: pilão
+phone: telefone
+photo: foto
+pickup: caminhonete
+pie: torta pizza
+piece: peça
+piggy: porquinho cofrinho economia
+pillow: travesseiro
+pills: comprimidos remédios
+pin: alfinete marcador local
+pizza: pizza
+place: lugar
+plane: avião
+plant: planta
+plastic: plástico
+plate: prato placa
+play: reproduzir iniciar jogar
+plug: tomada plugue
+plus: mais adicionar somar
+podcast: podcast
+point: ponto apontar
+pointed: apontado
+pointer: ponteiro
+pointing: apontando
+poll: enquete votação pesquisa
+polygon: polígono
+poo: cocô
+poop: cocô
+portable: portátil
+portrait: retrato
+post: publicação poste
+power: energia ligar poder
+powerpoint: powerpoint apresentação slides
+praying: orando oração
+pregnant: grávida gestante
+prescription: receita prescrição
+print: imprimir
+prints: impressões
+progress: progresso
+project: projeto
+pull: puxar
+pulling: puxando
+pulse: pulso batimento
+pump: bomba
+puzzle: quebra-cabeça
+q: q
+qrcode: qr code código qr
+quarter: quarto
+quarters: quartos
+queen: rainha
+question: pergunta dúvida ajuda
+quote: citação aspas
+quran: alcorão
+r: r
+radiation: radiação
+radio: rádio
+rain: chuva
+rainbow: arco-íris
+ramp: rampa
+ranking: classificação ranking
+ray: raio
+rays: raios
+reaching: alcançando
+reader: leitor
+real: real
+rear: traseiro
+receipt: recibo
+record: gravar registro
+rectangle: retângulo
+recycle: reciclar
+register: registrar caixa
+registered: registrado
+repeat: repetir
+reply: responder
+republican: republicano
+request: pedido solicitação
+restore: restaurar
+restroom: banheiro sanitário
+retro: retrô
+retweet: compartilhar
+ribbon: fita laço
+rice: arroz
+rifle: rifle
+right: direita
+ring: anel
+road: estrada rua
+robbery: roubo
+robot: robô
+rocket: foguete lançamento
+rockslide: deslizamento
+roller: rolo
+rolling: rolando
+roof: telhado
+rook: torre xadrez
+root: raiz
+rotate: girar rotacionar ciclo
+route: rota caminho jornada
+row: linha fileira
+rss: rss feed
+ruble: rublo moeda
+rug: tapete
+ruler: régua medir
+running: correndo corrida
+rupee: rupia moeda
+rupiah: rupia moeda
+s: s
+sack: saco
+sad: triste
+safety: segurança proteção
+sailboat: veleiro barco
+satellite: satélite
+saucer: pires disco voador
+scale: balança equilíbrio escala
+school: escola
+scissors: tesoura cortar
+screen: tela
+screwdriver: chave de fenda
+scroll: pergaminho rolar
+sd: cartão sd memória
+secret: segredo
+section: seção
+seedling: muda planta crescimento
+server: servidor
+set: conjunto
+shapes: formas
+share: compartilhar
+sheet: folha planilha
+shekel: shekel moeda
+shelter: abrigo
+shield: escudo proteção segurança
+ship: navio
+shirt: camisa camiseta
+shoe: sapato tênis
+shop: loja
+shopping: compras
+short: curto
+shower: chuveiro
+showers: chuveiros chuva
+shrimp: camarão
+shuffle: embaralhar aleatório
+shuttle: ônibus espacial
+side: lado
+sign: sinal placa assinar
+signal: sinal
+signature: assinatura
+signs: sinais placas
+sim: chip sim
+simple: simples
+sink: pia
+sitemap: hierarquia estrutura mapa do site organograma
+six: seis
+skating: patinação
+skiing: esqui
+skull: caveira crânio
+slash: barra cortado
+sleigh: trenó
+slice: fatia
+sliders: controles deslizantes ajustes
+slot: ranhura
+smile: sorriso feliz
+smog: poluição fumaça
+smoking: fumar cigarro
+sms: sms mensagem de texto
+snake: cobra
+snowboarding: snowboard
+snowflake: floco de neve
+snowman: boneco de neve
+snowplow: limpa-neve
+soap: sabão sabonete
+socks: meias
+solar: solar
+sort: ordenar classificar
+spa: spa
+space: espaço
+spaghetti: espaguete macarrão
+sparkles: brilhos estrelinhas magia
+spell: feitiço
+spider: aranha
+spikes: espetos
+spin: girar
+spinner: carregando girando
+split: dividir
+splotch: mancha
+spock: spock
+spoon: colher
+spray: spray
+square: quadrado
+squint: apertar os olhos
+stacked: empilhado
+staff: cajado equipe
+staggered: escalonado
+stairs: escadas
+stamp: carimbo
+stapler: grampeador
+star: estrela favorito destaque
+stars: estrelas
+start: início começar
+station: estação
+steelpan: tambor de aço
+step: passo etapa
+sterling: libra esterlina
+stethoscope: estetoscópio médico
+sticky: adesivo
+stop: parar
+stopwatch: cronômetro
+store: loja
+storm: tempestade
+street: rua
+strikethrough: tachado
+stroke: traço
+stroopwafel: waffle
+subscript: subscrito
+subway: metrô
+successor: sucessor
+suitcase: mala
+sun: sol claro dia
+superscript: sobrescrito
+surprise: surpresa
+swatchbook: amostras cores
+sweat: suor
+swimming: natação
+symbol: símbolo
+synagogue: sinagoga
+syringe: seringa vacina injeção
+t: t
+table: tabela
+tablet: tablet
+tablets: comprimidos
+tachograph: tacógrafo
+tag: etiqueta tag
+tags: etiquetas tags
+taka: taka moeda
+talkie: walkie-talkie
+tanakh: tanakh
+tape: fita
+tarp: lona
+taxi: táxi
+tear: lágrima
+tears: lágrimas
+tee: tê
+teeth: dentes
+temperature: temperatura
+tenge: tenge moeda
+tennis: tênis
+tent: barraca
+tents: barracas
+terminal: terminal
+text: texto
+than: que
+theater: teatro
+thermometer: termômetro
+three: três
+through: através
+thumbs: joinha polegar
+thumbtack: tachinha alfinete fixar
+ticket: ingresso bilhete
+tie: gravata
+time: tempo
+timeline: linha do tempo cronologia
+tired: cansado
+tissue: lenço
+to: para
+toggle: alternar interruptor
+toilet: vaso sanitário
+toilets: banheiros
+tongue: língua
+toolbox: caixa de ferramentas
+tooth: dente
+top: topo
+torah: torá
+torii: torii
+tornado: tornado
+tower: torre
+tractor: trator
+trademark: marca registrada
+traffic: trânsito tráfego
+trailer: reboque
+train: trem
+tram: bonde
+transfer: transferir
+transgender: transgênero
+trash: lixo lixeira
+tree: árvore natureza
+trend: tendência
+triangle: triângulo
+trophy: troféu prêmio conquista
+trowel: colher de pedreiro
+truck: caminhão
+tsunami: tsunami
+tty: telefone para surdos
+tub: banheira
+tunnel: túnel
+turkish: turco
+turn: virar
+tv: televisão tv
+two: dois
+u: u
+ul: lista com marcadores
+umbrella: guarda-chuva
+un: onu
+unbalanced: desequilibrado
+underline: sublinhado
+ungroup: desagrupar
+universal: universal
+unlock: destrancar desbloquear
+up: cima para cima
+upload: enviar upload
+usa: eua
+user: usuário pessoa
+users: usuários pessoas
+utensils: talheres
+v: v
+van: van
+variable: variável
+vault: cofre
+vector: vetor
+ventilator: ventilador respirador
+venus: vênus
+vertical: vertical
+vest: colete
+vial: frasco ampola
+vials: frascos
+video: vídeo filme
+view: ver visualizar
+viewfinder: visor
+vihara: templo budista
+vinyl: vinil disco
+virus: vírus
+viruses: vírus
+vision: visão
+voicemail: caixa postal
+volcano: vulcão
+volleyball: vôlei
+volume: volume som
+vr: realidade virtual
+w: w
+walkie: walkie
+walking: caminhando
+wallet: carteira
+wand: varinha
+warehouse: armazém depósito
+water: água
+wave: onda
+waveform: onda sonora
+week: semana
+weight: peso
+well: poço
+wheat: trigo
+wheelchair: cadeira de rodas
+whills: whills
+whiskey: uísque
+whole: inteiro
+wide: largo
+width: largura
+wifi: wi-fi internet sem fio
+wilt: murchar
+wind: vento
+window: janela
+wine: vinho
+wink: piscadinha
+wired: com fio
+with: com
+wizard: mago
+won: won moeda
+word: palavra word
+worm: minhoca verme
+worship: culto adoração
+wrench: chave inglesa ferramenta manutenção
+x: x
+xmark: fechar erro não cancelar
+xmarks: fechar erro
+y: y
+yang: yang
+yen: iene moeda
+yin: yin
+z: z
+zipper: zíper
