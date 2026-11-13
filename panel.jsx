@@ -615,9 +615,22 @@ const EQ_STRUCT = [
   ["x̄", "\\bar{¤}", "Barra (média)"], ["∂", "\\frac{\\partial ¤}{\\partial x}", "Derivada parcial"], ["abc", "\\text{¤}", "Texto dentro da fórmula"],
   ["( )", "\\left( ¤ \\right)", "Parênteses que crescem"],
 ];
+// Alfabeto grego completo, em dois quadros (minúsculas e maiúsculas). As maiúsculas iguais às
+// latinas (A, B, E…) não têm comando próprio no LaTeX: entram como letra reta (\mathrm).
+const EQ_GREEK_LOWER = [
+  ["α", "\\alpha ", "alfa"], ["β", "\\beta ", "beta"], ["γ", "\\gamma ", "gama"], ["δ", "\\delta ", "delta"], ["ε", "\\varepsilon ", "épsilon"], ["ϵ", "\\epsilon ", "épsilon (variante)"],
+  ["ζ", "\\zeta ", "zeta"], ["η", "\\eta ", "eta"], ["θ", "\\theta ", "teta"], ["ϑ", "\\vartheta ", "teta (variante)"], ["ι", "\\iota ", "iota"], ["κ", "\\kappa ", "capa"],
+  ["λ", "\\lambda ", "lambda"], ["μ", "\\mu ", "mi"], ["ν", "\\nu ", "ni"], ["ξ", "\\xi ", "csi"], ["ο", "o", "ômicron"], ["π", "\\pi ", "pi"], ["ϖ", "\\varpi ", "pi (variante)"],
+  ["ρ", "\\rho ", "rô"], ["ϱ", "\\varrho ", "rô (variante)"], ["σ", "\\sigma ", "sigma"], ["ς", "\\varsigma ", "sigma final"], ["τ", "\\tau ", "tau"], ["υ", "\\upsilon ", "ípsilon"],
+  ["φ", "\\varphi ", "fi"], ["ϕ", "\\phi ", "fi (variante)"], ["χ", "\\chi ", "qui"], ["ψ", "\\psi ", "psi"], ["ω", "\\omega ", "ômega"],
+];
+const EQ_GREEK_UPPER = [
+  ["Α", "\\mathrm{A}", "Alfa"], ["Β", "\\mathrm{B}", "Beta"], ["Γ", "\\Gamma ", "Gama"], ["Δ", "\\Delta ", "Delta"], ["Ε", "\\mathrm{E}", "Épsilon"], ["Ζ", "\\mathrm{Z}", "Zeta"],
+  ["Η", "\\mathrm{H}", "Eta"], ["Θ", "\\Theta ", "Teta"], ["Ι", "\\mathrm{I}", "Iota"], ["Κ", "\\mathrm{K}", "Capa"], ["Λ", "\\Lambda ", "Lambda"], ["Μ", "\\mathrm{M}", "Mi"],
+  ["Ν", "\\mathrm{N}", "Ni"], ["Ξ", "\\Xi ", "Csi"], ["Ο", "\\mathrm{O}", "Ômicron"], ["Π", "\\Pi ", "Pi"], ["Ρ", "\\mathrm{P}", "Rô"], ["Σ", "\\Sigma ", "Sigma"],
+  ["Τ", "\\mathrm{T}", "Tau"], ["Υ", "\\Upsilon ", "Ípsilon"], ["Φ", "\\Phi ", "Fi"], ["Χ", "\\mathrm{X}", "Qui"], ["Ψ", "\\Psi ", "Psi"], ["Ω", "\\Omega ", "Ômega"],
+];
 const EQ_SYMS = [
-  ["α", "\\alpha "], ["β", "\\beta "], ["γ", "\\gamma "], ["Δ", "\\Delta "], ["θ", "\\theta "], ["λ", "\\lambda "], ["μ", "\\mu "], ["π", "\\pi "],
-  ["ρ", "\\rho "], ["σ", "\\sigma "], ["τ", "\\tau "], ["φ", "\\varphi "], ["ω", "\\omega "], ["Ω", "\\Omega "],
   ["±", "\\pm "], ["×", "\\times "], ["·", "\\cdot "], ["÷", "\\div "], ["≤", "\\leq "], ["≥", "\\geq "], ["≠", "\\neq "], ["≈", "\\approx "],
   ["∞", "\\infty "], ["→", "\\rightarrow "], ["⇒", "\\Rightarrow "], ["°", "^{\\circ}"], ["∝", "\\propto "], ["∈", "\\in "],
 ];
@@ -657,6 +670,25 @@ const EQ_EXAMPLES = [
   ["Lógica: condicional", "p \\rightarrow q \\equiv \\neg p \\lor q"],
   ["Lógica: quantificadores", "\\forall x \\in A,\\ \\exists y \\in B : P(x, y)"],
 ];
+function GreekPicker({ insert, btn }) {
+  const KEY = "classatelier.eq.greekCase";
+  const [upper, setUpper] = React.useState(() => { try { return localStorage.getItem(KEY) === "upper"; } catch (e) { return false; } });
+  const pick = (v) => { setUpper(v); try { localStorage.setItem(KEY, v ? "upper" : "lower"); } catch (e) { /* sem armazenamento */ } };
+  const list = upper ? EQ_GREEK_UPPER : EQ_GREEK_LOWER;
+  const seg = (on) => ({ border: 0, borderRadius: 6, padding: "4px 10px", fontSize: 12, fontWeight: 650, cursor: "pointer", fontFamily: "inherit", background: on ? "#fff" : "transparent", color: on ? "var(--tool-ink)" : "var(--tool-ink-3)", boxShadow: on ? "0 1px 2px rgba(0,0,0,.12)" : "none" });
+  return (
+    <Field label="Letras gregas">
+      <div role="radiogroup" aria-label="Maiúsculas ou minúsculas" style={{ display: "inline-flex", gap: 2, padding: 2, borderRadius: 8, background: "var(--tool-surface)", border: "1px solid var(--tool-line)", marginBottom: 7 }}>
+        <button type="button" role="radio" aria-checked={!upper} data-eq="greek-lower" onClick={() => pick(false)} style={seg(!upper)}>α  minúsculas</button>
+        <button type="button" role="radio" aria-checked={upper} data-eq="greek-upper" onClick={() => pick(true)} style={seg(upper)}>Ω  MAIÚSCULAS</button>
+      </div>
+      <div data-eq="greek-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(34px, 1fr))", gap: 5 }}>
+        {list.map(([l, s, name]) => <button key={l + s} type="button" title={name + " — " + s.trim()} aria-label={"Inserir " + name} onClick={() => insert(s)} style={{ ...btn, fontSize: 15, fontFamily: "'Times New Roman', Georgia, serif" }}>{l}</button>)}
+      </div>
+    </Field>
+  );
+}
+
 function EquationPanel({ p, setP, onRenumber }) {
   const ref = React.useRef(null);
   const plain = (s) => String(s == null ? "" : s).replace(/<[^>]+>/g, "");
@@ -683,6 +715,7 @@ function EquationPanel({ p, setP, onRenumber }) {
         {EQ_STRUCT.map(([l, s, t]) => <button key={t} type="button" title={t} aria-label={t} onClick={() => insert(s)} style={btn}>{l}</button>)}
       </div>
     </Field>
+    <GreekPicker insert={insert} btn={btn} />
     <Field label="Símbolos">
       <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
         {EQ_SYMS.map(([l, s]) => <button key={l} type="button" title={s.trim()} aria-label={"Inserir " + s.trim()} onClick={() => insert(s)} style={btn}>{l}</button>)}
