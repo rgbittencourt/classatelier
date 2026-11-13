@@ -764,7 +764,9 @@ function ClassAtelierApp() {
           if (!el) throw new Error("este HTML não é uma aula exportada pelo ClassAtelier.");
           text = el.textContent;
         }
-        const data = JSON.parse(text);
+        if (/^%PDF-/.test(text)) throw new Error("este arquivo é um PDF, que não guarda a aula para edição. Procure o arquivo que termina em …-ClassAtelier.json (botão Salvar do ClassAtelier ou JSON ClassAtelier do ClassAuthor) ou a aula exportada em .html.");
+        let data;
+        try { data = JSON.parse(text); } catch (e) { throw new Error("este arquivo não é uma aula do ClassAtelier. Procure o arquivo …-ClassAtelier.json ou a aula exportada em .html."); }
         const project = extractProjectPayload(data);
         switchTo(project, newLessonId(), { app: "file", key: f.name }).then(() => showToast("Projeto aberto. A aula anterior ficou na Biblioteca."));
       } catch (err) { alert("Não consegui abrir o projeto: " + err.message); }
