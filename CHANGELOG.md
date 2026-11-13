@@ -4,12 +4,18 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.25.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.25.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.25.1 · 13/11/2026 · Sublinhado e superlinhado que se combinam
+
+- Sublinhado, superlinhado e tachado agora são marcas independentes que se somam: dá para sublinhar três palavras e superlinhar só duas delas (como chave primária e chave estrangeira na descrição de uma tabela de banco de dados). Antes, aplicar um podia apagar o outro.
+- Aplicar de novo num trecho já marcado desfaz só aquele trecho; o resto da marca e as outras marcas continuam.
+- O superlinhado é uma linha contínua, sem falhas nas letras altas (d, l, t).
 
 ### 1.25.0 · 13/11/2026 · Letras gregas, equação sem moldura e mais formatação de texto
 
