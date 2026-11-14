@@ -290,7 +290,9 @@ function Editable({ html, onChange, mode, tag = "div", single = false, placehold
     style: { ...style, cursor: "text" },
     contentEditable: true,
     suppressContentEditableWarning: true,
-    spellCheck: true,
+    // O corretor é o do ClassAtelier (corretor.js: pontilhado vermelho, idioma à escolha). O do navegador só entra
+    // onde o ClassAtelier não consegue marcar sem mexer no texto (navegador sem a API de realce).
+    spellCheck: !!(window.Corretor && !window.Corretor.supported),
     "data-placeholder": placeholder || "",
     "data-lz-editable": "1",
     "data-lz-single": single ? "1" : undefined,

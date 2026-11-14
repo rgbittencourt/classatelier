@@ -1210,6 +1210,9 @@ function Topbar({ onPresent, onSlides, onInsertCode, onLibrary, onCourse, lesson
   const [busy, setBusy] = useStateA(false);
   const [menu, setMenu] = useStateA(false);
   const [more, setMore] = useStateA(false);
+  const [spellOpen, setSpellOpen] = useStateA(false);
+  const [spellSt, setSpellSt] = useStateA(() => window.Corretor ? window.Corretor.get() : null);
+  React.useEffect(() => (window.Corretor ? window.Corretor.subscribe(setSpellSt) : undefined), []);
   const wrap = async (fn) => { setBusy(true); setMenu(false); try { await fn(); } finally { setBusy(false); } };
   return (
     <header className="tb" style={{ height: 52, flexShrink: 0, background: "var(--tool-panel)", borderBottom: "1px solid var(--tool-line)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", position: "relative", zIndex: 40 }}>
@@ -1245,10 +1248,12 @@ function Topbar({ onPresent, onSlides, onInsertCode, onLibrary, onCourse, lesson
               <button role="menuitem" onClick={() => { setMore(false); onOpenProject(); }} style={menuItem}><span style={{ fontWeight: 600 }}>Abrir projeto…</span><span style={menuSub}>Reabre um arquivo …-ClassAtelier.json.</span></button>
               <button role="menuitem" onClick={() => { setMore(false); onVersions(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Histórico de versões</span><span style={menuSub}>Voltar a uma versão anterior ou recuperar um bloco.</span></button>
               <button role="menuitem" onClick={() => { setMore(false); onRichNotes(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Termos e links</span><span style={menuSub}>Revisar glossário e links de toda a aula.</span></button>
+              {window.Corretor && <button role="menuitem" onClick={() => { setMore(false); setSpellOpen(true); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Corretor ortográfico</span><span style={menuSub}>{spellSt && spellSt.on ? (window.Corretor.LANGS.find((l) => l.id === spellSt.lang) || {}).label : "Desligado"}. Idioma e meu dicionário.</span></button>}
               <button role="menuitem" onClick={() => { setMore(false); onPrintPDF(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Imprimir PDF</span><span style={menuSub}>Abre a versão expandida para imprimir.</span></button>
               <button role="menuitem" disabled={!canClear} onClick={() => { setMore(false); onClear(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)", opacity: canClear ? 1 : 0.45, color: "var(--coral-deep)" }}><span style={{ fontWeight: 600 }}>Limpar página</span><span style={menuSub}>Remove todos os blocos (dá para desfazer).</span></button>
             </div>
           </>)}
+          {spellOpen && window.SpellDialog && <window.SpellDialog onClose={() => setSpellOpen(false)} />}
         </div>
         <div style={{ position: "relative" }}>
           <button onClick={() => setMenu((v) => !v)} disabled={busy} style={primaryBtn}>

@@ -135,7 +135,7 @@ function RichTextArea({ value, onChange, placeholder, single = false }) {
         <button type="button" title="Itálico" aria-label="Itálico" onMouseDown={(e) => e.preventDefault()} onClick={() => command("italic")} style={{ ...richBtn, fontFamily: "var(--font-serif)", fontStyle: "italic" }}>i</button>
       </div>
       <div
-        ref={ref} contentEditable suppressContentEditableWarning spellCheck
+        ref={ref} contentEditable suppressContentEditableWarning spellCheck={!!(window.Corretor && !window.Corretor.supported)}
         data-placeholder={placeholder || ""}
         onFocus={() => { try { document.execCommand("defaultParagraphSeparator", false, "p"); } catch (e) {} }}
         onInput={(e) => onChange(e.currentTarget.innerHTML)}

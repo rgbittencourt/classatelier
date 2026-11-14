@@ -4,12 +4,20 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.27.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.28.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.28.0 · 14/11/2026 · Corretor ortográfico próprio
+
+- **Corretor do ClassAtelier**, só no modo **Editar**: marca as palavras fora do dicionário com **pontilhado vermelho** (o sublinhado contínuo continua sendo do sublinhado/Rabisco). A marcação usa o realce do navegador, **sem criar nenhum elemento no texto**: o conteúdo da aula não muda, o Visualizar e a aula exportada não têm nada disso.
+- **Idioma à escolha:** Português (Brasil) por padrão, English (US) ou Desligado, em **⋯ Mais ações → Corretor ortográfico**. Dicionários Hunspell (LibreOffice VERO e SCOWL) em `vendor/dict/`, carregados só quando usados e com motor próprio (`corretor-motor.js`), que abre o pt-BR em cerca de 0,3 s. Funciona também com o arquivo aberto sem internet.
+- **Botão direito numa palavra marcada:** sugestões (com acentos, letras trocadas, coladas), **Ignorar** e **Adicionar ao dicionário**. O dicionário pessoal (por idioma) fica no navegador e se gerencia na mesma janela.
+- Não marca a palavra que você está digitando, números, endereços, e-mails, siglas de até 5 letras, `CamelCase`, código e fórmulas. O corretor do navegador deixa de aparecer nos textos da página (só volta em navegador sem o recurso de realce).
+- Licenças dos dicionários em `vendor/dict/LICENSE-*.txt` (LGPL/MPL para o pt-BR; SCOWL para o en-US).
 
 ### 1.27.1 · 14/11/2026 · Equação: espaços digitados em índices e expoentes
 
