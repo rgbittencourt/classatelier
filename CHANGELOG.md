@@ -4,12 +4,20 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.30.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.31.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.31.0 · 14/11/2026 · Botões reorganizados: barra de baixo e revisão na esquerda
+
+- **Barra de cima mais leve:** ficam desfazer, `</>`, lixeira, Acessibilidade (com o contador), Editar/Visualizar, Apresentar, Slides e, **juntos no canto**, **Importar** e **Exportar**. O Importar mantém o nome mesmo com a barra estreita. O menu «⋯» deixou de existir.
+- **Barra de baixo (nova)**, no centro, visível também no modo Visualizar: **Biblioteca, Abrir, Salvar, Pasta e Histórico**. A janela da Pasta abre para cima.
+- **Menu da esquerda:** **Termos e links** e **Ortografia** passam para lá, logo abaixo de Manual e Acervo.
+- **Imprimir PDF** agora está dentro do menu **Exportar**.
+- Nenhuma função mudou, só o lugar dos botões. Os identificadores `data-act` continuam os mesmos.
 
 ### 1.30.1 · 14/11/2026 · Importação do Moodle mais completa
 

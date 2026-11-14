@@ -854,7 +854,7 @@ function ClassAtelierApp() {
   return (
     <div style={{ display: "grid", gridTemplateColumns: mode === "preview" ? "1fr" : "248px 1fr " + (rightOpen ? "320px" : "40px"), height: "calc(100vh - var(--credits-h, 0px))", overflow: "hidden", transition: "grid-template-columns 160ms ease" }}>
       {mode === "edit" && (
-        <Palette onDragType={setDragType} onAdd={(t) => insertBlock(t, null)} />
+        <Palette onDragType={setDragType} onAdd={(t) => insertBlock(t, null)} onRichNotes={() => setRichOpen(true)} />
       )}
 
       <div style={{ display: "flex", flexDirection: "column", minWidth: 0, minHeight: 0, overflow: "hidden", borderLeft: mode === "edit" ? "1px solid var(--tool-line)" : "none", borderRight: mode === "edit" ? "1px solid var(--tool-line)" : "none" }}>
@@ -875,6 +875,9 @@ function ClassAtelierApp() {
           dragBlock={dragBlock}
           onRemove={removeBlock} onDuplicate={duplicateBlock} onMove={moveBlock}
         />
+        <BottomBar
+          onLibrary={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(false); setLibOpen(true); }}
+          onOpenProject={openProjectClick} onDownloadProject={downloadProject} onVersions={() => setVersionsOpen(true)} />
       </div>
 
       {mode === "edit" && (
@@ -970,7 +973,7 @@ function paletteMatches(b, q) {
   const hay = " " + palNorm(b.label + " " + b.type + " " + b.cat + " " + (PALETTE_KEYS[b.type] || "")).replace(/[^a-z0-9]+/g, " ");
   return terms.every((t) => hay.includes(" " + t));
 }
-function Palette({ onDragType, onAdd }) {
+function Palette({ onDragType, onAdd, onRichNotes }) {
   const [q, setQ] = useStateA("");
   const inputRef = useRefA(null);
   const searching = q.trim().length > 0;
@@ -1004,6 +1007,7 @@ function Palette({ onDragType, onAdd }) {
           <span data-act="version" title="Versão do ClassAtelier (Versionamento Semântico: MAIOR.MENOR.CORREÇÃO). Histórico no CHANGELOG do repositório." style={{ fontSize: 10, lineHeight: 1, fontWeight: 600, color: "var(--tool-ink-3)", whiteSpace: "nowrap" }}>v{window.CLASSATELIER_VERSION}</span></div>
         <div style={{ flexBasis: "100%", display: "flex", gap: 6, paddingLeft: 34 }}><a data-act="manual" href="manual/index.html#atelier" target="_blank" rel="noopener" title="Manual Class: guia de uso do ClassAtelier (abre em outra aba, no capítulo do ClassAtelier)" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11.5, fontWeight: 600, color: "var(--tool-ink-2)", textDecoration: "none", border: "1px solid var(--tool-line)", background: "var(--tool-surface)", borderRadius: 999, padding: "4px 9px", whiteSpace: "nowrap" }}>Manual <span aria-hidden="true">↗</span></a><a data-act="acervo" href={window.CLASSACERVO_URL || "https://rgbittencourt.github.io/classacervo/"} target="_blank" rel="noopener" title="ClassAcervo: organize, renomeie e copie os links dos cursos já publicados no GitHub Pages (abre em outra aba)" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11.5, fontWeight: 600, color: "var(--tool-ink-2)", textDecoration: "none", border: "1px solid var(--tool-line)", background: "var(--tool-surface)", borderRadius: 999, padding: "4px 9px", whiteSpace: "nowrap" }}>Acervo <span aria-hidden="true">↗</span></a></div>
       </div>
+      <ReviewTools onRichNotes={onRichNotes} />
       <div style={{ position: "sticky", top: -14, zIndex: 5, background: "var(--tool-panel)", margin: "0 -2px 12px", padding: "2px 2px 6px" }}>
         <div style={{ position: "relative" }}>
           <input ref={inputRef} value={q} data-pal="search" type="search" role="searchbox" aria-label="Buscar blocos" placeholder="Buscar bloco…  ( / )" autoComplete="off" spellCheck={false}
@@ -1241,34 +1245,23 @@ function RichNotesDialog({ lesson, onClose, onUpdate }) {
 const emptyNote={padding:18,border:"1px dashed var(--tool-line-2)",borderRadius:9,color:"var(--tool-ink-3)",fontSize:12};
 
 // ── Top bar ──
-function Topbar({ onPresent, onSlides, onInsertCode, onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportDelivery, onExportSCORM, onPrintPDF, onOpenProject, onImport, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear, onVersions, onRepublish, onMoodle, onCopyText, onDownloadText, onToAuthor, authorLinked }) {
+function Topbar({ onPresent, onSlides, onInsertCode, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportDelivery, onExportSCORM, onPrintPDF, onImport, onA11y, a11yOpen, a11yCount, onClear, canClear, onRepublish, onMoodle, onCopyText, onDownloadText, onToAuthor, authorLinked }) {
   const [busy, setBusy] = useStateA(false);
   const [menu, setMenu] = useStateA(false);
-  const [more, setMore] = useStateA(false);
-  const [spellOpen, setSpellOpen] = useStateA(false);
-  const [spellSt, setSpellSt] = useStateA(() => window.Corretor ? window.Corretor.get() : null);
-  React.useEffect(() => (window.Corretor ? window.Corretor.subscribe(setSpellSt) : undefined), []);
   const wrap = async (fn) => { setBusy(true); setMenu(false); try { await fn(); } finally { setBusy(false); } };
   return (
     <header className="tb" style={{ height: 52, flexShrink: 0, background: "var(--tool-panel)", borderBottom: "1px solid var(--tool-line)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 14px", position: "relative", zIndex: 40 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: "1 1 0" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0, flex: "0 1 auto" }}>
         <ThemePicker />
         <span className="tb-title" style={{ width: 1, height: 22, background: "var(--tool-line)" }} />
         <span className="tb-title" style={{ fontWeight: 600, fontSize: 14, color: "var(--tool-ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: 40 }}>{lesson.meta?.title || "Nova aula"}</span>
         <span className="tb-title" style={{ fontSize: 12, color: "var(--tool-ink-3)", whiteSpace: "nowrap", flexShrink: 0 }}>· {lesson.blocks.length} blocos</span>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "1 1 0", minWidth: 0, justifyContent: "flex-end" }}>
+        <div className="tb-scroll" style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, overflowX: "auto", padding: "2px 0" }}>
         <button onClick={onUndo} disabled={!canUndo} title="Desfazer (⌘Z)" style={{ ...ghostBtn, opacity: canUndo ? 1 : 0.4 }}><window.TIcon name="undo" size={15} /></button>
         {onInsertCode && <button data-act="insert-code-toolbar" onMouseDown={(e) => e.preventDefault()} onClick={onInsertCode} title="Inserir bloco de código: no cursor do parágrafo, depois do bloco selecionado ou no fim da aula" aria-label="Inserir bloco de código" style={{ ...ghostBtn, width: "auto", padding: "0 8px", font: "700 13px ui-monospace, Menlo, monospace" }}>{"</>"}</button>}
-        <button className="tb-sec" onClick={onClear} disabled={!canClear} title="Limpar página" style={{ ...ghostBtn, opacity: canClear ? 1 : 0.4, color: canClear ? "var(--coral-deep)" : "var(--tool-ink-3)" }}><window.TIcon name="trash" size={15} /></button>
-        <button onClick={onLibrary} title="Biblioteca: todas as aulas guardadas neste navegador (as semanas do ClassAuthor entram aqui)" style={textBtn}><window.TIcon name="library" size={15} /><span className="tb-label">Biblioteca</span></button>
-        {onImport && window.Importador && <button data-act="import" onClick={onImport} title="Importar do Moodle: traz uma aula pronta colando o HTML ou subindo um backup .mbz" style={textBtn}><window.TIcon name="upload" size={15} /><span className="tb-label">Importar</span></button>}
-        <button className="tb-sec" onClick={onOpenProject} title="Abrir projeto (…-ClassAtelier.json) ou aula exportada em HTML" style={textBtn}><window.TIcon name="folder" size={15} /><span className="tb-label">Abrir</span></button>
-        <button onClick={onDownloadProject} title="Salvar projeto: baixa o arquivo para continuar depois ou em outro computador" style={textBtn}><window.TIcon name="save" size={15} /><span className="tb-label">Salvar</span></button>
-        <PastaButton />
-        <button className="tb-sec" onClick={onVersions} title="Histórico de versões: volte a uma versão anterior da aula ou recupere um bloco apagado" style={textBtn}><window.TIcon name="history" size={15} /><span className="tb-label">Histórico</span></button>
-        <button className="tb-sec" onClick={onRichNotes} title="Termos e links: revisar glossário e links de toda a aula" style={textBtn}><window.TIcon name="link" size={15} /><span className="tb-label">Termos e links</span></button>
-        {window.Corretor && <button className="tb-sec" onClick={() => setSpellOpen(true)} title={"Corretor ortográfico: " + (spellSt && spellSt.on ? (window.Corretor.LANGS.find((l) => l.id === spellSt.lang) || {}).label : "desligado") + ". Escolha o idioma e gerencie seu dicionário"} aria-label="Corretor ortográfico" style={textBtn}><window.TIcon name="spell" size={15} /><span className="tb-label">Ortografia</span></button>}
+        <button data-act="clear" onClick={onClear} disabled={!canClear} title="Limpar página" style={{ ...ghostBtn, opacity: canClear ? 1 : 0.4, color: canClear ? "var(--coral-deep)" : "var(--tool-ink-3)" }}><window.TIcon name="trash" size={15} /></button>
         <button onClick={onA11y} aria-pressed={!!a11yOpen} title="Acessibilidade: verifica imagens sem descrição, contraste, títulos, links, vídeos e tabelas" style={{ ...textBtn, position: "relative", background: a11yOpen ? "var(--tool-surface)" : undefined }}><window.TIcon name="a11y" size={15} /><span className="tb-label">Acessibilidade</span>{a11yCount > 0 && <span aria-label={a11yCount + " itens para revisar"} style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 999, background: "#b3372a", color: "#fff", fontSize: 10.5, fontWeight: 800, display: "inline-grid", placeItems: "center", marginLeft: 2 }}>{a11yCount > 99 ? "99+" : a11yCount}</span>}</button>
         <div style={{ display: "flex", background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 9, padding: 3 }}>
           <button onClick={() => setMode("edit")} style={segBtn(mode === "edit")}><window.TIcon name="pencil" size={13} /> <span className="tb-seg-label">Editar</span></button>
@@ -1276,23 +1269,8 @@ function Topbar({ onPresent, onSlides, onInsertCode, onLibrary, onCourse, lesson
         </div>
         <button data-act="present" onClick={onPresent} disabled={!lesson.blocks.length} title="Apresentar: mostra a aula em tela cheia, uma seção por vez, para projetar em sala (Esc sai)" style={{ ...textBtn, opacity: lesson.blocks.length ? 1 : 0.45 }}><window.TIcon name="present" size={14} /><span className="tb-label">Apresentar</span></button>
         {onSlides && <button data-act="slides" onClick={onSlides} disabled={!lesson.blocks.length} title="Slides: gera uma apresentação profissional da aula com IA (você escolhe a paleta de cores)" style={{ ...textBtn, opacity: lesson.blocks.length ? 1 : 0.45 }}><window.TIcon name="slides" size={15} /><span className="tb-label">Slides</span></button>}
-        <button className="tb-sec" onClick={onPrintPDF} title="Imprimir PDF: abre a versão expandida da aula para imprimir" style={textBtn}><window.TIcon name="printer" size={15} /><span className="tb-label">Imprimir PDF</span></button>
-        <div className="tb-more" style={{ position: "relative" }}>
-          <button onClick={() => setMore((v) => !v)} title="Mais ações: abrir projeto, termos e links, imprimir PDF, limpar página" aria-haspopup="menu" aria-expanded={more} aria-label="Mais ações" style={{ ...ghostBtn, fontSize: 18, lineHeight: 1, paddingBottom: 5 }}>⋯</button>
-          {more && (<>
-            <div onClick={() => setMore(false)} style={{ position: "fixed", inset: 0, zIndex: 41 }} />
-            <div role="menu" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 42, background: "#fff", border: "1px solid var(--tool-line)", borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.16)", width: 236, overflow: "hidden" }}>
-              <button role="menuitem" onClick={() => { setMore(false); onOpenProject(); }} style={menuItem}><span style={{ fontWeight: 600 }}>Abrir projeto…</span><span style={menuSub}>Reabre um arquivo …-ClassAtelier.json.</span></button>
-              {onImport && window.Importador && <button role="menuitem" onClick={() => { setMore(false); onImport(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Importar do Moodle…</span><span style={menuSub}>Cola o HTML da aula ou sobe um backup .mbz.</span></button>}
-              <button role="menuitem" onClick={() => { setMore(false); onVersions(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Histórico de versões</span><span style={menuSub}>Voltar a uma versão anterior ou recuperar um bloco.</span></button>
-              <button role="menuitem" onClick={() => { setMore(false); onRichNotes(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Termos e links</span><span style={menuSub}>Revisar glossário e links de toda a aula.</span></button>
-              {window.Corretor && <button role="menuitem" onClick={() => { setMore(false); setSpellOpen(true); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Corretor ortográfico</span><span style={menuSub}>{spellSt && spellSt.on ? (window.Corretor.LANGS.find((l) => l.id === spellSt.lang) || {}).label : "Desligado"}. Idioma e meu dicionário.</span></button>}
-              <button role="menuitem" onClick={() => { setMore(false); onPrintPDF(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Imprimir PDF</span><span style={menuSub}>Abre a versão expandida para imprimir.</span></button>
-              <button role="menuitem" disabled={!canClear} onClick={() => { setMore(false); onClear(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)", opacity: canClear ? 1 : 0.45, color: "var(--coral-deep)" }}><span style={{ fontWeight: 600 }}>Limpar página</span><span style={menuSub}>Remove todos os blocos (dá para desfazer).</span></button>
-            </div>
-          </>)}
         </div>
-        {spellOpen && window.SpellDialog && <window.SpellDialog onClose={() => setSpellOpen(false)} />}
+        {onImport && window.Importador && <button data-act="import" onClick={onImport} title="Importar do Moodle: traz uma aula pronta colando o HTML ou subindo um backup .mbz" style={textBtn}><window.TIcon name="upload" size={15} /><span className="tb-imp-label">Importar</span></button>}
         <div style={{ position: "relative" }}>
           <button onClick={() => setMenu((v) => !v)} disabled={busy} style={primaryBtn}>
             <window.TIcon name="download" size={14} color="#fff" /> {busy ? "Gerando…" : "Exportar"} <span style={{ fontSize: 10, opacity: 0.8 }}>▾</span>
@@ -1320,6 +1298,10 @@ function Topbar({ onPresent, onSlides, onInsertCode, onLibrary, onCourse, lesson
                 <button onClick={onExportSCORM} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
                   <span style={{ fontWeight: 600 }}>Pacote SCORM (.zip)</span>
                   <span style={menuSub}>Para subir no seu ambiente virtual (LMS). Pergunta as opções.</span>
+                </button>
+                <button onClick={() => { setMenu(false); onPrintPDF(); }} data-act="print-pdf" style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
+                  <span style={{ fontWeight: 600 }}>Imprimir PDF…</span>
+                  <span style={menuSub}>Abre a versão expandida da aula para imprimir ou salvar como PDF.</span>
                 </button>
                 <button onClick={() => { setMenu(false); onCourse && onCourse(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
                   <span style={{ fontWeight: 600 }}>Curso e GitHub…</span>
@@ -1356,8 +1338,40 @@ function Topbar({ onPresent, onSlides, onInsertCode, onLibrary, onCourse, lesson
     </header>
   );
 }
+// ── Barra inferior: arquivos e revisão (o que não precisa ficar na barra de cima) ──
+function BottomBar({ onLibrary, onOpenProject, onDownloadProject, onVersions }) {
+  const b = { ...textBtn, height: 30, padding: "0 10px", fontSize: 12, gap: 6, border: "1px solid transparent", background: "transparent" };
+  const sep = <span aria-hidden="true" style={{ width: 1, height: 18, background: "var(--tool-line)", margin: "0 4px", flexShrink: 0 }} />;
+  return (
+    <footer className="bb" data-bottom-bar style={{ height: 42, flexShrink: 0, background: "var(--tool-panel)", borderTop: "1px solid var(--tool-line)", display: "flex", alignItems: "center", justifyContent: "flex-start", padding: "0 12px", position: "relative", zIndex: 40 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0 }}>
+        <button data-act="library" onClick={onLibrary} title="Biblioteca: todas as aulas guardadas neste navegador (as semanas do ClassAuthor entram aqui)" style={b}><window.TIcon name="library" size={15} /><span className="bb-label">Biblioteca</span></button>
+        <button data-act="open-project" onClick={onOpenProject} title="Abrir projeto (…-ClassAtelier.json) ou aula exportada em HTML" style={b}><window.TIcon name="folder" size={15} /><span className="bb-label">Abrir</span></button>
+        <button data-act="save-project" onClick={onDownloadProject} title="Salvar projeto: baixa o arquivo para continuar depois ou em outro computador" style={b}><window.TIcon name="save" size={15} /><span className="bb-label">Salvar</span></button>
+        <PastaButton up />
+        {sep}
+        <button data-act="versions" onClick={onVersions} title="Histórico de versões: volte a uma versão anterior da aula ou recupere um bloco apagado" style={b}><window.TIcon name="history" size={15} /><span className="bb-label">Histórico</span></button>
+      </div>
+    </footer>
+  );
+}
+// ── Revisão (menu da esquerda, junto de Manual e Acervo) ──
+function ReviewTools({ onRichNotes }) {
+  const [spellOpen, setSpellOpen] = useStateA(false);
+  const [spellSt, setSpellSt] = useStateA(() => window.Corretor ? window.Corretor.get() : null);
+  React.useEffect(() => (window.Corretor ? window.Corretor.subscribe(setSpellSt) : undefined), []);
+  const b = { ...textBtn, height: 32, padding: "0 9px", fontSize: 12, gap: 6, minWidth: 0, overflow: "hidden", justifyContent: "flex-start" };
+  const spellLabel = spellSt && spellSt.on ? (window.Corretor.LANGS.find((l) => l.id === spellSt.lang) || {}).label : "desligado";
+  return (
+    <div data-review-tools style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, margin: "0 0 12px" }}>
+      <button data-act="rich-notes" onClick={onRichNotes} title="Termos e links: revisar glossário e links de toda a aula" style={b}><window.TIcon name="link" size={14} /><span>Termos e links</span></button>
+      {window.Corretor && <button data-act="spell" onClick={() => setSpellOpen(true)} title={"Corretor ortográfico: " + spellLabel + ". Escolha o idioma e gerencie seu dicionário"} aria-label="Corretor ortográfico" style={b}><window.TIcon name="spell" size={14} /><span>Ortografia</span></button>}
+      {spellOpen && window.SpellDialog && <window.SpellDialog onClose={() => setSpellOpen(false)} />}
+    </div>
+  );
+}
 // ── Pasta do projeto ──
-function PastaButton() {
+function PastaButton({ up }) {
   const P = window.PastaProjeto;
   const [st, setSt] = useStateA(() => (P ? P.status() : { supported: false }));
   const [open, setOpen] = useStateA(false);
@@ -1370,12 +1384,12 @@ function PastaButton() {
   const dot = { width: 8, height: 8, borderRadius: 999, background: on ? "#2a9d8f" : waiting ? "#d4a017" : "var(--tool-line-2)", flexShrink: 0 };
   return (
     <div style={{ position: "relative" }}>
-      <button data-act="pasta-projeto" onClick={() => setOpen((v) => !v)} aria-expanded={open} title={on ? "Pasta do projeto: " + st.name + " (tudo o que você salvar vai para lá)" : waiting ? "Pasta do projeto aguardando sua permissão" : "Pasta do projeto: escolha onde salvar tudo, separado em subpastas"} style={{ ...textBtn, borderColor: on ? "#2a9d8f" : waiting ? "#d4a017" : undefined }}>
-        <window.TIcon name="folder" size={15} /><span style={dot} /><span className="tb-label">Pasta</span>
+      <button data-act="pasta-projeto" onClick={() => setOpen((v) => !v)} aria-expanded={open} title={on ? "Pasta do projeto: " + st.name + " (tudo o que você salvar vai para lá)" : waiting ? "Pasta do projeto aguardando sua permissão" : "Pasta do projeto: escolha onde salvar tudo, separado em subpastas"} style={up ? { ...textBtn, height: 30, padding: "0 10px", fontSize: 12, border: "1px solid " + (on ? "#2a9d8f" : waiting ? "#d4a017" : "transparent"), background: "transparent" } : { ...textBtn, borderColor: on ? "#2a9d8f" : waiting ? "#d4a017" : undefined }}>
+        <window.TIcon name="folder" size={15} /><span style={dot} /><span className={up ? "bb-label" : "tb-label"}>Pasta</span>
       </button>
       {open && (<>
         <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 41 }} />
-        <div role="dialog" aria-label="Pasta do projeto" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 42, background: "#fff", border: "1px solid var(--tool-line)", borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.16)", width: 330, padding: 14, display: "flex", flexDirection: "column", gap: 10, fontSize: 12.5, color: "var(--tool-ink)", lineHeight: 1.45 }}>
+        <div role="dialog" aria-label="Pasta do projeto" style={{ position: "absolute", ...(up ? { bottom: "calc(100% + 6px)", left: 0 } : { top: "calc(100% + 6px)", right: 0 }), zIndex: 42, boxShadow: "0 12px 32px rgba(0,0,0,0.16)", width: 330, background: "#fff", border: "1px solid var(--tool-line)", borderRadius: 10, padding: 14, display: "flex", flexDirection: "column", gap: 10, fontSize: 12.5, color: "var(--tool-ink)", lineHeight: 1.45 }}>
           <strong style={{ fontSize: 13.5 }}>{on ? "Pasta do projeto: " + st.name : waiting ? "Pasta " + st.name + " (aguardando permissão)" : "Pasta do projeto"}</strong>
           {!st.supported ? <span style={{ color: "var(--tool-ink-2)" }}>Este navegador não deixa o site gravar numa pasta do computador. No Chrome ou no Edge (computador), tudo o que o ClassAtelier salva vai para uma pasta, separado em subpastas. Aqui, os arquivos continuam indo para Downloads.</span>
           : on ? <span style={{ color: "var(--tool-ink-2)" }}>{st.inAuthor ? "Ligado à pasta do projeto do ClassAuthor: o ClassAtelier usa a subpasta classatelier/ dela. " : ""}Tudo o que você salvar ou exportar vai para cá, cada tipo na sua subpasta ({st.subfolders.join(", ")}). O projeto aberto também é gravado em projetos/ a cada alteração. Para o PDF, salve na pasta pdf/ pela janela de impressão.</span>
