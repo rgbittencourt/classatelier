@@ -192,6 +192,7 @@ function ClassAtelierApp() {
   const [courseEntries, setCourseEntries] = useStateA(null);
   const [toast, setToast] = useStateA(null);
   const [imageDlg, setImageDlg] = useStateA(null); // janela «Inserir imagem no cursor»
+  const [importOpen, setImportOpen] = useStateA(false); // janela «Importar do Moodle»
   const toastTimer = useRefA(null);
   // origem do ClassAuthor que abriu esta aba (aprendida na primeira mensagem dele); permite devolver a aula editada
   const [authorOrigin, setAuthorOrigin] = useStateA(() => { try { return window.opener ? (sessionStorage.getItem("classatelier.authorOrigin") || "") : ""; } catch (e) { return ""; } });
@@ -774,6 +775,37 @@ function ClassAtelierApp() {
     r.readAsText(f);
   };
 
+  // Importar do Moodle (HTML colado ou backup .mbz): vira aula nova ou entra no fim da aula aberta.
+  const applyImport = async (r) => {
+    setImportOpen(false);
+    try {
+      if (r.embedded) {
+        const el = new DOMParser().parseFromString(r.embedded, "text/html").getElementById("aula-lesson");
+        if (!el) throw new Error("não achei a aula dentro deste HTML.");
+        await switchTo(extractProjectPayload(JSON.parse(el.textContent)), newLessonId(), { app: "file", key: "html colado" });
+        showToast("Aula importada do HTML exportado. A aula anterior ficou na Biblioteca."); return;
+      }
+      const baseMeta = emptyLesson().meta, I = window.Importador;
+      const aviso = r.warnCount ? " " + r.warnCount + (r.warnCount === 1 ? " item ficou" : " itens ficaram") + " de fora ou vazio(s): confira os blocos de imagem." : "";
+      if (r.dest === "append") {
+        const aula = I.montarAula(r.model, { hero: false, baseMeta });
+        const cur = lessonRef.current, blocks = cur.blocks.slice();
+        let at = blocks.length;
+        while (at > 0 && (blocks[at - 1].type === "sintese" || blocks[at - 1].type === "referencias")) at--;
+        blocks.splice(at, 0, ...aula.blocks);
+        commit({ ...cur, blocks });
+        showToast("Importado no fim da aula (" + r.total + " blocos). Dá para desfazer." + aviso);
+      } else {
+        const aula = I.montarAula(r.model, { hero: true, baseMeta });
+        let project = { meta: aula.meta, blocks: aula.blocks };
+        if (window.autoNumberEquations) project = window.autoNumberEquations(project);
+        await switchTo(project, newLessonId(), { app: "import", key: r.model.title || "" });
+        setMode("edit");
+        showToast("Aula importada (" + r.total + " blocos). A aula anterior ficou na Biblioteca." + aviso);
+      }
+    } catch (err) { alert("Não consegui importar: " + err.message); }
+  };
+
   const exportHTML = async () => {
     try { await window.downloadExport(lesson); } catch (e) { alert("Erro ao exportar: " + e.message); }
   };
@@ -830,7 +862,7 @@ function ClassAtelierApp() {
           lesson={lesson} setLesson={commit} mode={mode} setMode={setMode}
           onUndo={undo} canUndo={history.current.length > 0} onInsertCode={mode === "edit" ? () => insertCodeBlock(null) : null}
           onExportHTML={exportHTML} onExportStandaloneHTML={exportStandaloneHTML} onExportDelivery={exportDelivery} onExportSCORM={() => setScormOpen(true)} onPrintPDF={printPDF} onPresent={() => setPresenting({ at: mode === "edit" ? window.presentStartIndex(lesson, selected) : 0 })} onSlides={() => setSlidesOpen(true)}
-          onOpenProject={openProjectClick} onDownloadProject={downloadProject}
+          onOpenProject={openProjectClick} onImport={() => setImportOpen(true)} onDownloadProject={downloadProject}
           onRichNotes={() => setRichOpen(true)} onA11y={() => setA11yOpen((v) => !v)} a11yOpen={a11yOpen} a11yCount={a11yCount} onLibrary={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(false); setLibOpen(true); }} onCourse={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(true); setLibOpen(true); }}
           onClear={() => setClearOpen(true)} canClear={hasLessonContent} onVersions={() => setVersionsOpen(true)} onRepublish={() => setRepublishOpen(true)} onMoodle={() => setMoodle({ links: [] })} onCopyText={copyLessonText} onDownloadText={downloadLessonText} onToAuthor={sendToAuthor} authorLinked={!!authorOrigin && !!window.opener}
         />
@@ -876,6 +908,7 @@ function ClassAtelierApp() {
       <input ref={fileInputRef} type="file" accept=".json,.JSON,.html,.htm,application/json,text/html" onChange={onProjectFile} style={{ display: "none" }} />
       {scormOpen && <ScormDialog lesson={lesson} onClose={() => setScormOpen(false)} onConfirm={exportSCORM} onCheck={(title, load) => setScormCheck({ title, load })} />}
       {moodle && <window.MoodleDialog links={moodle.links} lesson={moodle.links && moodle.links.length ? null : lesson} onClose={() => setMoodle(null)} />}
+      {importOpen && window.ImportDialog && <window.ImportDialog hasLesson={hasLessonContent} onClose={() => setImportOpen(false)} onApply={applyImport} />}
       {imageDlg && <window.InsertImageDialog title={lesson.meta && lesson.meta.title} context={imageDlg.context} suggestions={pendingFigureSuggestions(lesson)} onInsert={confirmImage} onClose={() => setImageDlg(null)} />}
       {republishOpen && <window.RepublishDialog lesson={lesson} onClose={() => setRepublishOpen(false)} />}
       {versionsOpen && <window.VersionsDialog lessonId={curRef.current.id} lesson={lesson} onClose={() => setVersionsOpen(false)} onRestore={restoreVersion} onApplyBlock={applyVersionBlock} />}
@@ -1206,7 +1239,7 @@ function RichNotesDialog({ lesson, onClose, onUpdate }) {
 const emptyNote={padding:18,border:"1px dashed var(--tool-line-2)",borderRadius:9,color:"var(--tool-ink-3)",fontSize:12};
 
 // ── Top bar ──
-function Topbar({ onPresent, onSlides, onInsertCode, onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportDelivery, onExportSCORM, onPrintPDF, onOpenProject, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear, onVersions, onRepublish, onMoodle, onCopyText, onDownloadText, onToAuthor, authorLinked }) {
+function Topbar({ onPresent, onSlides, onInsertCode, onLibrary, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportDelivery, onExportSCORM, onPrintPDF, onOpenProject, onImport, onDownloadProject, onRichNotes, onA11y, a11yOpen, a11yCount, onClear, canClear, onVersions, onRepublish, onMoodle, onCopyText, onDownloadText, onToAuthor, authorLinked }) {
   const [busy, setBusy] = useStateA(false);
   const [menu, setMenu] = useStateA(false);
   const [more, setMore] = useStateA(false);
@@ -1227,6 +1260,7 @@ function Topbar({ onPresent, onSlides, onInsertCode, onLibrary, onCourse, lesson
         {onInsertCode && <button data-act="insert-code-toolbar" onMouseDown={(e) => e.preventDefault()} onClick={onInsertCode} title="Inserir bloco de código: no cursor do parágrafo, depois do bloco selecionado ou no fim da aula" aria-label="Inserir bloco de código" style={{ ...ghostBtn, width: "auto", padding: "0 8px", font: "700 13px ui-monospace, Menlo, monospace" }}>{"</>"}</button>}
         <button className="tb-sec" onClick={onClear} disabled={!canClear} title="Limpar página" style={{ ...ghostBtn, opacity: canClear ? 1 : 0.4, color: canClear ? "var(--coral-deep)" : "var(--tool-ink-3)" }}><window.TIcon name="trash" size={15} /></button>
         <button onClick={onLibrary} title="Biblioteca: todas as aulas guardadas neste navegador (as semanas do ClassAuthor entram aqui)" style={textBtn}><window.TIcon name="library" size={15} /><span className="tb-label">Biblioteca</span></button>
+        {onImport && window.Importador && <button data-act="import" onClick={onImport} title="Importar do Moodle: traz uma aula pronta colando o HTML ou subindo um backup .mbz" style={textBtn}><window.TIcon name="upload" size={15} /><span className="tb-label">Importar</span></button>}
         <button className="tb-sec" onClick={onOpenProject} title="Abrir projeto (…-ClassAtelier.json) ou aula exportada em HTML" style={textBtn}><window.TIcon name="folder" size={15} /><span className="tb-label">Abrir</span></button>
         <button onClick={onDownloadProject} title="Salvar projeto: baixa o arquivo para continuar depois ou em outro computador" style={textBtn}><window.TIcon name="save" size={15} /><span className="tb-label">Salvar</span></button>
         <PastaButton />
@@ -1247,6 +1281,7 @@ function Topbar({ onPresent, onSlides, onInsertCode, onLibrary, onCourse, lesson
             <div onClick={() => setMore(false)} style={{ position: "fixed", inset: 0, zIndex: 41 }} />
             <div role="menu" style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 42, background: "#fff", border: "1px solid var(--tool-line)", borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.16)", width: 236, overflow: "hidden" }}>
               <button role="menuitem" onClick={() => { setMore(false); onOpenProject(); }} style={menuItem}><span style={{ fontWeight: 600 }}>Abrir projeto…</span><span style={menuSub}>Reabre um arquivo …-ClassAtelier.json.</span></button>
+              {onImport && window.Importador && <button role="menuitem" onClick={() => { setMore(false); onImport(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Importar do Moodle…</span><span style={menuSub}>Cola o HTML da aula ou sobe um backup .mbz.</span></button>}
               <button role="menuitem" onClick={() => { setMore(false); onVersions(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Histórico de versões</span><span style={menuSub}>Voltar a uma versão anterior ou recuperar um bloco.</span></button>
               <button role="menuitem" onClick={() => { setMore(false); onRichNotes(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Termos e links</span><span style={menuSub}>Revisar glossário e links de toda a aula.</span></button>
               {window.Corretor && <button role="menuitem" onClick={() => { setMore(false); setSpellOpen(true); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}><span style={{ fontWeight: 600 }}>Corretor ortográfico</span><span style={menuSub}>{spellSt && spellSt.on ? (window.Corretor.LANGS.find((l) => l.id === spellSt.lang) || {}).label : "Desligado"}. Idioma e meu dicionário.</span></button>}

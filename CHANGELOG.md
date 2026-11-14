@@ -4,12 +4,22 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.29.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.30.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.30.0 · 14/11/2026 · Importar uma aula do Moodle
+
+- **Botão Importar** na barra (ao lado de Biblioteca; também em **⋯ → Importar do Moodle…**). Não dá para importar só pelo endereço da aula (o Moodle exige login e o navegador não deixa um site ler a página de outro), então são dois caminhos, que terminam na mesma tela de revisão.
+- **Colar HTML:** código-fonte do editor do Moodle ou conteúdo copiado da página. Vira blocos: títulos (cada H1/H2 abre um tópico), parágrafos com negrito, itálico, links e listas, imagens com legenda, tabelas, citações, código, caixas de alerta (Atenção/Destaque), seções recolhíveis (Accordion), vídeos do YouTube (incorporados ou link sozinho) e outros incorporados (Conteúdo externo). Fórmulas `\(…\)` viram fórmula na linha; `$$…$$` e `\[…\]` sozinhas viram o bloco Equação. HTML exportado pelo próprio ClassAtelier (com `aula-lesson`) volta inteiro.
+- **Backup do Moodle (.mbz):** lido no navegador (ZIP, ou .tar.gz). Mostra as seções e atividades para marcar; importa páginas, rótulos, resumos de seção, livros (um título por capítulo, na ordem), links (URL) e arquivos de imagem, **com as imagens do backup** (reduzidas a 1600 px). Fóruns, tarefas, questionários, H5P e outros tipos aparecem em cinza e ficam de fora.
+- **Revisão antes de importar:** contagem de blocos por tipo, lista do que ficou de fora ou precisa de você (imagem do Moodle que não veio, H5P, vídeo ou áudio hospedado no Moodle, anexo, link interno), título editável e destino: **aula nova** (com abertura; a atual vai para a Biblioteca) ou **no fim da aula aberta** (antes da síntese e das referências; dá para desfazer).
+- Imagens guardadas só no Moodle não passam pelo HTML colado: o bloco de imagem é criado vazio, com a legenda, e o painel Acessibilidade o aponta.
+- Segurança: o HTML de entrada é reescrito; scripts, estilos e atributos (`style`, `class`, `on…`) são descartados, só passam formatação básica e links http(s).
+- Arquivos novos: `importar.js` (conversão e leitura do .mbz, testável no node), `importar-ui.jsx` (janela) e `tests/importar.test.js` (101 verificações, com um backup .mbz sintético). `index.html`/`boot.js` carregam os dois; a janela usa o JSZip que já vinha para os pacotes.
 
 ### 1.29.0 · 14/11/2026 · Fórmula na linha e paleta de letras gregas e símbolos
 

@@ -13,8 +13,8 @@
 (function () {
   var BASE = window.AULA_BASE || "";
   // Versão do ClassAtelier (Versionamento Semântico; histórico em CHANGELOG.md).
-  window.CLASSATELIER_VERSION = "1.29.0";
-  var BUILD_REV = "20261114-v1.29.0a";
+  window.CLASSATELIER_VERSION = "1.30.0";
+  var BUILD_REV = "20261114-v1.30.0a";
   var theme = window.resolveAulaTheme();
   window.AULA_ACTIVE_THEME = theme;
 
@@ -83,6 +83,8 @@
   w('<script src="' + attr(rev(BASE + "equacao-quimica.js")) + '"><\/script>');
   // 6b2b) Fórmula na linha (no meio do parágrafo) e paleta de letras gregas e símbolos; só do editor
   w('<script src="' + attr(rev(BASE + "equacao-inline.js")) + '"><\/script>');
+  // 6b2c) Importar aula do Moodle (HTML colado ou backup .mbz); só do editor
+  w('<script src="' + attr(rev(BASE + "importar.js")) + '"><\/script>');
   // 6b3) Corretor ortográfico próprio (só do editor): motor Hunspell leve + marcação pontilhada; dicionários em vendor/dict/ (carregados sob demanda)
   w('<script src="' + attr(rev(BASE + "corretor-motor.js")) + '"><\/script>');
   w('<script src="' + attr(rev(BASE + "corretor.js")) + '"><\/script>');
@@ -94,7 +96,7 @@
   w('<script src="' + attr(rev(BASE + "slides-pptx.js")) + '"><\/script>');
 
   // 7) Módulos do builder (agnósticos de tema — vivem ao lado do index.html)
-  ["editable.jsx", "registry.jsx", "blocks.jsx", "panel.jsx", "export.jsx", "a11y.jsx", "scormcheck.jsx", "versions.jsx", "republish.jsx", "moodle.jsx", "lessontext.jsx", "devicepreview.jsx", "corretor-ui.jsx", "present.jsx", "insertimage.jsx", "referencias.jsx", "slides.jsx", "app.jsx", "mount.jsx"].forEach(function (m) {
+  ["editable.jsx", "registry.jsx", "blocks.jsx", "panel.jsx", "export.jsx", "a11y.jsx", "scormcheck.jsx", "versions.jsx", "republish.jsx", "moodle.jsx", "lessontext.jsx", "devicepreview.jsx", "corretor-ui.jsx", "importar-ui.jsx", "present.jsx", "insertimage.jsx", "referencias.jsx", "slides.jsx", "app.jsx", "mount.jsx"].forEach(function (m) {
     w('<script type="text/babel" src="' + attr(rev(m)) + '"><\/script>');
   });
 
