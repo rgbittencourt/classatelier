@@ -61,20 +61,20 @@
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
     }
-    :root { --credits-h: 30px; }
+    :root { --credits-h: 38px; }
     #root { height: calc(100vh - var(--credits-h)); }
 
-    /* Barra de créditos: fina, fixa embaixo, com as cores da marca (não muda com o tema) */
-    .ca-credits { position: fixed; left: 0; right: 0; bottom: 0; height: var(--credits-h); z-index: 30; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 14px; background: #14213d; color: #cbd5e4; border-top: 2px solid #d3b56e; font: 11px/1.2 var(--tool-sans); white-space: nowrap; overflow: hidden; }
+    /* Barra de créditos: fixa embaixo (38 px), com as cores da marca (não muda com o tema) */
+    .ca-credits { position: fixed; left: 0; right: 0; bottom: 0; height: var(--credits-h); z-index: 30; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 14px; background: #14213d; color: #cbd5e4; border-top: 2px solid #d3b56e; font: 12px/1.2 var(--tool-sans); white-space: nowrap; overflow: hidden; }
     .ca-credits img { display: block; flex: none; object-fit: contain; }
     .ca-credits strong { color: #f8f5ec; font-weight: 600; }
-    .ca-credits .ca-k { color: #d3b56e; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; font-size: 9.5px; }
-    .ca-credits .ca-sep { width: 1px; height: 16px; background: rgba(211,181,110,.7); flex: none; }
+    .ca-credits .ca-k { color: #d3b56e; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; font-size: 10.5px; }
+    .ca-credits .ca-sep { width: 1px; height: 20px; background: rgba(211,181,110,.7); flex: none; }
     .ca-credits a { color: #e1c986; text-decoration: none; font-weight: 600; }
     .ca-credits a:hover { text-decoration: underline; }
     @media (max-width: 1240px) { .ca-credits .ca-lume { display: none; } }
     @media (max-width: 1000px) { .ca-credits .ca-inst, .ca-credits .ca-sep.ca-s1 { display: none; } }
-    @media (max-width: 700px) { .ca-credits .ca-ino, .ca-credits .ca-sep.ca-s2 { display: none; } .ca-credits { gap: 8px; font-size: 10.5px; } .ca-credits .ca-k { display: none; } }
+    @media (max-width: 700px) { .ca-credits .ca-ino, .ca-credits .ca-sep.ca-s2 { display: none; } .ca-credits { gap: 8px; font-size: 11px; } .ca-credits .ca-k { display: none; } }
     @media (max-width: 400px) { .ca-credits .ca-ver-name { display: none; } }
     @media print { .ca-credits { display: none; } #root { height: auto; } }
 
@@ -170,11 +170,11 @@
 <body>
   <div id="root"></div>
   <footer class="ca-credits" aria-label="Créditos">
-    <img src="assets/brand/ifsc-institutional-mark.png" alt="Logotipo do IFSC" height="22" width="19" />
+    <img src="assets/brand/ifsc-institutional-mark.png" alt="Logotipo do IFSC" height="26" width="22" />
     <span class="ca-inst"><strong>Instituto Federal de Santa Catarina</strong> · Câmpus Florianópolis–Continente</span>
     <span class="ca-sep ca-s1" aria-hidden="true"></span>
-    <span><span class="ca-k">Desenvolvido pelos</span> <strong>Profs. Rogério G. Bittencourt &amp; Luís Lindner</strong></span>
-    <img class="ca-ino" src="assets/brand/inovalab-signature.png" alt="Logotipo do INOVALAB" height="22" width="56" />
+    <span><span class="ca-k">Desenvolvido pelos</span> <strong>Profs. Rogério Bittencourt &amp; Luís Lindner</strong></span>
+    <img class="ca-ino" src="assets/brand/inovalab-signature.png" alt="Logotipo do INOVALAB" height="26" width="66" />
     <span class="ca-sep ca-s2" aria-hidden="true"></span>
     <span><span class="ca-ver-name">ClassAtelier </span><span id="ca-ver"></span><span class="ca-lume"> · evolução do LumeAuthor, do Prof. Luís Lindner</span></span>
   </footer>
@@ -191,10 +191,10 @@
   <!-- Tema + componentes do kit + módulos do builder são injetados aqui,
        em ordem, por boot.js — a partir do tema ativo (themes.js). -->
   <script>window.AULA_BASE = "";</script>
-  <script src="pasta.js?v=20261114-v1.31.0a"></script>
-  <script src="icones.js?v=20261114-v1.31.0a" defer></script>
-  <script src="themes.js?v=20261114-v1.31.0a"></script>
-  <script src="boot.js?v=20261114-v1.31.0a"></script>
+  <script src="pasta.js?v=20261114-v1.31.1a"></script>
+  <script src="icones.js?v=20261114-v1.31.1a" defer></script>
+  <script src="themes.js?v=20261114-v1.31.1a"></script>
+  <script src="boot.js?v=20261114-v1.31.1a"></script>
   <script>(function(){var e=document.getElementById("ca-ver");if(e)e.textContent="v"+(window.CLASSATELIER_VERSION||"");})();</script>
 </body>
 </html>

@@ -4,12 +4,17 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.31.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.31.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.31.1 · 14/11/2026 · Faixa de créditos mais grossa e nome corrigido
+
+- A **faixa de créditos** de baixo ficou um pouco mais grossa (de 30 para **38 px**), com letra e logotipos maiores. A barra de baixo dos arquivos e as demais colunas se ajustam sozinhas.
+- O nome passou a ser **«Profs. Rogério Bittencourt & Luís Lindner»** (sem o «G.»), no ClassAtelier, no ClassAuthor, no ClassAcervo (rodapé e índice gerado) e no Manual.
 
 ### 1.31.0 · 14/11/2026 · Botões reorganizados: barra de baixo e revisão na esquerda
 
