@@ -1232,6 +1232,7 @@ function Topbar({ onPresent, onSlides, onInsertCode, onLibrary, onCourse, lesson
         <PastaButton />
         <button className="tb-sec" onClick={onVersions} title="Histórico de versões: volte a uma versão anterior da aula ou recupere um bloco apagado" style={textBtn}><window.TIcon name="history" size={15} /><span className="tb-label">Histórico</span></button>
         <button className="tb-sec" onClick={onRichNotes} title="Termos e links: revisar glossário e links de toda a aula" style={textBtn}><window.TIcon name="link" size={15} /><span className="tb-label">Termos e links</span></button>
+        {window.Corretor && <button className="tb-sec" onClick={() => setSpellOpen(true)} title={"Corretor ortográfico: " + (spellSt && spellSt.on ? (window.Corretor.LANGS.find((l) => l.id === spellSt.lang) || {}).label : "desligado") + ". Escolha o idioma e gerencie seu dicionário"} aria-label="Corretor ortográfico" style={textBtn}><window.TIcon name="spell" size={15} /><span className="tb-label">Ortografia</span></button>}
         <button onClick={onA11y} aria-pressed={!!a11yOpen} title="Acessibilidade: verifica imagens sem descrição, contraste, títulos, links, vídeos e tabelas" style={{ ...textBtn, position: "relative", background: a11yOpen ? "var(--tool-surface)" : undefined }}><window.TIcon name="a11y" size={15} /><span className="tb-label">Acessibilidade</span>{a11yCount > 0 && <span aria-label={a11yCount + " itens para revisar"} style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 999, background: "#b3372a", color: "#fff", fontSize: 10.5, fontWeight: 800, display: "inline-grid", placeItems: "center", marginLeft: 2 }}>{a11yCount > 99 ? "99+" : a11yCount}</span>}</button>
         <div style={{ display: "flex", background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 9, padding: 3 }}>
           <button onClick={() => setMode("edit")} style={segBtn(mode === "edit")}><window.TIcon name="pencil" size={13} /> <span className="tb-seg-label">Editar</span></button>
@@ -1253,8 +1254,8 @@ function Topbar({ onPresent, onSlides, onInsertCode, onLibrary, onCourse, lesson
               <button role="menuitem" disabled={!canClear} onClick={() => { setMore(false); onClear(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)", opacity: canClear ? 1 : 0.45, color: "var(--coral-deep)" }}><span style={{ fontWeight: 600 }}>Limpar página</span><span style={menuSub}>Remove todos os blocos (dá para desfazer).</span></button>
             </div>
           </>)}
-          {spellOpen && window.SpellDialog && <window.SpellDialog onClose={() => setSpellOpen(false)} />}
         </div>
+        {spellOpen && window.SpellDialog && <window.SpellDialog onClose={() => setSpellOpen(false)} />}
         <div style={{ position: "relative" }}>
           <button onClick={() => setMenu((v) => !v)} disabled={busy} style={primaryBtn}>
             <window.TIcon name="download" size={14} color="#fff" /> {busy ? "Gerando…" : "Exportar"} <span style={{ fontSize: 10, opacity: 0.8 }}>▾</span>

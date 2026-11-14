@@ -499,6 +499,7 @@ function TIcon({ name, size = 16, color = "currentColor", stroke = 1.9 }) {
     folder: <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>,
     save: <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>,
     link: <><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></>,
+    spell: <><path d="M3 15 8 4l5 11M4.9 11.5h6.2"/><path d="m14 18.5 3 3 5-6"/></>,
     history: <><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 7.5V12l3 2"/></>,
     a11y: <><circle cx="12" cy="12" r="10"/><circle cx="12" cy="7.4" r="1.3"/><path d="M7 10.4l5 1 5-1"/><path d="M12 11.4v3.6"/><path d="M9.6 19l2.4-4 2.4 4"/></>,
     undo: <><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></>,

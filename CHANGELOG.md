@@ -4,12 +4,16 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.28.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.28.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.28.1 · 14/11/2026 · Botão «Ortografia» na barra
+
+- O corretor ortográfico só era alcançável pelo menu **⋯**, que a barra esconde quando há largura de sobra (aparecem os botões soltos). Agora há o botão **Ortografia** na própria barra, ao lado de **Termos e links** (e continua no menu ⋯ nas telas estreitas). A janela do corretor passou a abrir também com a barra larga.
 
 ### 1.28.0 · 14/11/2026 · Corretor ortográfico próprio
 
