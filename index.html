@@ -68,6 +68,30 @@
       -webkit-font-smoothing: antialiased;
     }
     :root { --credits-h: 38px; }
+    /* Visualizar impressão (print-view.jsx): a aula corrida em folha A4, com linhas pontilhadas nas quebras de página */
+    html[data-pdf][data-pv], html[data-pdf][data-pv] body { background: var(--tool-bg); }
+    .pv-scroll { background: var(--tool-bg); }
+    .pv-bar { display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; padding: 8px 14px; min-height: 48px; background: var(--tool-panel); border-bottom: 1px solid var(--tool-line); font-size: 12.5px; color: var(--tool-ink-2); flex-shrink: 0; }
+    .pv-bar b { color: var(--tool-ink); font-size: 13px; }
+    .pv-bar .pv-hint { color: var(--tool-ink-3); font-size: 12px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pv-bar > b, .pv-bar > span:not(.pv-hint), .pv-bar button { flex-shrink: 0; white-space: nowrap; }
+    .pv-bar button { height: 32px; padding: 0 12px; border: 1px solid var(--tool-line); background: #fff; border-radius: 8px; font: 600 12.5px var(--tool-sans); color: var(--tool-ink-2); cursor: pointer; }
+    .pv-bar button.pv-primary { background: var(--tool-accent, #D9593B); border-color: var(--tool-accent, #D9593B); color: #fff; }
+    .pv-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 40; overflow: visible; }
+    .pv-line { position: absolute; left: 0; right: 0; height: 0; border-top: 1.5px dashed #8B9099; }
+    .pv-line .pv-tag { position: absolute; right: 8px; top: -9px; font: 700 10.5px var(--tool-sans); letter-spacing: .02em; color: #5B6068; background: rgba(255,255,255,.92); border: 1px solid #C9CDD4; border-radius: 5px; padding: 1px 7px; white-space: nowrap; }
+    .pv-line.is-manual { border-top: 2px dashed #1d6fd8; }
+    .pv-line.is-manual .pv-tag { color: #fff; background: #1d6fd8; border-color: #1d6fd8; right: 40px; }
+    .pv-line.is-idle { opacity: .6; }
+    .pv-line.is-dragged { opacity: .3; }
+    .pv-line.is-ghost { border-top: 2px solid #1d6fd8; }
+    .pv-line.is-ghost .pv-tag { color: #fff; background: #1d6fd8; border-color: #1d6fd8; right: 8px; }
+    .pv-grip { position: absolute; left: 8px; top: -12px; width: 26px; height: 22px; display: grid; place-items: center; background: #fff; border: 2px solid #1d6fd8; border-radius: 6px; color: #1d6fd8; font: 700 12px/1 var(--tool-sans); cursor: grab; pointer-events: auto; touch-action: none; user-select: none; }
+    .pv-x { position: absolute; right: 8px; top: -11px; width: 22px; height: 20px; padding: 0; display: grid; place-items: center; background: #fff; border: 1px solid #1d6fd8; border-radius: 5px; color: #1d6fd8; font: 700 11px/1 var(--tool-sans); cursor: pointer; pointer-events: auto; }
+    .pv-hoverline { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dotted rgba(29,111,216,.55); }
+    .pv-add { position: absolute; left: 8px; top: -13px; height: 24px; padding: 0 10px; border: 1px solid #1d6fd8; background: #fff; color: #1d6fd8; border-radius: 6px; font: 700 11.5px var(--tool-sans); cursor: pointer; pointer-events: auto; box-shadow: 0 2px 8px rgba(0,0,0,.14); }
+    .pv-add:hover { background: #1d6fd8; color: #fff; }
+
     #root { height: calc(100vh - var(--credits-h)); }
 
     /* Barra de créditos: fixa embaixo (38 px), com as cores da marca (não muda com o tema) */
@@ -197,10 +221,10 @@
   <!-- Tema + componentes do kit + módulos do builder são injetados aqui,
        em ordem, por boot.js — a partir do tema ativo (themes.js). -->
   <script>window.AULA_BASE = "";</script>
-  <script src="pasta.js?v=20261114-v1.32.0a"></script>
-  <script src="icones.js?v=20261114-v1.32.0a" defer></script>
-  <script src="themes.js?v=20261114-v1.32.0a"></script>
-  <script src="boot.js?v=20261114-v1.32.0a"></script>
+  <script src="pasta.js?v=20261114-v1.33.0a"></script>
+  <script src="icones.js?v=20261114-v1.33.0a" defer></script>
+  <script src="themes.js?v=20261114-v1.33.0a"></script>
+  <script src="boot.js?v=20261114-v1.33.0a"></script>
   <script>(function(){var e=document.getElementById("ca-ver");if(e)e.textContent="v"+(window.CLASSATELIER_VERSION||"");})();</script>
 </body>
 </html>

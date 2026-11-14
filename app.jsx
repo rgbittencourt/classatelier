@@ -409,6 +409,7 @@ function ClassAtelierApp() {
     const prose = src.list[i];
     const sp = sp0 !== undefined ? sp0 : (window.splitProseAtCaret ? window.splitProseAtCaret(blockId) : null);
     if (prose.slide != null) child.slide = prose.slide;
+    if (sp && sp.mid && child.type === "pagebreak") child.props = { ...(child.props || {}), mid: true };
     const parts = [];
     if (!sp) { parts.push(prose, child); }
     else {
@@ -424,6 +425,83 @@ function ClassAtelierApp() {
     return true;
   };
   const insertEquationInProse = (blockId) => { insertChildInProse(blockId, window.newChildBlock("equacao")); };
+
+  // ── Visualizar impressão: criar, mover e tirar quebras de página ──
+  // `target`: { kind: "prose", id, textOffset } (divide o parágrafo naquele ponto) ou { kind: "before", id } (antes do bloco).
+  const placeBreak = (next, target) => {
+    const src = collectBlockLists(next.blocks, undefined, [], true).find((ref) => ref.list.some((b) => b.id === target.id));
+    if (!src) return null;
+    const i = src.list.findIndex((b) => b.id === target.id);
+    const blk = src.list[i];
+    const child = window.newChildBlock("pagebreak");
+    if (blk.slide != null) child.slide = blk.slide;
+    if (target.kind === "prose" && blk.type === "prose") {
+      const sp = window.pvSplitBody(blk.props.body, target.textOffset);
+      const keepBefore = !emptyHtml(sp.before), keepAfter = !emptyHtml(sp.after);
+      const parts = [];
+      if (keepBefore || !keepAfter) parts.push({ ...blk, props: { ...blk.props, body: keepBefore ? sp.before : "<p></p>" } });
+      if (sp.mid) child.props = { ...(child.props || {}), mid: true };
+      parts.push(child);
+      if (keepAfter) { const n = window.newChildBlock("prose"); n.props = { ...n.props, body: sp.after, dropcap: false, align: blk.props && blk.props.align }; if (blk.slide != null) n.slide = blk.slide; parts.push(n); }
+      src.list.splice(i, 1, ...parts);
+    } else {
+      src.list.splice(i, 0, child);
+    }
+    return child;
+  };
+  // Tira a quebra `id`. Se ela tinha dividido um parágrafo ao meio, os dois pedaços voltam a ser um só.
+  const dropBreak = (next, id) => {
+    const src = collectBlockLists(next.blocks, undefined, [], true).find((ref) => ref.list.some((b) => b.id === id));
+    if (!src) return false;
+    const i = src.list.findIndex((b) => b.id === id);
+    const br = src.list[i], prev = src.list[i - 1], nxt = src.list[i + 1];
+    src.list.splice(i, 1);
+    if (br.props && br.props.mid && prev && nxt && prev.type === "prose" && nxt.type === "prose") {
+      const a = String(prev.props.body || ""), b = String(nxt.props.body || "");
+      if (/<\/p>\s*$/.test(a) && /^\s*<p[^>]*>/.test(b)) {
+        src.list[i - 1] = { ...prev, props: { ...prev.props, body: a.replace(/<\/p>\s*$/, "") + b.replace(/^\s*<p[^>]*>/, "") } };
+        src.list.splice(i, 1);
+      }
+    }
+    return true;
+  };
+  const insideColumns = (id) => collectBlockLists(lesson.blocks).some((ref) => ref.meta.kind !== "root" && ref.meta.kind !== "topic" && ref.list.some((b) => b.id === id));
+  const addBreakAt = (target) => {
+    if (!target) return;
+    if (insideColumns(target.id)) { showToast("Dentro de colunas, sanfonas e linhas do tempo não dá para quebrar a página. Quebre antes ou depois do bloco."); return; }
+    const next = JSON.parse(JSON.stringify(lesson));
+    const b = placeBreak(next, target);
+    if (!b) return;
+    commit(next);
+    showToast("Quebra de página criada. Arraste a alça azul para mudar de lugar.");
+  };
+  const moveBreak = (oldId, target) => {
+    if (!target) return;
+    if (insideColumns(target.id)) { showToast("Dentro de colunas, sanfonas e linhas do tempo não dá para quebrar a página."); return; }
+    const next = JSON.parse(JSON.stringify(lesson));
+    const src = collectBlockLists(next.blocks, undefined, [], true).find((ref) => ref.list.some((b) => b.id === oldId));
+    if (src && target.kind === "prose") {
+      // soltou no mesmo lugar: nada a fazer
+      const i = src.list.findIndex((b) => b.id === oldId);
+      const prev = src.list[i - 1], nxt = src.list[i + 1];
+      if (nxt && nxt.id === target.id && target.textOffset === 0) return;
+      if (prev && prev.id === target.id && target.textOffset >= plainText(prev.props.body).length) return;
+    }
+    if (src && target.kind === "before") {
+      const i = src.list.findIndex((b) => b.id === oldId);
+      if (src.list[i + 1] && src.list[i + 1].id === target.id) return;
+    }
+    const b = placeBreak(next, target);
+    if (!b) return;
+    dropBreak(next, oldId);
+    commit(next);
+  };
+  const removeBreakById = (id) => {
+    const next = JSON.parse(JSON.stringify(lesson));
+    if (!dropBreak(next, id)) return;
+    commit(next);
+    showToast("Quebra de página retirada.");
+  };
 
   // Coloca `child` logo depois do bloco `afterId`, na mesma lista (na raiz, dentro de um tópico próprio).
   const insertAfterBlock = (afterId, child) => {
@@ -838,6 +916,8 @@ function ClassAtelierApp() {
   const exportDelivery = async () => {
     try { await window.downloadDelivery(lesson); } catch (e) { alert("Erro ao montar o pacote de entrega: " + e.message); }
   };
+  const [printView, setPrintView] = useStateA(false);
+  const [pvInfo, setPvInfo] = useStateA({ lines: [], pages: 1 });
   const printPDF = async () => {
     try { await window.openPrintPreview(lesson); } catch (e) { alert("Erro ao preparar PDF: " + e.message); }
   };
@@ -889,7 +969,9 @@ function ClassAtelierApp() {
           onRichNotes={() => setRichOpen(true)} onA11y={() => setA11yOpen((v) => !v)} a11yOpen={a11yOpen} a11yCount={a11yCount} onLibrary={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(false); setLibOpen(true); }} onCourse={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(true); setLibOpen(true); }}
           onClear={() => setClearOpen(true)} canClear={hasLessonContent} onVersions={() => setVersionsOpen(true)} onRepublish={() => setRepublishOpen(true)} onMoodle={() => setMoodle({ links: [] })} onCopyText={copyLessonText} onDownloadText={downloadLessonText} onToAuthor={sendToAuthor} authorLinked={!!authorOrigin && !!window.opener}
         />
-        <Canvas
+        {printView ? (
+          <window.PrintView lesson={lesson} onAdd={addBreakAt} onMove={moveBreak} onRemove={removeBreakById} onPrint={printPDF} onClose={() => setPrintView(false)} onLayout={setPvInfo} />
+        ) : <Canvas
           lesson={lesson} mode={mode} selected={selected} setSelected={setSelected}
           updateBlock={updateBlockProps}
           dragType={dragType} setDragType={setDragType}
@@ -897,8 +979,8 @@ function ClassAtelierApp() {
           insertBlock={insertBlock} insertChild={insertChild} insertInto={insertInto} reorderTo={reorderTo} moveChildTo={moveChildTo}
           dragBlock={dragBlock}
           onRemove={removeBlock} onDuplicate={duplicateBlock} onMove={moveBlock}
-        />
-        <BottomBar
+        />}
+        <BottomBar printView={printView} onPrintView={() => setPrintView((v) => !v)}
           onLibrary={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(false); setLibOpen(true); }}
           onOpenProject={openProjectClick} onDownloadProject={downloadProject} onVersions={() => setVersionsOpen(true)} />
       </div>
@@ -908,7 +990,9 @@ function ClassAtelierApp() {
           {rightOpen ? (<>
             <button onClick={() => setRightOpen(false)} title="Recolher painel de propriedades" aria-label="Recolher painel de propriedades" aria-expanded="true"
               style={{ position: "absolute", top: 11, right: 10, zIndex: 6, width: 28, height: 28, display: "grid", placeItems: "center", border: "1px solid var(--tool-line)", background: "#fff", borderRadius: 7, cursor: "pointer", color: "var(--tool-ink-2)", fontSize: 15, lineHeight: 1 }}>»</button>
-            {selBlock
+            {printView
+              ? <window.PrintPanel info={pvInfo} onRemove={removeBreakById} onPrint={printPDF} onClose={() => setPrintView(false)} />
+              : selBlock
               ? <window.PropertiesPanel block={selBlock} update={(patch) => updateBlock(selBlock.id, patch)} mergePrev={mergeInfo(selBlock) ? () => mergeTopicWithPrevious(selBlock) : null} onRenumberEquations={() => commit(window.autoNumberEquations(lesson, true))} onInsertEquation={() => insertEquationInProse(selBlock.id)} onInsertImage={() => openImageDialog(selBlock.id)} onInsertCode={() => insertCodeBlock(selBlock.id)} onBreakProse={() => breakProseAtCaret(selBlock.id)} onBreakTopic={() => breakTopicAtCaret(selBlock.id)} onBreakPage={() => insertPageBreakAtCursor(selBlock.id)} />
               : <LessonMeta lesson={lesson} setLesson={(L) => setLesson(L)} />}
           </>) : (
@@ -1323,8 +1407,8 @@ function Topbar({ onPresent, onSlides, onInsertCode, onCourse, lesson, mode, set
                   <span style={menuSub}>Para subir no seu ambiente virtual (LMS). Pergunta as opções.</span>
                 </button>
                 <button onClick={() => { setMenu(false); onPrintPDF(); }} data-act="print-pdf" style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
-                  <span style={{ fontWeight: 600 }}>Imprimir PDF…</span>
-                  <span style={menuSub}>Abre a versão expandida da aula para imprimir ou salvar como PDF.</span>
+                  <span style={{ fontWeight: 600 }}>Gerar arquivo PDF…</span>
+                  <span style={menuSub}>Abre a aula em folhas A4 e a janela de impressão, onde você salva o arquivo PDF. Para ver e ajustar as quebras antes, use «Visualizar impressão» na barra de baixo.</span>
                 </button>
                 <button onClick={() => { setMenu(false); onCourse && onCourse(); }} style={{ ...menuItem, borderTop: "1px solid var(--tool-line)" }}>
                   <span style={{ fontWeight: 600 }}>Curso e GitHub…</span>
@@ -1362,7 +1446,7 @@ function Topbar({ onPresent, onSlides, onInsertCode, onCourse, lesson, mode, set
   );
 }
 // ── Barra inferior: arquivos e revisão (o que não precisa ficar na barra de cima) ──
-function BottomBar({ onLibrary, onOpenProject, onDownloadProject, onVersions }) {
+function BottomBar({ onLibrary, onOpenProject, onDownloadProject, onVersions, onPrintView, printView }) {
   const b = { ...textBtn, height: 30, padding: "0 10px", fontSize: 12, gap: 6, border: "1px solid transparent", background: "transparent" };
   const sep = <span aria-hidden="true" style={{ width: 1, height: 18, background: "var(--tool-line)", margin: "0 4px", flexShrink: 0 }} />;
   return (
@@ -1374,6 +1458,7 @@ function BottomBar({ onLibrary, onOpenProject, onDownloadProject, onVersions }) 
         <PastaButton up />
         {sep}
         <button data-act="versions" onClick={onVersions} title="Histórico de versões: volte a uma versão anterior da aula ou recupere um bloco apagado" style={b}><window.TIcon name="history" size={15} /><span className="bb-label">Histórico</span></button>
+        <button data-act="print-view" onClick={onPrintView} aria-pressed={!!printView} title="Visualizar impressão: veja a aula em folhas A4, com as linhas onde cada página termina, e mude as quebras de página de lugar (não imprime nada)" style={printView ? { ...b, background: "var(--tool-ink)", color: "#fff", borderColor: "var(--tool-ink)" } : b}><window.TIcon name="printer" size={15} /><span className="bb-label">Visualizar impressão</span></button>
       </div>
     </footer>
   );

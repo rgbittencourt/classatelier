@@ -123,7 +123,7 @@ function BlockCore({ block, mode, renderNestedList }) {
     case "divider":
       return <ChapterDivider label={E("label", { single: true, placeholder: "Rótulo" })} />;
     case "pagebreak":
-      if (!isEdit) return <div className="aula-pagebreak-before aula-pagebreak-marker" aria-hidden="true" />;
+      if (!isEdit) return <div className="aula-pagebreak-before aula-pagebreak-marker" aria-hidden="true" data-pv-break={block.id} />;
       return (
         <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px max(24px, var(--page-pad))", color: "var(--tool-ink-2)", background: "var(--tool-surface)" }}>
           <span style={{ flex: 1, borderTop: "1.5px dashed var(--tool-line-2)" }} />
@@ -329,7 +329,7 @@ function TopicBand({ block, mode, renderChild }) {
   const [slide, setSlide] = React.useState(0);
   const pdf = usePDF();
   const editing = !!renderChild;
-  const item = (c, i) => renderChild ? renderChild(c, i) : <div key={c.id} className="aula-topic-item" data-type={c.type}><BlockCore block={{ ...c, onChange: () => {} }} mode={mode} /></div>;
+  const item = (c, i) => renderChild ? renderChild(c, i) : <div key={c.id} className="aula-topic-item" data-type={c.type} data-pv-bid={c.id}><BlockCore block={{ ...c, onChange: () => {} }} mode={mode} /></div>;
   const items = kids.map(item);
   let content = <div className="aula-topic">{items}</div>;
   if (block.type === "topic-collapsible") {
@@ -369,9 +369,9 @@ function BlockView({ block, mode, renderChild, renderNestedList }) {
 }
 
 // ── Full-lesson renderer (preview + exported file) ──
-function LessonRenderer({ lesson, mode = "preview", chrome = true }) {
+function LessonRenderer({ lesson, mode = "preview", chrome = true, pdf: pdfProp }) {
   const blocks = (lesson.blocks || []).map((b) => <BlockView key={b.id} block={{ ...b, onChange: () => {} }} mode={mode} />);
-  const pdf = typeof location !== "undefined" && new URLSearchParams(location.search).has("pdf");
+  const pdf = pdfProp !== undefined ? !!pdfProp : (typeof location !== "undefined" && new URLSearchParams(location.search).has("pdf"));
   const body = (
     <main id="app">
       {chrome && <ProgressBar />}

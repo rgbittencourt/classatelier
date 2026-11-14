@@ -4,12 +4,21 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.32.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.33.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.33.0 · 14/11/2026 · Visualizar impressão (folhas A4) e Apresentar por «Título de seção»
+
+- **Visualizar impressão** (novo botão na **barra de baixo**, também no modo Visualizar): mostra a aula corrida na largura de uma folha A4, com **linhas pontilhadas** onde cada página termina. **Cinza** = fim automático da página; **azul** = quebra de página sua. Nada é impresso aqui.
+- **Mexer nas quebras direto na tela:** arraste a alça da linha azul (a quebra cai no começo da linha de texto mais próxima e, no meio de um parágrafo, divide-o ali); passe o mouse no texto e clique em «＋ Quebra de página aqui»; o ✕ tira a quebra e, se ela tinha dividido um parágrafo, os dois pedaços voltam a ser um só. Ctrl+Z desfaz. No modo Editar, o painel da direita lista as quebras. Dentro de colunas, sanfonas e linhas do tempo a quebra é recusada com aviso.
+- As páginas são calculadas com as regras da impressão (parágrafos, figuras e tabelas não se partem; título não fica sozinho no fim). Num teste, a prévia previu as mesmas 5 páginas do PDF gerado, com os mesmos parágrafos no começo de cada uma.
+- **Exportar:** «Imprimir PDF…» passou a se chamar **«Gerar arquivo PDF…»** (abre a janela de impressão para salvar o arquivo); a prévia fica em «Visualizar impressão».
+- **Apresentar:** além de uma tela por seção, **cada «Título de seção» abre um slide novo** dentro da seção, levando o que vem depois dele. O que vem antes do primeiro título é o primeiro slide da seção; seções sem títulos continuam inteiras. O índice (tecla I) mostra os slides de título com recuo, e os textos dizem «slide» em vez de «seção».
+- Internamente: `print-view.jsx` (novo), `data-pv-bid`/`data-pv-break` nos blocos da prévia, `LessonRenderer` aceita `pdf`.
 
 ### 1.32.0 · 14/11/2026 · Imagens redimensionáveis e quebra de página no cursor
 

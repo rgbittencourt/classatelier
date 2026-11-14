@@ -247,8 +247,20 @@ window.splitProseAtCaret = function (blockId) {
   try {
     const a = c.range.cloneRange(); a.setStart(c.host, 0); a.setEnd(c.range.startContainer, c.range.startOffset);
     const b = c.range.cloneRange(); b.setStart(c.range.endContainer, c.range.endOffset); b.setEnd(c.host, c.host.childNodes.length);
-    return { before: html(a.cloneContents()), after: html(b.cloneContents()) };
+    return { before: html(a.cloneContents()), after: html(b.cloneContents()), mid: window.rangeIsMidBlock(c.range, c.host) };
   } catch (e) { return null; }
+};
+// O ponto cai no meio de um parágrafo (nem no começo nem no fim dele)? Serve para a quebra de página poder ser
+// desfeita sem deixar o parágrafo cortado em dois.
+window.rangeIsMidBlock = function (range, host) {
+  try {
+    let n = range.startContainer; if (n.nodeType === 3) n = n.parentNode;
+    const blk = n.closest("p,li,blockquote,h1,h2,h3,h4,h5,h6") || host;
+    const txt = (r) => r.toString().replace(/\s|\u00a0/g, "");
+    const a = document.createRange(); a.selectNodeContents(blk); a.setEnd(range.startContainer, range.startOffset);
+    const b = document.createRange(); b.selectNodeContents(blk); b.setStart(range.startContainer, range.startOffset);
+    return !!txt(a) && !!txt(b);
+  } catch (e) { return false; }
 };
 function fireInput(host) { host.dispatchEvent(new Event("input", { bubbles: true })); }
 
