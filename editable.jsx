@@ -134,6 +134,8 @@ function applyLink() {
   fireInput(host);
 }
 
+// Elementos de marca que «Limpar marcas» remove.
+const CLEAR_SEL = "mark, .scribble, b, strong, i, em, u, s, strike, del, sup, sub, .sobrelinha, a, .termo";
 function clearMarks() {
   const sel = window.getSelection();
   if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
@@ -143,9 +145,29 @@ function clearMarks() {
   const frag = range.cloneContents();
   const tmp = document.createElement("div");
   tmp.appendChild(frag);
-  tmp.querySelectorAll("mark, .scribble, b, strong, i, em, u, s, strike, del, sup, sub, .sobrelinha, a, .termo").forEach(unwrap);
+  tmp.querySelectorAll(CLEAR_SEL).forEach(unwrap);
+  const clean = document.createRange().createContextualFragment(tmp.innerHTML);
+  const nodes = Array.from(clean.childNodes);
   range.deleteContents();
-  range.insertNode(document.createRange().createContextualFragment(tmp.innerHTML));
+  range.insertNode(clean);
+  // Quando a seleção está DENTRO de uma marca (por exemplo, a palavra inteira dentro de <u> ou de .scribble),
+  // o trecho limpo foi reinserido dentro dela e nada mudava. Tira o trecho de dentro das marcas que o
+  // envolvem, dividindo cada marca em duas (o que vem antes e o que vem depois ficam como estavam).
+  if (nodes.length) {
+    let parent = nodes[0].parentNode;
+    while (parent && parent !== host && parent.matches && parent.matches(CLEAR_SEL)) {
+      const last = nodes[nodes.length - 1];
+      const rest = [];
+      for (let n = last.nextSibling; n; n = n.nextSibling) rest.push(n);
+      let tail = null;
+      if (rest.length) { tail = parent.cloneNode(false); rest.forEach((n) => tail.appendChild(n)); }
+      parent.after(...nodes);
+      if (tail && tail.textContent !== "") last.after(tail);
+      if (parent.textContent === "" && !parent.querySelector("img, br, svg, math")) parent.remove();
+      parent = nodes[0].parentNode;
+    }
+  }
+  host.normalize();
   sel.removeAllRanges();
   fireInput(host);
 }

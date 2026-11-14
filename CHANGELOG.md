@@ -4,16 +4,20 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.26.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.26.2** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
 
-### 1.26.1 · 14/11/2026 · Sem corretor ortográfico no modo Visualizar
+### 1.26.2 · 14/11/2026 · «Limpar marcas» (✕) funciona de verdade
 
-- Ao passar do modo **Editar** para **Visualizar**, os sublinhados vermelhos do corretor ortográfico do navegador (palavras escritas de propósito de outro jeito, como `matricula` ou `codigo`) continuavam aparecendo no texto. Agora o texto é refeito ao trocar de modo e a verificação fica desligada: no Visualizar, na apresentação e na aula exportada não há corretor. No modo Editar nada mudou.
+- O botão **✕** da barra de seleção não tirava nada quando o trecho selecionado estava **dentro** de uma marca (a palavra inteira sublinhada, com Rabisco, em negrito, etc.): o texto era reinserido dentro da mesma marca. Agora ele sai de dentro das marcas que o envolvem (sublinhado, superlinhado, tachado, negrito, itálico, Rabisco, marca-texto, link, termo, sobrescrito e subscrito), e o que vem antes e depois do trecho continua marcado como estava.
+
+### 1.26.1 · 14/11/2026 · Precaução com o corretor ortográfico no modo Visualizar
+
+- Ao passar de **Editar** para **Visualizar**, o texto é refeito e a verificação ortográfica do navegador fica desligada, para não sobrar nenhum sublinhado do corretor. É uma precaução: o traço vermelho irregular que motivou esta mudança era a marca **Rabisco**, e não o corretor. No modo Editar nada mudou.
 
 ### 1.26.0 · 13/11/2026 · Editor de equações ampliado: Matemática e Física, Química e Bioquímica
 
