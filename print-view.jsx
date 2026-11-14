@@ -34,9 +34,9 @@ function pvPaginate(sheet) {
       const r = ch.getBoundingClientRect();
       if (r.height < 1) continue;
       const small = r.height <= P * 0.9;
-      if (ch.matches(PV_UNBREAK) && small) { atoms.push({ top: r.top - base, bottom: r.bottom - base, head: PV_HEAD.test(ch.tagName) }); continue; }
+      if (ch.matches(PV_UNBREAK) && small) { atoms.push({ top: r.top - base, bottom: r.bottom - base, head: PV_HEAD.test(ch.tagName), el: ch }); continue; }
       const kids = Array.prototype.filter.call(ch.children, (k) => !(k.classList && k.classList.contains("pv-ui")));
-      if (!kids.some(pvBlocky)) { if (small) atoms.push({ top: r.top - base, bottom: r.bottom - base, head: false }); continue; }
+      if (!kids.some(pvBlocky)) { if (small) atoms.push({ top: r.top - base, bottom: r.bottom - base, head: false, el: ch }); continue; }
       walk(ch);
     }
   };
@@ -45,25 +45,32 @@ function pvPaginate(sheet) {
   atoms.sort((a, b) => a.top - b.top);
   markers.sort((a, b) => a.y - b.y);
   const end = app.getBoundingClientRect().bottom - base;
-  const bounds = []; // limites efetivos de página, em ordem
+  const bounds = []; // limites efetivos de página, em ordem: { y, manual, id, el, off }
   let start = 0, guard = 0;
   while (guard++ < 600 && start + 4 < end) {
     const limit = start + P;
     const m = markers.find((k) => k.y > start + 4 && k.y <= limit + 0.5);
-    let y = null, id = null;
+    let y = null, id = null, el = null, off = 0;
     if (limit < end - 2) {
       const a = atoms.find((x) => x.bottom > limit + 0.5);
       if (a) {
-        y = a.top < limit ? a.top : limit;
+        // o bloco cruza o limite (vai inteiro para a próxima página) ou já começa depois dele (a folha acabou antes)
+        y = a.top;
+        let first = a;
         // título nunca sozinho no pé da página: leva o título junto
-        if (y === a.top) { const prev = atoms.filter((x) => x.top < a.top).pop(); if (prev && prev.head && a.top - prev.bottom < 60) y = prev.top; }
-        if (y - start < P * 0.15) y = limit;
+        if (a.top < limit) { const prev = atoms.filter((x) => x.top < a.top).pop(); if (prev && prev.head && a.top - prev.bottom < 60) { y = prev.top; first = prev; } }
+        if (a.top < limit && y - start < P * 0.15) { y = limit; first = null; }
+        if (first) el = first.el;
       } else y = limit;
     }
-    if (m && (y == null || m.y <= y)) { y = m.y; id = m.id; }
+    if (m && (y == null || m.y <= y)) {
+      y = m.y; id = m.id;
+      const nx = atoms.find((x) => x.top >= m.y - 1);
+      el = nx ? nx.el : null; off = nx ? Math.max(0, nx.top - m.y) : 0;
+    }
     if (y == null) break;
-    if (y <= start + 1) y = start + P;
-    bounds.push({ y, manual: !!id, id });
+    if (y <= start + 1) { y = start + P; el = null; off = 0; id = null; }
+    bounds.push({ y, manual: !!id, id, el, off });
     start = y;
   }
   const lines = [];
@@ -71,7 +78,31 @@ function pvPaginate(sheet) {
   bounds.forEach((b, i) => { b.page = i + 1; if (b.id) used.add(b.id); lines.push({ y: b.y, manual: b.manual, id: b.id, page: i + 1, effective: true }); });
   markers.forEach((m) => { if (!used.has(m.id)) lines.push({ y: m.y, manual: true, id: m.id, page: null, effective: false }); });
   lines.sort((a, b) => a.y - b.y);
-  return { lines, pages: bounds.length + 1, height: end, P };
+  return { lines, pages: bounds.length + 1, height: end, P, bounds };
+}
+
+const PV_GAP = 28; // faixa cinza entre uma folha e outra, em px
+
+function pvClearGaps(sheet) { sheet.querySelectorAll(".pv-gapel").forEach((g) => g.remove()); sheet.style.minHeight = ""; }
+
+// Folhas A4: empurra o conteúdo para que cada limite de página caia no começo de uma folha nova.
+// Os vãos são só espaçadores; a faixa cinza e o número de página são desenhados por cima, em posição exata.
+function pvApplyGaps(sheet, bounds, P) {
+  const base = sheet.getBoundingClientRect().top;
+  const app = sheet.querySelector("#app");
+  bounds.forEach((b, i) => {
+    if (!b.el || !b.el.isConnected) return;
+    let ref = b.el;
+    while (ref.parentElement && ref.parentElement !== app && ref.parentElement !== sheet && /flex|grid|table/.test(getComputedStyle(ref.parentElement).display)) ref = ref.parentElement;
+    const g = document.createElement("div");
+    g.className = "pv-gapel pv-ui";
+    g.setAttribute("aria-hidden", "true");
+    g.style.cssText = "height:1px;margin:0;padding:0;border:0;pointer-events:none;flex:none;width:100%";
+    ref.parentNode.insertBefore(g, ref);
+    const t0 = b.el.getBoundingClientRect().top - base;
+    const desired = (i + 1) * (P + PV_GAP) + (b.off || 0);
+    g.style.height = Math.max(1, desired - t0 + 1) + "px"; // 1px de partida: um vão vazio deixaria a margem do bloco se fundir com ele
+  });
 }
 
 // Quantos caracteres de texto existem de `item` até o ponto (node, off) — sem contar o balão dos termos.
@@ -195,15 +226,30 @@ function PrintView({ lesson, onAdd, onMove, onRemove, onPrint, onClose, onLayout
     return () => { el.removeAttribute("data-pdf"); el.removeAttribute("data-pv"); link.remove(); };
   }, []);
 
+  const [view, setViewState] = useStateP(() => { try { return localStorage.getItem("classatelier.pv.view") === "flow" ? "flow" : "sheets"; } catch (e) { return "sheets"; } });
+  const setView = (v) => { setViewState(v); try { localStorage.setItem("classatelier.pv.view", v); } catch (e) {} };
+  const busy = useRefP(false);
   const measure = useCallbackP(() => {
-    if (!sheet.current) return;
-    const r = pvPaginate(sheet.current);
-    setInfo((old) => (JSON.stringify(old.lines) === JSON.stringify(r.lines) && old.pages === r.pages && old.height === r.height ? old : r));
-  }, []);
+    const sh = sheet.current;
+    if (!sh) return;
+    busy.current = true;
+    pvClearGaps(sh);
+    let r = pvPaginate(sh);
+    if (view === "sheets") {
+      pvApplyGaps(sh, r.bounds, r.P);
+      sh.style.minHeight = (r.pages * r.P + (r.pages - 1) * PV_GAP) + "px";
+      const base = sh.getBoundingClientRect().top, ys = {};
+      sh.querySelectorAll("[data-pv-break]").forEach((m) => { ys[m.getAttribute("data-pv-break")] = m.getBoundingClientRect().top - base; });
+      r = { ...r, lines: r.lines.filter((l) => l.manual).map((l) => ({ ...l, y: ys[l.id] != null ? ys[l.id] : l.y })) };
+    }
+    const out = { lines: r.lines, pages: r.pages, height: Math.round(sh.getBoundingClientRect().height), P: r.P, view };
+    setInfo((old) => (JSON.stringify(old.lines) === JSON.stringify(out.lines) && old.pages === out.pages && old.height === out.height && old.view === out.view ? old : out));
+    requestAnimationFrame(() => requestAnimationFrame(() => { busy.current = false; }));
+  }, [view]);
 
   useEffectP(() => {
     let raf = 0;
-    const later = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(measure); };
+    const later = () => { if (busy.current) return; cancelAnimationFrame(raf); raf = requestAnimationFrame(measure); };
     const ro = new ResizeObserver(later);
     if (sheet.current) ro.observe(sheet.current);
     const app = sheet.current && sheet.current.querySelector("#app");
@@ -275,8 +321,12 @@ function PrintView({ lesson, onAdd, onMove, onRemove, onPrint, onClose, onLayout
     <div className="pv" style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, background: "var(--tool-canvas, #D9DBE0)" }}>
       <div className="pv-bar">
         <b>Visualizar impressão</b>
+        <div role="group" aria-label="Modo da visualização" className="pv-seg">
+          <button type="button" data-pv-view="flow" aria-pressed={view === "flow"} onClick={() => setView("flow")} title="A aula corrida, com linhas pontilhadas nos limites de página">Aula corrida</button>
+          <button type="button" data-pv-view="sheets" aria-pressed={view === "sheets"} onClick={() => setView("sheets")} title="Cada página numa folha A4 separada, com o espaço que sobra em branco">Folhas A4</button>
+        </div>
         <span>Folha A4 · {info.pages} {info.pages === 1 ? "página" : "páginas"}{manualCount ? " · " + manualCount + (manualCount === 1 ? " quebra sua" : " quebras suas") : ""}</span>
-        <span className="pv-hint">Cinza: fim da página · Azul: sua quebra (arraste a alça) · Passe o mouse no texto para criar uma</span>
+        <span className="pv-hint">{view === "sheets" ? "Azul: sua quebra (arraste a alça) · Passe o mouse no texto para criar uma" : "Cinza: fim da página · Azul: sua quebra (arraste a alça) · Passe o mouse no texto para criar uma"}</span>
         <button data-act="pv-print" className="pv-primary" onClick={onPrint} title="Abre a janela de impressão do navegador, onde também dá para salvar como PDF">Imprimir / salvar PDF</button>
         <button data-act="pv-close" onClick={onClose} title="Voltar à aula">Fechar</button>
       </div>
@@ -284,6 +334,15 @@ function PrintView({ lesson, onAdd, onMove, onRemove, onPrint, onClose, onLayout
         <div ref={sheet} className="pv-sheet" data-pv-sheet style={{ position: "relative", width: "210mm", margin: "0 auto", background: "var(--paper)", boxShadow: "0 2px 14px rgba(0,0,0,.22)" }}>
           <window.LessonRenderer lesson={lesson} mode="preview" chrome={true} pdf={true} />
           <div className="pv-ui pv-overlay" aria-hidden={drag ? "true" : undefined}>
+            {info.view === "sheets" && Array.from({ length: Math.max(0, info.pages - 1) }, (_, k) => (
+              <div key={"band" + k} className="pv-band" data-pv-band style={{ top: (k + 1) * info.P + k * PV_GAP, height: PV_GAP }}>
+                <span>fim da página {k + 1} · começa a página {k + 2}</span>
+              </div>
+            ))}
+            {info.view === "sheets" && <div className="pv-pn" style={{ top: 6 }}>Página 1 de {info.pages}</div>}
+            {info.view === "sheets" && Array.from({ length: Math.max(0, info.pages - 1) }, (_, k) => (
+              <div key={"pn" + k} className="pv-pn" style={{ top: (k + 1) * (info.P + PV_GAP) + 6 }}>Página {k + 2} de {info.pages}</div>
+            ))}
             {info.lines.map((l, i) => (
               <div key={(l.id || "a") + i} className={"pv-line " + (l.manual ? "is-manual" : "is-auto") + (drag && drag.id === l.id ? " is-dragged" : "") + (l.effective ? "" : " is-idle")} style={{ top: l.y }} data-pv-line={l.manual ? "manual" : "auto"} data-pv-id={l.id || undefined}>
                 {l.manual

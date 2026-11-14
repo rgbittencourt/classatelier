@@ -4,12 +4,18 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.34.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.35.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.35.0 · 14/11/2026 · Folhas A4 na Visualizar impressão
+
+- Na **Visualizar impressão**, novo seletor **«Aula corrida | Folhas A4»** (a escolha fica salva; o padrão é Folhas A4). Em **Folhas A4** cada página é uma folha separada: o papel em branco que sobra no fim dela fica à mostra, há uma faixa cinza entre as folhas («fim da página 1 · começa a página 2») e o número da página aparece no canto. Ao arrastar uma quebra azul, o texto sobe ou desce entre as folhas.
+- Criar («＋ Quebra de página aqui»), mover (alça) e tirar (✕) quebras funcionam nos dois modos. A quebra sua mantém a margem que o PDF real mantém depois dela.
+- Num teste, as páginas das Folhas A4 e as do PDF gerado foram as mesmas, com os mesmos parágrafos começando cada uma.
 
 ### 1.34.0 · 14/11/2026 · Juntar parágrafos
 

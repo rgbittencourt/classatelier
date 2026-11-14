@@ -88,6 +88,11 @@
     .pv-line.is-ghost .pv-tag { color: #fff; background: #1d6fd8; border-color: #1d6fd8; right: 8px; }
     .pv-grip { position: absolute; left: 8px; top: -12px; width: 26px; height: 22px; display: grid; place-items: center; background: #fff; border: 2px solid #1d6fd8; border-radius: 6px; color: #1d6fd8; font: 700 12px/1 var(--tool-sans); cursor: grab; pointer-events: auto; touch-action: none; user-select: none; }
     .pv-x { position: absolute; right: 8px; top: -11px; width: 22px; height: 20px; padding: 0; display: grid; place-items: center; background: #fff; border: 1px solid #1d6fd8; border-radius: 5px; color: #1d6fd8; font: 700 11px/1 var(--tool-sans); cursor: pointer; pointer-events: auto; }
+    .pv-seg { display: inline-flex; background: var(--tool-surface); border: 1px solid var(--tool-line); border-radius: 8px; padding: 2px; flex-shrink: 0; }
+    .pv-bar .pv-seg button { height: 26px; padding: 0 10px; border: 0; background: transparent; border-radius: 6px; font: 600 12px var(--tool-sans); color: var(--tool-ink-2); }
+    .pv-bar .pv-seg button[aria-pressed="true"] { background: #fff; box-shadow: 0 0 0 1px var(--tool-line); color: var(--tool-ink); }
+    .pv-band { position: absolute; left: -24px; right: -24px; background: var(--tool-bg); box-shadow: inset 0 6px 8px -6px rgba(0,0,0,.28), inset 0 -6px 8px -6px rgba(0,0,0,.28); display: flex; align-items: center; justify-content: center; font: 600 10.5px var(--tool-sans); color: var(--tool-ink-3); letter-spacing: .03em; z-index: 1; }
+    .pv-pn { position: absolute; right: 12px; font: 600 10px var(--tool-sans); color: var(--tool-ink-3); background: rgba(255,255,255,.75); border-radius: 4px; padding: 0 6px; }
     .pv-hoverline { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dotted rgba(29,111,216,.55); }
     .pv-add { position: absolute; left: 8px; top: -13px; height: 24px; padding: 0 10px; border: 1px solid #1d6fd8; background: #fff; color: #1d6fd8; border-radius: 6px; font: 700 11.5px var(--tool-sans); cursor: pointer; pointer-events: auto; box-shadow: 0 2px 8px rgba(0,0,0,.14); }
     .pv-add:hover { background: #1d6fd8; color: #fff; }
@@ -221,10 +226,10 @@
   <!-- Tema + componentes do kit + módulos do builder são injetados aqui,
        em ordem, por boot.js — a partir do tema ativo (themes.js). -->
   <script>window.AULA_BASE = "";</script>
-  <script src="pasta.js?v=20261114-v1.34.0a"></script>
-  <script src="icones.js?v=20261114-v1.34.0a" defer></script>
-  <script src="themes.js?v=20261114-v1.34.0a"></script>
-  <script src="boot.js?v=20261114-v1.34.0a"></script>
+  <script src="pasta.js?v=20261114-v1.35.0a"></script>
+  <script src="icones.js?v=20261114-v1.35.0a" defer></script>
+  <script src="themes.js?v=20261114-v1.35.0a"></script>
+  <script src="boot.js?v=20261114-v1.35.0a"></script>
   <script>(function(){var e=document.getElementById("ca-ver");if(e)e.textContent="v"+(window.CLASSATELIER_VERSION||"");})();</script>
 </body>
 </html>
