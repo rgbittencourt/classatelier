@@ -243,8 +243,11 @@ function Editable({ html, onChange, mode, tag = "div", single = false, placehold
   }, [html]);
 
   if (!isEdit) {
+    // `key` própria + spellCheck desligado: ao sair do modo Editar o elemento é refeito do zero. Sem isso o
+    // navegador mantém os sublinhados vermelhos do corretor ortográfico nos mesmos nós de texto, e eles
+    // continuavam aparecendo no modo Visualizar.
     return React.createElement(tag, {
-      className, style,
+      key: "view", className, style, spellCheck: false,
       dangerouslySetInnerHTML: { __html: html || "" },
     });
   }
@@ -259,6 +262,7 @@ function Editable({ html, onChange, mode, tag = "div", single = false, placehold
   };
 
   return React.createElement(tag, {
+    key: "edit",
     ref,
     className,
     style: { ...style, cursor: "text" },

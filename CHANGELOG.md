@@ -4,12 +4,16 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.26.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.26.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.26.1 · 14/11/2026 · Sem corretor ortográfico no modo Visualizar
+
+- Ao passar do modo **Editar** para **Visualizar**, os sublinhados vermelhos do corretor ortográfico do navegador (palavras escritas de propósito de outro jeito, como `matricula` ou `codigo`) continuavam aparecendo no texto. Agora o texto é refeito ao trocar de modo e a verificação fica desligada: no Visualizar, na apresentação e na aula exportada não há corretor. No modo Editar nada mudou.
 
 ### 1.26.0 · 13/11/2026 · Editor de equações ampliado: Matemática e Física, Química e Bioquímica
 
