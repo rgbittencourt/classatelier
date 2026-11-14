@@ -37,6 +37,46 @@ function PointerGuard({ on, children }) {
   return <div style={{ pointerEvents: "none" }}>{children}</div>;
 }
 
+// Alças para redimensionar a imagem arrastando as laterais (só no modo Editar).
+// A imagem fica sempre centralizada, então arrastar uma lateral muda a largura dos dois lados.
+// Durante o arrasto só o estilo muda; o valor entra na aula (e no Desfazer) uma vez, ao soltar.
+function ImageResizeHandles({ width, onChange }) {
+  const ref = React.useRef(null);
+  const [live, setLive] = React.useState(null);
+  const start = (side) => (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const fig = ref.current && ref.current.closest("figure"); if (!fig || !fig.parentElement) return;
+    const parentW = fig.parentElement.getBoundingClientRect().width || 1;
+    const x0 = e.clientX, w0 = Number(width) > 0 && Number(width) < 100 ? Number(width) : 100;
+    const frame = ref.current.parentElement;
+    let cur = w0;
+    const calc = (ev) => {
+      const dx = (ev.clientX - x0) * (side === "right" ? 1 : -1);
+      let w = w0 + (dx * 2 / parentW) * 100;
+      w = Math.max(20, Math.min(100, w));
+      if (!ev.altKey) { const snap = [25, 40, 50, 60, 75, 80, 100].find((t) => Math.abs(w - t) < 1.6); if (snap) w = snap; }
+      return Math.round(w);
+    };
+    const move = (ev) => { cur = calc(ev); fig.style.width = cur >= 100 ? "" : cur + "%"; setLive(cur); };
+    const up = () => {
+      window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); window.removeEventListener("pointercancel", up);
+      setLive(null);
+      if (cur !== Math.round(w0)) onChange(cur >= 100 ? 100 : cur);
+      else fig.style.width = w0 >= 100 ? "" : w0 + "%";
+    };
+    window.addEventListener("pointermove", move); window.addEventListener("pointerup", up); window.addEventListener("pointercancel", up);
+  };
+  const h = (side) => (
+    <div className="aula-imgresize__h" data-side={side} role="separator" aria-orientation="vertical" aria-label={"Arraste para mudar a largura da imagem (lado " + (side === "left" ? "esquerdo" : "direito") + ")"} title="Arraste para mudar a largura (Alt desliga o encaixe)" onPointerDown={start(side)} onDragStart={(e) => e.preventDefault()} />
+  );
+  return (
+    <div ref={ref} className="aula-imgresize" data-editor-only contentEditable={false} suppressContentEditableWarning>
+      {h("left")}{h("right")}
+      {live != null && <span className="aula-imgresize__badge">{live}%</span>}
+    </div>
+  );
+}
+
 // The INNER content of a block — no band, no measure wrapper. Safe to render
 // both at root (BlockView adds the band) and inside a topic (compact, shared
 // band). Never receives a "topic" here.
@@ -208,7 +248,8 @@ function BlockCore({ block, mode, renderNestedList }) {
     case "imagem":
       return (
         <ImagemLegenda
-          src={p.src} slotId={p.slotId || block.id} ratio={p.ratio} alt={p.alt} decorative={p.decorative}
+          src={p.src} slotId={p.slotId || block.id} ratio={p.ratio} alt={p.alt} decorative={p.decorative} width={p.width}
+          overlay={isEdit && p.src ? <ImageResizeHandles width={p.width} onChange={(w) => set("width", w)} /> : null}
           caption={E("caption", { single: true, placeholder: "Legenda" })}
           credit={isEdit ? E("credit", { single: true, placeholder: "Crédito / fonte" }) : p.credit}
         />

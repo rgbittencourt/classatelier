@@ -320,7 +320,7 @@ function ExportCore({ block }) {
     case "atencao": return h(R.Atencao, { title: htmlSpan(p.title), tone: p.tone, icon: p.icon }, html(p.body));
     case "reflexao": return h(R.Reflexao, { title: htmlSpan(p.title), question: htmlSpan(p.question), tone: p.tone, icon: p.icon }, (p.body && p.body !== "<p></p>") ? html(p.body) : null);
     case "pitaco": return h(R.PitacoDo, { kicker: p.kicker, name: p.name, gender: p.gender, role: p.role, tone: p.tone, src: p.src, slotId: p.slotId || block.id }, html(p.body));
-    case "imagem": return h(R.ImagemLegenda, { src: p.src, slotId: p.slotId || block.id, ratio: p.ratio, caption: htmlSpan(p.caption), credit: p.credit });
+    case "imagem": return h(R.ImagemLegenda, { src: p.src, slotId: p.slotId || block.id, ratio: p.ratio, width: p.width, caption: htmlSpan(p.caption), credit: p.credit });
     case "parallax": return h(R.ParallaxImage, { src: p.src, slotId: p.slotId || block.id, height: p.height || "70vh", overlayTitle: htmlSpan(p.overlayTitle), caption: htmlSpan(p.caption), credit: p.credit });
     case "video": return h(R.VideoYouTube, { id: p.id, title: p.title, caption: p.caption, credit: p.credit, start: p.start, transcript: p.transcript, transcriptUrl: p.transcriptUrl, cues: p.transcriptCues, summary: p.summary, showSub: p.showSubtitle !== false, showSummary: p.showSummary !== false, showTranscript: p.showTranscript !== false });
     case "audio": return h(R.AudioPodcast, { spotify: p.spotify, src: p.src, title: p.title, show: p.show, description: p.description, duration: p.duration, slotId: block.id, transcript: p.transcript, transcriptUrl: p.transcriptUrl });

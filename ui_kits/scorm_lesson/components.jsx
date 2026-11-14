@@ -717,9 +717,11 @@ function RecursoLink({ rotulo = "Assista em", href }) {
 }
 
 // IMAGEM COM LEGENDA — image with serif italic caption
-function ImagemLegenda({ src, slotId, caption, credit, ratio = "16/9", alt, decorative }) {
-  return (
-    <figure className="aula-figura">
+function ImagemLegenda({ src, slotId, caption, credit, ratio = "16/9", alt, decorative, width, overlay }) {
+  // width: porcentagem da largura da coluna (20 a 99). Sem valor (ou 100), ocupa a largura toda. Sempre centralizada.
+  const wpct = Number(width) > 0 && Number(width) < 100 ? Math.round(Number(width)) : null;
+  const frame = (
+    <>
       {src ? (
         // Real image: full width, height follows the image's own proportions.
         <div className="aula-figura__frame aula-figura__frame--auto">
@@ -731,6 +733,11 @@ function ImagemLegenda({ src, slotId, caption, credit, ratio = "16/9", alt, deco
           <image-slot id={slotId || "img"} shape="rect" placeholder={richPlain(caption) || "Arraste uma imagem"} style={{ width: "100%", height: "100%" }}></image-slot>
         </div>
       )}
+    </>
+  );
+  return (
+    <figure className="aula-figura" style={wpct ? { width: wpct + "%" } : undefined} data-w={wpct || undefined}>
+      {overlay ? <div style={{ position: "relative" }}>{frame}{overlay}</div> : frame}
       {caption && <figcaption className="aula-media-cap"><RichInline value={caption}/>{credit && <span className="aula-media-credit"> — <RichInline value={credit}/></span>}</figcaption>}
     </figure>
   );

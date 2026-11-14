@@ -253,6 +253,57 @@ function AltFields({ p, setP }) {
     <div style={{ height: 10 }} />
   </>);
 }
+// Tamanho da imagem na aula (sempre centralizada) e peso do arquivo.
+const IMG_PRESETS = [{ id: 40, label: "Pequena" }, { id: 60, label: "Média" }, { id: 80, label: "Grande" }, { id: 100, label: "Total" }];
+function ImageSizeFields({ p, setP }) {
+  const cur = Number(p.width) > 0 && Number(p.width) < 100 ? Math.round(Number(p.width)) : 100;
+  const T = window.ImgTools;
+  const [inf, setInf] = useStateP(null);
+  const [busy, setBusy] = useStateP(false);
+  const [msg, setMsg] = useStateP("");
+  useEffectP(() => {
+    let alive = true; setInf(null);
+    if (T && p.src) T.info(p.src).then((i) => { if (alive) setInf(i); }, () => { if (alive) setInf({ err: true }); });
+    return () => { alive = false; };
+  }, [p.src]);
+  const side = inf && inf.w ? Math.max(inf.w, inf.h) : 0;
+  const heavy = inf && !inf.err && ((inf.bytes != null && inf.bytes > 600 * 1024) || side > 1600);
+  const sizes = [1600, 1200, 800].filter((n) => side > n);
+  const canTune = inf && !inf.err && !inf.external && /^image\/(png|jpeg|jpg|webp)$/.test(inf.type || "");
+  const run = (max) => {
+    setBusy(true); setMsg("");
+    const before = inf ? inf.bytes : null;
+    T.reduce(p.src, max).then((r) => {
+      if (!r.changed) { setMsg("O arquivo já está enxuto: nada a ganhar."); return; }
+      setP({ src: r.src });
+      setMsg("Pronto: de " + T.fmtBytes(before) + " para " + T.fmtBytes(r.bytes) + " (" + r.w + " × " + r.h + " px). Ctrl+Z desfaz.");
+    }).catch((e) => setMsg(e.message || "Não foi possível reduzir.")).then(() => setBusy(false));
+  };
+  const btn = (primary) => ({ ...miniBtn, ...(primary ? { background: "var(--tool-accent)", borderColor: "var(--tool-accent)", color: "#fff" } : {}), opacity: busy ? 0.6 : 1 });
+  return (<>
+    <Field label="Tamanho na aula">
+      <Segmented value={IMG_PRESETS.some((o) => o.id === cur) ? cur : null} onChange={(v) => setP({ width: v })} options={IMG_PRESETS} />
+      <input data-img-width type="range" min="20" max="100" step="1" value={cur} onChange={(e) => setP({ width: Number(e.target.value) })} aria-label="Largura da imagem em porcentagem" style={{ width: "100%", margin: "10px 0 0", accentColor: "var(--tool-accent)" }} />
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--tool-ink-3)" }}><span>20%</span><b data-img-width-label style={{ color: "var(--tool-ink)", fontSize: 12 }}>{cur}% da largura</b><span>100%</span></div>
+      <p style={hint}>A imagem fica sempre centralizada. Você também pode arrastar as laterais dela na página (Alt desliga o encaixe).</p>
+    </Field>
+    <Field label="Arquivo">
+      <div data-img-file style={{ border: "1px solid var(--tool-line)", background: "var(--tool-surface)", borderRadius: 9, padding: "9px 11px", fontSize: 12, lineHeight: 1.5, color: "var(--tool-ink-2)" }}>
+        {!inf ? "Lendo a imagem…" : inf.err ? "Não foi possível ler esta imagem." : (<>
+          <b style={{ color: "var(--tool-ink)" }}>{inf.bytes != null ? T.fmtBytes(inf.bytes) : "Arquivo em outro site"}</b> · {inf.w} × {inf.h} px{inf.label ? " · " + inf.label : ""}
+          {inf.external && <div>Esta imagem está em outro site. Envie o arquivo (botão acima) para poder reduzi-lo.</div>}
+          {!inf.external && heavy && <div>Pesada para uma aula{sizes.length ? ": reduzindo o lado maior a imagem fica bem mais leve, sem diferença visível na tela." : "."}</div>}
+          {!inf.external && !heavy && <div>Tamanho bom para a aula.</div>}
+          {canTune && (heavy || sizes.length > 0 || (inf.bytes || 0) > 150 * 1024) && <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 7 }}>
+            {sizes.map((n, i) => <button key={n} data-img-reduce={n} disabled={busy} onClick={() => run(n)} style={btn(i === 0)}>{i === 0 ? "Reduzir para " + n + " px" : n + " px"}</button>)}
+            <button data-img-reduce="0" disabled={busy} onClick={() => run(0)} style={btn(sizes.length === 0)}>{sizes.length ? "Só otimizar" : "Otimizar arquivo"}</button>
+          </div>}
+        </>)}
+        {msg && <div data-img-msg style={{ marginTop: 6, color: "var(--tool-ink)" }}>{msg}</div>}
+      </div>
+    </Field>
+  </>);
+}
 function ImageField({ src, onChange, label }) {
   const ref = useRefP(null);
   const pick = (e) => {
@@ -395,7 +446,7 @@ function QuizEditor({ p, setP }) {
 }
 
 // ── the panel ──
-function PropertiesPanel({ block, update, mergePrev, onRenumberEquations, onInsertEquation, onInsertImage, onInsertCode, onBreakProse, onBreakTopic }) {
+function PropertiesPanel({ block, update, mergePrev, onRenumberEquations, onInsertEquation, onInsertImage, onInsertCode, onBreakProse, onBreakTopic, onBreakPage }) {
   if (!block) {
     return <div style={{ padding: 24, color: "var(--tool-ink-3)", fontSize: 13, lineHeight: 1.5 }}>Selecione um bloco na página para editar suas propriedades, ou arraste um bloco da biblioteca à esquerda.</div>;
   }
@@ -439,7 +490,7 @@ function PropertiesPanel({ block, update, mergePrev, onRenumberEquations, onInse
       {/* Conteúdo estrutural por tipo */}
       <div style={ps.group}>
         <p style={ps.groupTitle}>Conteúdo</p>
-        {renderTypeContent(block, p, setP, mergePrev, onRenumberEquations, onInsertEquation, { onInsertImage, onInsertCode, onBreakProse, onBreakTopic })}
+        {renderTypeContent(block, p, setP, mergePrev, onRenumberEquations, onInsertEquation, { onInsertImage, onInsertCode, onBreakProse, onBreakTopic, onBreakPage })}
         <div style={{ height: 8 }} />
       </div>
     </div>
@@ -1113,7 +1164,7 @@ function EquationPanel({ p, setP, onRenumber }) {
 }
 
 function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquation, cursorActions = {}) {
-  const { onInsertImage, onBreakProse, onBreakTopic } = cursorActions;
+  const { onInsertImage, onBreakProse, onBreakTopic, onBreakPage } = cursorActions;
   const def = window.BLOCK_BY_TYPE[block.type];
   switch (block.type) {
     case "pagebreak":
@@ -1249,7 +1300,7 @@ function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquati
           </Field>
           <p style={hint}>Escolha um arquivo ou peça à IA que crie a figura na hora. O parágrafo se divide no cursor e a imagem entra no meio.</p>
         </>}
-        {(onBreakProse || onBreakTopic) && <>
+        {(onBreakProse || onBreakTopic || onBreakPage) && <>
           <div style={{ height: 14 }} />
           <Field label="Quebra no cursor">
             <div style={{ display: "grid", gap: 8 }}>
@@ -1259,9 +1310,12 @@ function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquati
               {onBreakTopic && <button type="button" data-act="break-topic" onClick={onBreakTopic} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 12px", borderRadius: 10, border: "1px solid var(--tool-line, #d8d3c6)", background: "var(--tool-card, #fff)", cursor: "pointer", font: "600 13px var(--font-ui, inherit)", color: "var(--tool-ink)", textAlign: "left" }}>
                 <window.Icon name="separator-horizontal" size={16} stroke={1.8} /> Quebrar tópico aqui
               </button>}
+              {onBreakPage && <button type="button" data-act="break-page" onClick={onBreakPage} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 12px", borderRadius: 10, border: "1px solid var(--tool-line, #d8d3c6)", background: "var(--tool-card, #fff)", cursor: "pointer", font: "600 13px var(--font-ui, inherit)", color: "var(--tool-ink)", textAlign: "left" }}>
+                <window.Icon name="separator-horizontal" size={16} stroke={1.8} /> Quebra de página (PDF) aqui
+              </button>}
             </div>
           </Field>
-          <p style={hint}>Clique no ponto do texto e use o botão. <strong>Parágrafo</strong>: vira dois parágrafos, para não ficar longo demais. <strong>Tópico</strong>: o Tópico de conteúdo se divide em dois, e o que vem depois do cursor passa para o segundo.</p>
+          <p style={hint}>Clique no ponto do texto e use o botão. <strong>Parágrafo</strong>: vira dois parágrafos, para não ficar longo demais. <strong>Tópico</strong>: o Tópico de conteúdo se divide em dois, e o que vem depois do cursor passa para o segundo. <strong>Quebra de página (PDF)</strong>: o parágrafo se divide no cursor e o PDF muda de página exatamente ali.</p>
         </>}
       </>);
     case "pitaco":
@@ -1276,6 +1330,7 @@ function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquati
     case "imagem":
       return (<>
         <ImageField label="Imagem" src={p.src} onChange={(v) => setP({ src: v })} />
+        {p.src && <ImageSizeFields p={p} setP={setP} />}
         <AltFields p={p} setP={setP} />
         <Field label="Proporção"><Segmented value={p.ratio} onChange={(v) => setP({ ratio: v })} options={[{ id: "16/9", label: "16:9" }, { id: "4/3", label: "4:3" }, { id: "1/1", label: "1:1" }]} /></Field>
         <Field label="Crédito / fonte"><TextInput value={p.credit} onChange={(v) => setP({ credit: v })} /></Field>

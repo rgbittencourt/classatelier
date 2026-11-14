@@ -30,6 +30,12 @@
     @container tb (max-width: 600px) { .tb-theme { display: none; } }
     /* No Visualizar, o botão flutuante do sumário (círculo escuro) ficava por cima do Exportar: desce abaixo da barra */
     [data-lz-canvas] .aula-sumario__fab { top: 64px; }
+    /* Alças de redimensionar imagem (só no editor) */
+    .aula-imgresize { position: absolute; inset: 0; pointer-events: none; }
+    .aula-imgresize__h { position: absolute; top: 50%; width: 12px; height: 34px; margin-top: -17px; background: #fff; border: 2px solid #1d6fd8; border-radius: 6px; cursor: ew-resize; pointer-events: auto; opacity: 0; transition: opacity 120ms; touch-action: none; box-shadow: 0 1px 4px rgba(0,0,0,.25); z-index: 5; }
+    .aula-imgresize__h[data-side="left"] { left: -7px; } .aula-imgresize__h[data-side="right"] { right: -7px; }
+    .aula-figura:hover .aula-imgresize__h, .aula-imgresize__h:focus-visible, .aula-embedded-block[data-selected="true"] .aula-imgresize__h { opacity: 1; }
+    .aula-imgresize__badge { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); background: #23262B; color: #fff; font: 700 12px/1 var(--tool-sans, system-ui); padding: 5px 9px; border-radius: 7px; pointer-events: none; z-index: 6; }
     .tb-scroll { scrollbar-width: none; } .tb-scroll::-webkit-scrollbar { display: none; }
     @container tb (max-width: 640px) { .tb-imp-label { display: none; } }
     /* Barra inferior (arquivos e revisão): some o rótulo, fica o ícone, quando a coluna estreita */
@@ -191,10 +197,10 @@
   <!-- Tema + componentes do kit + módulos do builder são injetados aqui,
        em ordem, por boot.js — a partir do tema ativo (themes.js). -->
   <script>window.AULA_BASE = "";</script>
-  <script src="pasta.js?v=20261114-v1.31.1a"></script>
-  <script src="icones.js?v=20261114-v1.31.1a" defer></script>
-  <script src="themes.js?v=20261114-v1.31.1a"></script>
-  <script src="boot.js?v=20261114-v1.31.1a"></script>
+  <script src="pasta.js?v=20261114-v1.32.0a"></script>
+  <script src="icones.js?v=20261114-v1.32.0a" defer></script>
+  <script src="themes.js?v=20261114-v1.32.0a"></script>
+  <script src="boot.js?v=20261114-v1.32.0a"></script>
   <script>(function(){var e=document.getElementById("ca-ver");if(e)e.textContent="v"+(window.CLASSATELIER_VERSION||"");})();</script>
 </body>
 </html>

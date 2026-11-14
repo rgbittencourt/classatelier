@@ -523,6 +523,29 @@ function ClassAtelierApp() {
     setMode("edit");
   };
 
+  // «Quebra de página (PDF)» no cursor: o parágrafo se divide ali e a quebra entra entre as duas partes,
+  // então o PDF muda de página exatamente nesse ponto. Sem cursor num parágrafo, entra depois do bloco
+  // selecionado; sem nada selecionado, no fim da aula.
+  const insertPageBreakAtCursor = (proseId) => {
+    const child = window.newChildBlock("pagebreak");
+    const c = window.__lzCaret;
+    const wrap = c && c.host && c.host.isConnected ? c.host.closest("[data-bid]") : null;
+    const caretId = wrap ? wrap.getAttribute("data-bid") : null;
+    const id = proseId || (selected && caretId === selected ? selected : null);
+    const block = id ? findBlockDeep(lesson.blocks, id) : null;
+    if (block && block.type === "prose") {
+      const sp = window.splitProseAtCaret ? window.splitProseAtCaret(block.id) : null;
+      const owner = collectBlockLists(lesson.blocks, undefined, [], true).find((ref) => ref.list.some((b) => b.id === block.id));
+      if (owner && owner.meta && owner.meta.kind !== "topic") { showToast("Dentro de coluna, acordeão ou linha do tempo não cabe quebra de página. Clique no texto do tópico, fora dessa estrutura."); return; }
+      if (insertChildInProse(block.id, child)) showToast(sp ? "Quebra de página inserida no cursor: o PDF muda de página neste ponto." : "Não achei o cursor neste parágrafo, então a quebra entrou depois dele. Clique no ponto do texto e use de novo para quebrar ali.");
+      return;
+    }
+    const after = selected ? findBlockDeep(lesson.blocks, selected) : null;
+    if (after && after.type !== "topic" && !/^(hero|divider|sintese|referencias|pagebreak)$/.test(after.type)) { if (insertAfterBlock(after.id, child)) showToast("Quebra de página inserida depois do bloco selecionado. Para quebrar no meio de um parágrafo, clique no texto e use de novo."); return; }
+    insertBlock("pagebreak", null);
+    showToast("Quebra de página inserida no fim da aula. Para quebrar num ponto do texto, clique nele e use de novo.");
+  };
+
   // «Quebrar tópico no cursor»: o Tópico de conteúdo vira dois, no ponto do cursor. `ref` é o id do parágrafo
   // ou do próprio tópico (o cursor guardado diz em qual parágrafo do tópico a quebra acontece).
   const breakTopicAtCaret = (ref) => {
@@ -854,7 +877,7 @@ function ClassAtelierApp() {
   return (
     <div style={{ display: "grid", gridTemplateColumns: mode === "preview" ? "1fr" : "248px 1fr " + (rightOpen ? "320px" : "40px"), height: "calc(100vh - var(--credits-h, 0px))", overflow: "hidden", transition: "grid-template-columns 160ms ease" }}>
       {mode === "edit" && (
-        <Palette onDragType={setDragType} onAdd={(t) => insertBlock(t, null)} onRichNotes={() => setRichOpen(true)} />
+        <Palette onDragType={setDragType} onAdd={(t) => (t === "pagebreak" ? insertPageBreakAtCursor() : insertBlock(t, null))} onRichNotes={() => setRichOpen(true)} />
       )}
 
       <div style={{ display: "flex", flexDirection: "column", minWidth: 0, minHeight: 0, overflow: "hidden", borderLeft: mode === "edit" ? "1px solid var(--tool-line)" : "none", borderRight: mode === "edit" ? "1px solid var(--tool-line)" : "none" }}>
@@ -886,7 +909,7 @@ function ClassAtelierApp() {
             <button onClick={() => setRightOpen(false)} title="Recolher painel de propriedades" aria-label="Recolher painel de propriedades" aria-expanded="true"
               style={{ position: "absolute", top: 11, right: 10, zIndex: 6, width: 28, height: 28, display: "grid", placeItems: "center", border: "1px solid var(--tool-line)", background: "#fff", borderRadius: 7, cursor: "pointer", color: "var(--tool-ink-2)", fontSize: 15, lineHeight: 1 }}>»</button>
             {selBlock
-              ? <window.PropertiesPanel block={selBlock} update={(patch) => updateBlock(selBlock.id, patch)} mergePrev={mergeInfo(selBlock) ? () => mergeTopicWithPrevious(selBlock) : null} onRenumberEquations={() => commit(window.autoNumberEquations(lesson, true))} onInsertEquation={() => insertEquationInProse(selBlock.id)} onInsertImage={() => openImageDialog(selBlock.id)} onInsertCode={() => insertCodeBlock(selBlock.id)} onBreakProse={() => breakProseAtCaret(selBlock.id)} onBreakTopic={() => breakTopicAtCaret(selBlock.id)} />
+              ? <window.PropertiesPanel block={selBlock} update={(patch) => updateBlock(selBlock.id, patch)} mergePrev={mergeInfo(selBlock) ? () => mergeTopicWithPrevious(selBlock) : null} onRenumberEquations={() => commit(window.autoNumberEquations(lesson, true))} onInsertEquation={() => insertEquationInProse(selBlock.id)} onInsertImage={() => openImageDialog(selBlock.id)} onInsertCode={() => insertCodeBlock(selBlock.id)} onBreakProse={() => breakProseAtCaret(selBlock.id)} onBreakTopic={() => breakTopicAtCaret(selBlock.id)} onBreakPage={() => insertPageBreakAtCursor(selBlock.id)} />
               : <LessonMeta lesson={lesson} setLesson={(L) => setLesson(L)} />}
           </>) : (
             <button onClick={() => setRightOpen(true)} title="Abrir painel de propriedades" aria-label="Abrir painel de propriedades" aria-expanded="false"
@@ -1031,7 +1054,7 @@ function Palette({ onDragType, onAdd, onRichNotes }) {
                 onDragStart={(e) => { onDragType(b.type); e.dataTransfer.effectAllowed = "copy"; e.dataTransfer.setData("text/plain", b.type); }}
                 onDragEnd={() => onDragType(null)}
                 onDoubleClick={() => onAdd(b.type)}
-                title={"Arraste para a página · ou clique duas vezes para inserir"}
+                title={b.type === "pagebreak" ? "Clique no ponto do texto e dê dois cliques aqui: o parágrafo se divide no cursor e o PDF muda de página ali · ou arraste para a página" : "Arraste para a página · ou clique duas vezes para inserir"}
                 style={{ display: "flex", alignItems: "center", gap: 9, padding: "8px 9px", borderRadius: 8, border: "1px solid " + (searching && b === first ? "var(--tool-accent)" : "var(--tool-line)"), background: "var(--tool-surface)", cursor: "grab" }}>
                 <window.Icon name={b.icon} size={16} stroke={1.8} color="var(--tool-ink-2)" />
                 <span style={{ fontSize: 12.5, fontWeight: 500, color: "var(--tool-ink)" }}>{mark(b.label)}</span>
@@ -1264,8 +1287,8 @@ function Topbar({ onPresent, onSlides, onInsertCode, onCourse, lesson, mode, set
         <button data-act="clear" onClick={onClear} disabled={!canClear} title="Limpar página" style={{ ...ghostBtn, opacity: canClear ? 1 : 0.4, color: canClear ? "var(--coral-deep)" : "var(--tool-ink-3)" }}><window.TIcon name="trash" size={15} /></button>
         <button onClick={onA11y} aria-pressed={!!a11yOpen} title="Acessibilidade: verifica imagens sem descrição, contraste, títulos, links, vídeos e tabelas" style={{ ...textBtn, position: "relative", background: a11yOpen ? "var(--tool-surface)" : undefined }}><window.TIcon name="a11y" size={15} /><span className="tb-label">Acessibilidade</span>{a11yCount > 0 && <span aria-label={a11yCount + " itens para revisar"} style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 999, background: "#b3372a", color: "#fff", fontSize: 10.5, fontWeight: 800, display: "inline-grid", placeItems: "center", marginLeft: 2 }}>{a11yCount > 99 ? "99+" : a11yCount}</span>}</button>
         <div style={{ display: "flex", background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 9, padding: 3 }}>
-          <button onClick={() => setMode("edit")} style={segBtn(mode === "edit")}><window.TIcon name="pencil" size={13} /> <span className="tb-seg-label">Editar</span></button>
-          <button onClick={() => setMode("preview")} style={segBtn(mode === "preview")}><window.TIcon name="eye" size={13} /> <span className="tb-seg-label">Visualizar</span></button>
+          <button onClick={() => setMode("edit")} title="Editar a aula" aria-label="Editar" style={segBtn(mode === "edit")}><window.TIcon name="pencil" size={13} /> <span className="tb-seg-label">Editar</span></button>
+          <button onClick={() => setMode("preview")} title="Visualizar a aula como o aluno vê" aria-label="Visualizar" style={segBtn(mode === "preview")}><window.TIcon name="eye" size={13} /> <span className="tb-seg-label">Visualizar</span></button>
         </div>
         <button data-act="present" onClick={onPresent} disabled={!lesson.blocks.length} title="Apresentar: mostra a aula em tela cheia, uma seção por vez, para projetar em sala (Esc sai)" style={{ ...textBtn, opacity: lesson.blocks.length ? 1 : 0.45 }}><window.TIcon name="present" size={14} /><span className="tb-label">Apresentar</span></button>
         {onSlides && <button data-act="slides" onClick={onSlides} disabled={!lesson.blocks.length} title="Slides: gera uma apresentação profissional da aula com IA (você escolhe a paleta de cores)" style={{ ...textBtn, opacity: lesson.blocks.length ? 1 : 0.45 }}><window.TIcon name="slides" size={15} /><span className="tb-label">Slides</span></button>}

@@ -13,8 +13,8 @@
 (function () {
   var BASE = window.AULA_BASE || "";
   // Versão do ClassAtelier (Versionamento Semântico; histórico em CHANGELOG.md).
-  window.CLASSATELIER_VERSION = "1.31.1";
-  var BUILD_REV = "20261114-v1.31.1a";
+  window.CLASSATELIER_VERSION = "1.32.0";
+  var BUILD_REV = "20261114-v1.32.0a";
   var theme = window.resolveAulaTheme();
   window.AULA_ACTIVE_THEME = theme;
 
@@ -85,6 +85,7 @@
   w('<script src="' + attr(rev(BASE + "equacao-inline.js")) + '"><\/script>');
   // 6b2c) Importar aula do Moodle (HTML colado ou backup .mbz); só do editor
   w('<script src="' + attr(rev(BASE + "importar.js")) + '"><\/script>');
+  w('<script src="' + attr(rev(BASE + "imagem-tools.js")) + '"><\/script>');
   // 6b3) Corretor ortográfico próprio (só do editor): motor Hunspell leve + marcação pontilhada; dicionários em vendor/dict/ (carregados sob demanda)
   w('<script src="' + attr(rev(BASE + "corretor-motor.js")) + '"><\/script>');
   w('<script src="' + attr(rev(BASE + "corretor.js")) + '"><\/script>');

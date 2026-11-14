@@ -4,12 +4,18 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.31.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.32.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.32.0 · 14/11/2026 · Imagens redimensionáveis e quebra de página no cursor
+
+- **Tamanho da imagem:** no painel do bloco Imagem, **Tamanho na aula** (Pequena, Média, Grande, Largura total) com controle deslizante de 20% a 100%; também dá para **arrastar as alças** da imagem na própria página (mostra a % ao vivo e «gruda» em valores redondos). A imagem fica **sempre centralizada**, na aula, no Visualizar, no HTML exportado e no PDF. Desfazer (Ctrl+Z) funciona.
+- **Peso do arquivo:** novo cartão **Arquivo** no painel mostra as dimensões e o peso e permite **Reduzir** (1600, 1200 ou 800 px no lado maior) ou **Só otimizar**. Imagens grandes do ClassAuthor, ChatGPT ou Napkin caem de vários MB para poucas centenas de KB. Mantém PNG só quando há transparência; GIF, SVG e imagens de endereço externo não são reduzidos.
+- **Quebra de página (PDF) no cursor:** clique no ponto do texto e dê dois cliques em «Quebra de página (PDF)» na paleta (ou use o botão **Quebra de página (PDF) aqui** no painel do parágrafo). O parágrafo se divide ali e o PDF muda de página exatamente naquele ponto. Sem cursor no texto, insere depois do bloco selecionado. Dentro de colunas, sanfonas e linhas do tempo a quebra é recusada com aviso.
 
 ### 1.31.1 · 14/11/2026 · Faixa de créditos mais grossa e nome corrigido
 
