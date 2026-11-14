@@ -192,6 +192,8 @@ ${cssClean}
 /* anatomia dos componentes — defaults Aula + overrides do tema */
 ${compBaseCss}
 ${compThemeCss}
+/* sublinhado e tachado contínuos: sem "cortes" nos descendentes (g, p, q, y), vírgulas e outras pontuações */
+u, s, strike, del { text-decoration-skip-ink: none; }
 </style>
 <style>
 ${pdfCss}

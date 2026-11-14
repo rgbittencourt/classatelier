@@ -4,12 +4,17 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.26.2** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.26.3** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.26.3 · 14/11/2026 · Acessibilidade sem tela em branco; sublinhado contínuo
+
+- **Botão Acessibilidade:** em aulas com o bloco **Casos reais** ou **Por que isto importa** (cujo campo `columns` é um número), a conferência dava erro e o editor ficava em **tela em branco**, sem nem os menus. Corrigido: a conferência agora lê esses blocos normalmente (o mesmo erro também podia atrapalhar a conferência do pacote de entrega). Se algum outro problema surgir na conferência, o painel mostra um aviso com o botão Fechar, em vez de derrubar o editor.
+- **Sublinhado e tachado contínuos:** o traço não é mais interrompido sob as letras com cauda (g, p, q, y), vírgulas, parênteses e outras pontuações que estiverem dentro do trecho sublinhado. Vale no editor, no Visualizar e na aula exportada (HTML, pacote e SCORM). Para a pontuação ficar sublinhada, ela precisa estar dentro da seleção quando você aplica o sublinhado.
 
 ### 1.26.2 · 14/11/2026 · «Limpar marcas» (✕) funciona de verdade
 

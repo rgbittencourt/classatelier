@@ -32,9 +32,12 @@
   function childrenOf(b) {
     const p = b.props || {}, out = [];
     if (Array.isArray(p.children)) out.push(...p.children);
-    (p.columns || []).forEach((c) => { if (c && Array.isArray(c.children)) out.push(...c.children); });
-    (p.items || []).forEach((c) => { if (c && Array.isArray(c.children)) out.push(...c.children); });
-    (p.eras || []).forEach((e) => (e.events || []).forEach((ev) => { if (ev && Array.isArray(ev.children)) out.push(...ev.children); }));
+    // Cada um só vale se for lista: em «Casos reais» e «Por que isto importa», `columns` é um NÚMERO (2, 3)
+    // e `(2).forEach` derrubava o painel (tela em branco) e a conferência do pacote.
+    const list = (x) => (Array.isArray(x) ? x : []);
+    list(p.columns).forEach((c) => { if (c && Array.isArray(c.children)) out.push(...c.children); });
+    list(p.items).forEach((c) => { if (c && Array.isArray(c.children)) out.push(...c.children); });
+    list(p.eras).forEach((e) => list(e && e.events).forEach((ev) => { if (ev && Array.isArray(ev.children)) out.push(...ev.children); }));
     return out.filter((c) => c && c.type);
   }
   function walk(blocks, fn, trail) {
@@ -292,7 +295,24 @@
 })();
 
 // ── Painel lateral ──
-function A11yPanel({ lesson, onClose, onGoto, ignored, onIgnored }) {
+// Se algo der errado ao conferir a aula, o painel mostra o aviso em vez de derrubar o editor (tela em branco).
+class A11yBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { err: null }; }
+  static getDerivedStateFromError(err) { return { err }; }
+  componentDidCatch(err) { try { console.error("Acessibilidade:", err); } catch (e) {} }
+  render() {
+    if (!this.state.err) return this.props.children;
+    return (
+      <aside role="dialog" aria-label="Acessibilidade" style={{ position: "fixed", top: 56, right: 0, bottom: 0, width: 360, background: "#fff", borderLeft: "1px solid var(--tool-line-2)", padding: 18, zIndex: 50, overflow: "auto", fontSize: 13, lineHeight: 1.5 }}>
+        <strong>Não foi possível conferir a acessibilidade desta aula.</strong>
+        <p style={{ margin: "8px 0" }}>Sua aula não foi alterada. Detalhe técnico: <code>{String(this.state.err && this.state.err.message || this.state.err)}</code></p>
+        <button onClick={this.props.onClose} style={{ border: "1px solid var(--tool-line-2)", borderRadius: 8, background: "#fff", padding: "6px 12px", cursor: "pointer" }}>Fechar</button>
+      </aside>
+    );
+  }
+}
+function A11yPanel(props) { return <A11yBoundary onClose={props.onClose}><A11yPanelInner {...props} /></A11yBoundary>; }
+function A11yPanelInner({ lesson, onClose, onGoto, ignored, onIgnored }) {
   const [tab, setTab] = React.useState("all");
   const [contrast, setContrast] = React.useState({ state: "idle", items: [] });
   const [tick, setTick] = React.useState(0);
