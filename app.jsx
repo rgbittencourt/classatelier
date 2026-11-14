@@ -786,7 +786,7 @@ function ClassAtelierApp() {
         showToast("Aula importada do HTML exportado. A aula anterior ficou na Biblioteca."); return;
       }
       const baseMeta = emptyLesson().meta, I = window.Importador;
-      const aviso = r.warnCount ? " " + r.warnCount + (r.warnCount === 1 ? " item ficou" : " itens ficaram") + " de fora ou vazio(s): confira os blocos de imagem." : "";
+      const aviso = r.warnCount ? " " + r.warnCount + (r.warnCount === 1 ? " ponto precisa" : " pontos precisam") + " da sua revisão: confira as imagens vazias e abra o painel Acessibilidade." : "";
       if (r.dest === "append") {
         const aula = I.montarAula(r.model, { hero: false, baseMeta });
         const cur = lessonRef.current, blocks = cur.blocks.slice();
@@ -801,7 +801,7 @@ function ClassAtelierApp() {
         if (window.autoNumberEquations) project = window.autoNumberEquations(project);
         await switchTo(project, newLessonId(), { app: "import", key: r.model.title || "" });
         setMode("edit");
-        showToast("Aula importada (" + r.total + " blocos). A aula anterior ficou na Biblioteca." + aviso);
+        showToast("Aula importada como rascunho (" + r.total + " blocos). A aula anterior ficou na Biblioteca." + aviso);
       }
     } catch (err) { alert("Não consegui importar: " + err.message); }
   };
@@ -898,6 +898,7 @@ function ClassAtelierApp() {
       {libOpen && <LibraryDialog preselectCurrent={libPre} currentId={curRef.current.id} onClose={() => setLibOpen(false)}
         onOpen={async (e) => { await switchTo(e.lesson, e.id, e.source); setLibOpen(false); setMode("edit"); }}
         onNew={async () => { await switchTo(emptyLesson(), newLessonId(), null); setLibOpen(false); setMode("edit"); }}
+        onImport={window.Importador ? () => { setLibOpen(false); setImportOpen(true); } : null}
         onCourse={(entries) => setCourseEntries(entries)} />}
       {courseEntries && <CourseDialog entries={courseEntries} onMoodle={(links) => setMoodle({ links })} onClose={() => setCourseEntries(null)} onCheck={(title, load) => setScormCheck({ title, load })}
         onConfirm={async (opts) => { try { await (opts.format === "site" ? window.downloadCourseSite : window.downloadCourseSCORM)(opts.lessons, opts); setCourseEntries(null); showToast("Pacote do curso gerado."); } catch (e) { alert("Erro ao gerar o pacote do curso: " + e.message); } }} />}
@@ -1039,7 +1040,7 @@ function Palette({ onDragType, onAdd }) {
   );
 }
 
-function LibraryDialog({ currentId, preselectCurrent, onClose, onOpen, onNew, onCourse }) {
+function LibraryDialog({ currentId, preselectCurrent, onClose, onOpen, onNew, onImport, onCourse }) {
   const [items, setItems] = useStateA(null);
   const [picked, setPicked] = useStateA(preselectCurrent && currentId ? { [currentId]: true } : {});
   const [failed, setFailed] = useStateA(false);
@@ -1062,6 +1063,7 @@ function LibraryDialog({ currentId, preselectCurrent, onClose, onOpen, onNew, on
           </div>
           <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
             <button style={{ ...ghostBtn, width: "auto", padding: "0 12px", fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap" }} onClick={onNew}>+ Nova aula</button>
+            {onImport && <button data-act="lib-import" style={{ ...ghostBtn, width: "auto", padding: "0 12px", fontSize: 12.5, fontWeight: 600, whiteSpace: "nowrap" }} onClick={onImport} title="Traz uma Página ou um capítulo de Livro do Moodle como aula nova">Importar do Moodle</button>}
             <button style={ghostBtn} onClick={onClose} title="Fechar">×</button>
           </div>
         </header>

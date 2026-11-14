@@ -34,17 +34,24 @@ const b = r.children[0].props.body;
 ok(!/script|onclick|javascript:|alert|style/i.test(b), "sem script/onclick/javascript: " + b);
 ok(b.includes('<a href="https://ok.com/a?b=1&amp;c=2">bom</a>'), "link seguro mantido: " + b);
 
-// ── 4. Imagens ──
-r = I.htmlParaBlocos('<p><img src="data:image/png;base64,AAAA" alt="Foto A"></p><img src="https://site.com/x.png"><img src="@@PLUGINFILE@@/figura 1.png" alt="F"><img src="https://moodle.x/pluginfile.php/12/mod_page/content/1/f.jpg"><figure><img src="data:image/png;base64,BBBB"><figcaption>Figura 2. Legenda</figcaption></figure>');
+// ── 4. Imagens: importada, referenciada, reenviar ──
+r = I.htmlParaBlocos('<p><img src="data:image/png;base64,AAAA" alt="Foto A"></p><img src="https://site.com/x.png" alt="X"><img src="@@PLUGINFILE@@/figura 1.png" alt="F"><img src="https://moodle.x/pluginfile.php/12/mod_page/content/1/f.jpg" alt="G"><figure><img src="data:image/png;base64,BBBB" alt="B"><figcaption>Figura 2. Legenda</figcaption></figure>');
 eq(types(r), ["imagem", "imagem", "imagem", "imagem", "imagem"]);
 eq(r.children[0].props.src, "data:image/png;base64,AAAA");
-eq(r.children[0].props.caption, "Foto A");
+eq([r.children[0].props.alt, r.children[0].props.caption], ["Foto A", ""], "alt e legenda separados");
+eq(r.children.map((c) => c._imp.img), ["importada", "referenciada", "reenviar", "reenviar", "importada"]);
 eq(r.children[1].props.src, "https://site.com/x.png");
 eq(r.children[2].props.src, "", "imagem do Moodle fica vazia");
-eq(r.children[3].props.src, "");
+eq(r.children[2].props.origemArquivo, "figura 1.png", "guarda a referência ao arquivo");
+eq(r.children[3].props.origemArquivo, "https://moodle.x/pluginfile.php/12/mod_page/content/1/f.jpg");
 eq(r.children[4].props.caption, "Figura 2. Legenda");
-eq(r.warnings.length, 2, "dois avisos de imagem do Moodle: " + JSON.stringify(r.warnings));
-ok(r.warnings[0].includes("figura 1.png"), "aviso com o nome do arquivo");
+eq(r.children[2]._imp.status, "pendente");
+eq(r.children[1]._imp.status, "ok");
+ok(r.warnings.filter((w) => /vinculada ao curso de origem/.test(w)).length === 2, "dois avisos de imagem do Moodle: " + JSON.stringify(r.warnings));
+ok(r.warnings.some((w) => /figura 1\.png/.test(w)), "aviso com o nome do arquivo");
+ok(r.notes.some((w) => /só referenciada/.test(w)), "imagem referenciada vai nos ajustes");
+r = I.htmlParaBlocos('<img src="data:image/png;base64,AA">');
+ok(r.warnings.some((w) => /sem texto alternativo nem legenda/.test(w)), "aviso de imagem sem descrição");
 r = I.htmlParaBlocos('<img class="icon" src="/x.gif" width="16" height="16"><img class="emoticon" src="/s.gif">');
 eq(r.children.length, 0, "ícones e emoticons ignorados");
 
@@ -54,12 +61,20 @@ eq(types(r), ["prose", "imagem", "prose"]);
 
 // ── 6. Vídeos e incorporados ──
 r = I.htmlParaBlocos('<iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ?start=30" title="Aula"></iframe><p><a href="https://youtu.be/abcdefghijk">https://youtu.be/abcdefghijk</a></p><iframe src="https://player.vimeo.com/video/123" width="640" height="360"></iframe><iframe src="https://moodle.x/h5p/embed.php?url=1" title="Quiz H5P"></iframe><video src="@@PLUGINFILE@@/aula.mp4"></video><audio src="https://x.com/a.mp3"></audio>');
-eq(types(r), ["video", "video", "externalembed", "audio"]);
+eq(types(r), ["video", "video", "externalembed", "prose", "audio"]);
 eq([r.children[0].props.id, r.children[0].props.start, r.children[1].props.id], ["dQw4w9WgXcQ", "30", "abcdefghijk"]);
 ok(/^<iframe src="https:\/\/player\.vimeo\.com\/video\/123"/.test(r.children[2].props.embed), "embed vimeo");
 eq(r.children[2].props.height, 360);
-ok(r.warnings.some((w) => /H5P/.test(w) && /Quiz H5P/.test(w)), "aviso H5P");
-ok(r.warnings.some((w) => /vídeo do Moodle/.test(w) && /aula\.mp4/.test(w)), "aviso vídeo");
+ok(r.children[3].props.body.includes('<a href="https://moodle.x/h5p/embed.php?url=1">Quiz H5P</a>'), "H5P com endereço vira link");
+ok(r.warnings.some((w) => /interação importada como link/.test(w)), "aviso: interação como link");
+ok(r.warnings.some((w) => /vídeo do Moodle não importado/.test(w) && /aula\.mp4/.test(w)), "vídeo sem endereço: aviso solto " + JSON.stringify(r.warnings));
+r = I.htmlParaBlocos('<video src="https://moodle.x/pluginfile.php/9/mod_page/content/aula.mp4"></video><iframe src="/h5p/embed.php?url=2" title="H5P relativo"></iframe>', { baseUrl: "https://moodle.x/mod/page/view.php?id=5" });
+eq(types(r), ["prose", "prose"], "com a URL de origem os dois viram link");
+ok(r.children[0].props.body.includes('href="https://moodle.x/pluginfile.php/9/mod_page/content/aula.mp4"'), "vídeo do curso vira link: " + r.children[0].props.body);
+ok(r.children[1].props.body.includes('href="https://moodle.x/h5p/embed.php?url=2"'), "H5P relativo resolvido pela URL de origem");
+r = I.htmlParaBlocos('<iframe src="/h5p/embed.php?url=2" title="H5P relativo"></iframe>');
+eq(r.children.length, 0);
+ok(r.warnings.some((w) => /H5P não importado/.test(w) && /informe a URL original/.test(w)), "sem URL: pede a URL de origem");
 
 // ── 7. Tabela ──
 r = I.htmlParaBlocos("<table><caption>Tab 1</caption><thead><tr><th>A</th><th>B</th></tr></thead><tbody><tr><td>1</td><td><b>2</b></td></tr><tr><td>3</td></tr></tbody></table>");
@@ -104,6 +119,88 @@ eq(aula.blocks[1].props.children[0].props.text, "Pág A");
 // ── 11. Colar HTML (modelo) ──
 let m = I.htmlParaModelo("<h1>Fundamentos</h1><p>texto</p>");
 eq(m.model.title, "Fundamentos");
+
+// ── 11b. Texto simples (sem HTML) ──
+m = I.htmlParaModelo("Primeiro parágrafo\ncom segunda linha.\n\n- item um\n- item dois\n\n1. passo\n2. outro passo\n\nÚltimo & <fim>");
+eq(m.plain, true, "detecta texto simples");
+eq(m.model.fonte, "texto");
+let kidsP = m.model.sections[0].items[0].children;
+eq(kidsP.map((c) => c.type), ["prose"]);
+const bp = kidsP[0].props.body;
+ok(bp.includes("<p>Primeiro parágrafo<br>com segunda linha.</p>"), "parágrafo com quebra: " + bp);
+ok(bp.includes("<ul><li>item um</li><li>item dois</li></ul>") && bp.includes("<ol><li>passo</li><li>outro passo</li></ol>"), "listas");
+ok(bp.includes("Último &amp; &lt;fim&gt;"), "escapa o texto: " + bp);
+eq(I.htmlParaModelo("<p>x</p>").plain, false, "HTML não é texto simples");
+
+// ── 11c. URL de origem: links relativos e links do curso ──
+r = I.htmlParaBlocos('<p><a href="/mod/page/view.php?id=7">Outra página</a> <a href="../x/y.html">rel</a> <a href="https://www.inpe.br">INPE</a> <a href="#sec2">ir</a></p>', { baseUrl: "https://moodle.ifsc.edu.br/mod/page/view.php?id=3" });
+const lb = r.children[0].props.body;
+ok(lb.includes('href="https://moodle.ifsc.edu.br/mod/page/view.php?id=7"'), "link relativo resolvido: " + lb);
+ok(lb.includes('href="https://moodle.ifsc.edu.br/mod/x/y.html"'), "../ resolvido a partir da página de origem: " + lb);
+ok(!lb.includes("#sec2"), "âncora interna vira texto");
+ok(r.warnings.some((w) => /link do curso de origem/.test(w) && /Outra página/.test(w)), "aviso de link do curso: " + JSON.stringify(r.warnings));
+ok(!r.warnings.some((w) => /INPE/.test(w)), "link externo não gera aviso");
+ok(r.notes.some((w) => /link interno para uma seção virou texto/.test(w)), "âncora interna nos ajustes");
+r = I.htmlParaBlocos('<p><a href="/mod/page/view.php?id=7">Outra página</a> <a href="https://m.x/pluginfile.php/1/mod_resource/content/1/aula.pdf">aula.pdf</a></p>');
+ok(!r.children[0].props.body.includes("href=\"/mod"), "sem URL de origem o relativo não fica no HTML");
+ok(r.warnings.some((w) => /sem endereço completo/.test(w) && /informe a URL original/.test(w)), "pede a URL de origem");
+ok(r.children[0].props.body.includes('href="https://m.x/pluginfile.php/1/mod_resource/content/1/aula.pdf"'), "anexo com endereço completo mantém título e URL");
+ok(r.warnings.some((w) => /anexo do curso de origem/.test(w)), "aviso de anexo");
+
+// ── 11d. Tabelas com células mescladas ──
+r = I.htmlParaBlocos('<table><tr><th colspan="2">Cabeça</th><th>C</th></tr><tr><td rowspan="2">A</td><td>B</td><td>C1</td></tr><tr><td>B2</td><td>C2</td></tr></table>');
+eq(r.children[0].props.headers, ["Cabeça", "", "C"]);
+eq(r.children[0].props.rows, [["A", "B", "C1"], ["", "B2", "C2"]], "rowspan ocupa a coluna da linha seguinte");
+eq(r.children[0]._imp.status, "revisar");
+ok(r.warnings.some((w) => /células mescladas requer revisão/.test(w)), "aviso de mescladas");
+r = I.htmlParaBlocos("<table><tr><th>A</th></tr><tr><td>1</td></tr></table>");
+ok(!r.warnings.some((w) => /mescladas/.test(w)), "tabela simples sem aviso");
+
+// ── 11e. Fórmulas que vieram como imagem ──
+r = I.htmlParaBlocos('<p><img class="texrender" src="https://m.x/filter/tex/pix.php/ab.gif" alt="\\frac{a}{b}"></p><p>Vale <img class="texrender" src="https://m.x/filter/tex/pix.php/cd.gif" alt="x^2"> aqui.</p><p><img class="texrender" src="https://m.x/filter/tex/pix.php/ef.gif" alt="figura"></p>', { chip: (l) => "[[" + l + "]]" });
+eq(types(r), ["equacao", "prose", "imagem"]);
+eq(r.children[0].props.latex, "\\frac{a}{b}");
+ok(r.children[1].props.body.includes("[[x^2]]"), "fórmula-imagem dentro do texto vira fórmula na linha");
+eq(r.children[2].props.src, "https://m.x/filter/tex/pix.php/ef.gif", "fórmula como imagem sem código: a imagem é preservada");
+eq(r.children[2]._imp.img, "referenciada");
+ok(r.warnings.some((w) => /fórmula como imagem sem código/.test(w)), "aviso de fórmula sem código");
+ok(r.notes.some((w) => /virou equação editável/.test(w)), "ajuste informado");
+
+// ── 11f. Elementos retráteis do Bootstrap e abas ──
+r = I.htmlParaBlocos('<div class="card"><div class="card-header"><a data-toggle="collapse">Pergunta A</a></div><div class="collapse"><div class="card-body"><p>Resposta A</p></div></div></div><div class="card"><div class="card-header">Pergunta B</div><div class="card-body"><p>Resposta B</p><img src="data:image/png;base64,AA"></div></div>');
+eq(types(r), ["accordion"]);
+eq(r.children[0].props.items.map((i) => i.title), ["Pergunta A", "Pergunta B"]);
+ok(r.children[0].props.items[1].body.includes("Resposta B"));
+ok(r.warnings.some((w) => /item recolhível que não é texto \(imagem\)/.test(w)), "imagem dentro de item recolhível: aviso " + JSON.stringify(r.warnings));
+r = I.htmlParaBlocos('<div class="nav-nav-tabs tab-content nav-tabs"><p>Aba 1</p></div>');
+ok(r.warnings.some((w) => /abas ou carrossel/.test(w)), "interação por abas: texto + aviso");
+
+// ── 11g. Avisos presos ao bloco e ao lugar de origem ──
+r = I.htmlParaBlocos('<h2>Ondas</h2><p>a</p><img src="@@PLUGINFILE@@/a.png" alt="A"><h2>Radar</h2><table><tr><td colspan="2">x</td></tr></table>');
+const tIm = r.children.find((c) => c.type === "imagem"), tTab = r.children.find((c) => c.type === "tabela");
+eq(tIm._imp.notes[0].where, "em «Ondas»");
+eq(tTab._imp.notes.find((n) => /mescladas/.test(n.msg)).where, "em «Radar»");
+ok(r.warnings.some((w) => /a\.png/.test(w) && /— em «Ondas»$/.test(w)), "localização no aviso: " + JSON.stringify(r.warnings));
+
+// ── 11h. Seleção, avisos recalculados, resumo e montagem ──
+m = I.htmlParaModelo('<h2>Ondas</h2><p>a</p><img src="@@PLUGINFILE@@/a.png" alt="A"><h2>Radar</h2><p>b</p>');
+const kk = m.model.sections[0].items[0].children, imgBlk = kk.find((c) => c.type === "imagem");
+eq(I.contar(m.model), { titulo: 2, prose: 2, imagem: 1 });
+ok(I.avisos(m.model).warnings.length >= 1, "há aviso da imagem");
+const excl = { [imgBlk.id]: true };
+eq(I.avisos(m.model, excl).warnings, [], "desmarcar a imagem tira o aviso");
+eq(I.contar(m.model, excl), { titulo: 2, prose: 2 });
+eq(I.filtrar(m.model, excl).sections[0].items[0].children.map((c) => c.type), ["titulo", "prose", "titulo", "prose"]);
+eq(kk.length, 5, "o modelo original não foi alterado");
+eq(I.resumo(imgBlk), { tipo: "Imagem", texto: "A" }, "resumo da imagem usa legenda, texto alternativo ou nome do arquivo");
+eq(I.resumo(kk[0]), { tipo: "Título", texto: "Ondas" });
+let mont = I.montarAula(I.filtrar(m.model, excl), { hero: false, baseMeta: {} });
+ok(JSON.stringify(mont).indexOf("_imp") < 0, "a aula montada não leva _imp");
+m = I.htmlParaModelo("<p>x</p>", { baseUrl: "https://moodle.x/mod/page/view.php?id=3" });
+mont = I.montarAula(m.model, { hero: true, baseMeta: {} });
+eq([mont.meta.importedFrom.tipo, mont.meta.importedFrom.url], ["moodle", "https://moodle.x/mod/page/view.php?id=3"], "origem registrada");
+ok(!!mont.meta.importedFrom.em);
+eq(I.montarAula(I.htmlParaModelo("<p>x</p>").model, { hero: true, baseMeta: {} }).meta.importedFrom, undefined, "sem URL, sem origem");
 
 // ── 12. Backup .mbz sintético ──
 const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
@@ -155,10 +252,10 @@ async function sample() {
   const fund = all[1].children;
   eq(fund.map((c) => c.type), ["titulo", "prose", "imagem", "prose", "imagem"]);
   ok(/^data:image\/png;base64,/.test(fund[2].props.src), "imagem do backup virou data URL");
-  eq(fund[2].props.caption, "Onda", "texto alternativo vira legenda");
+  eq([fund[2].props.alt, fund[2].props.caption], ["Onda", ""], "texto alternativo preservado");
   ok(fund[3].props.body.includes("[[\\lambda]]"), "fórmula do Moodle na linha");
   eq(fund[4].props.src, "", "imagem que faltou no backup");
-  ok(res.warnings.some((w) => /^Fundamentos:/.test(w) && /faltando\.png/.test(w)), "aviso da imagem que faltou: " + JSON.stringify(res.warnings));
+  ok(res.warnings.some((w) => /^Fundamentos:/.test(w) && /faltando\.png/.test(w) && /reenvie/.test(w)), "aviso da imagem que faltou: " + JSON.stringify(res.warnings));
   // a imagem do <p> com texto: "Veja <img> e ..." → prose, imagem, prose; a prose "e [[λ]]." fica depois
   const book = all[3].children;
   eq(book.map((c) => c.type), ["titulo", "prose", "titulo", "prose"], "livro: um título por capítulo");

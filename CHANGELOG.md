@@ -4,12 +4,22 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.30.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.30.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.30.1 · 14/11/2026 · Importação do Moodle mais completa
+
+- **Entrada:** além do HTML do editor, vale **copiar o corpo da aula na tela** e colar (usa o HTML da área de transferência); **texto simples** é aceito, com aviso na prévia de que vieram só texto, sem imagens, tabelas e links. Campo opcional **URL original**: completa links relativos (`/mod/page/view.php?id=9`) e registra a origem da aula (`meta.importedFrom`). Sem a URL, o link fica como texto e a revisão avisa.
+- **Prévia melhor:** blocos **na ordem da origem**, cada um com caixa para marcar/desmarcar; lista **«Precisa de você»** com o **trecho** de cada pendência («em «Ondas»»); ajustes automáticos numa lista recolhida; título editável; cancelar não cria nada e não altera as aulas existentes.
+- **Imagens com estado:** *Importada*, *Só referenciada* (endereço público externo) e *Precisa reenviar* (arquivo do curso de origem), com o botão **Substituir arquivo** na própria prévia. Legenda e texto alternativo ficam separados e preservados.
+- **Conversões novas:** fórmula desenhada como imagem pelo Moodle (código LaTeX no texto alternativo) vira **Equação** ou fórmula na linha; sem código, fica a imagem com aviso para recriar. Tabela com **células mescladas** é achatada com aviso. Cartões recolhíveis do Bootstrap viram **Accordion**; abas e carrosséis importam o texto e avisam. Vídeo, áudio e H5P hospedados no Moodle viram **link** (com URL utilizável) marcado para revisão.
+- **Links e anexos do curso** ficam no texto, com título e URL, e a revisão avisa que pertencem ao curso de origem. Links `#âncora` viram texto (os títulos não têm âncoras).
+- **Biblioteca:** botão «Importar do Moodle» ao lado de «+ Nova aula»; o botão Importar da barra aparece em qualquer largura.
+- `tests/importar.test.js` passa a ter 162 verificações; teste de ponta a ponta no navegador cobre colar formatado e simples, URL base, cancelar, trocar imagem, recuos do código, fórmula, salvar, reabrir e exportar. Ainda **não** testado contra um Moodle real nem com perfil de estudante.
 
 ### 1.30.0 · 14/11/2026 · Importar uma aula do Moodle
 

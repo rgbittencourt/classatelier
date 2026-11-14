@@ -3,14 +3,19 @@
 // ClassAtelier — IMPORTAR uma aula do Moodle
 // ────────────────────────────────────────────────────────────
 // Dois caminhos, os dois terminam em blocos do ClassAtelier:
-//   • HTML colado (código-fonte do editor do Moodle ou conteúdo copiado da página)
+//   • HTML colado (código-fonte do editor do Moodle, conteúdo copiado da página ou só texto)
 //   • Backup do Moodle (.mbz): ZIP com XML, lido aqui mesmo no navegador
 //
 // Este arquivo é só lógica (sem React), para poder ser testado no node:
-//   Importador.htmlParaBlocos(html, opts)   → { children, warnings, stats }
-//   Importador.montarAula(model, opts)      → { meta, blocks }
-//   Importador.lerBackup(buffer, opts)      → Promise<modelo do backup>
-//   Importador.itensParaModelo(backup, keys, opts) → Promise<{ model, warnings }>
+//   Importador.htmlParaModelo(html, opts)        → { model, warnings, notes, stats, plain }
+//   Importador.lerBackup(buffer, opts)           → Promise<backup>
+//   Importador.itensParaModelo(backup, keys, o)  → Promise<{ model, warnings, notes, stats }>
+//   Importador.filtrar(model, excluidos)         → model sem os blocos desmarcados
+//   Importador.avisos(model, excluidos)          → { warnings, notes } (recalculado)
+//   Importador.montarAula(model, opts)           → { meta, blocks }
+//
+// Cada bloco convertido leva um `_imp` (só na prévia; montarAula o remove):
+//   { status: "ok" | "revisar" | "pendente", notes: [{ msg, level, where }], img?: "importada" | "referenciada" | "reenviar" }
 //
 // Segurança: o HTML de entrada nunca é reaproveitado como está. Só passam
 // negrito, itálico, links http(s), listas, sub/sobrescrito e código; scripts,
@@ -26,6 +31,7 @@
   function unesc(s) { return String(s).replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&"); }
   function plain(s) { return String(s == null ? "" : s).replace(/[ \s]+/g, " ").trim(); }
   function isBlank(html) { return !String(html || "").replace(/<br\s*\/?>/gi, "").replace(/<[^>]*>/g, "").replace(/&nbsp;|[ \s]/g, "").length; }
+  function strip(html) { return unesc(plain(String(html == null ? "" : html).replace(/<[^>]*>/g, " "))); }
 
   function defaults(type) {
     var d = G.BLOCK_BY_TYPE && G.BLOCK_BY_TYPE[type];
@@ -43,12 +49,23 @@
   }
 
   // ───────────── Endereços ─────────────
+  var COURSE_LINK = /\/pluginfile\.php|\/draftfile\.php|\/course\/view\.php|\/mod\/[a-z0-9_]+\/|\/user\/|\/grade\/|\/enrol\/|\/calendar\/|\/group\/|\/blocks\//i;
+  // Endereço que só funciona dentro do Moodle (arquivo, anexo, caminho relativo).
   function isMoodleLocal(u) {
     u = String(u || "").trim();
     if (!u) return true;
     if (/@@PLUGINFILE@@|\/pluginfile\.php|\/draftfile\.php|\/webservice\/pluginfile/i.test(u)) return true;
     if (/^(https?:)?\/\//i.test(u) || /^data:/i.test(u) || /^mailto:/i.test(u)) return false;
-    return true; // relativo (ex.: /mod/page/view.php) não funciona fora do Moodle
+    return true;
+  }
+  // Completa um endereço relativo a partir da URL de origem (se houver). Devolve "" se não der.
+  function absolute(u, base) {
+    u = String(u || "").trim();
+    if (!u || /@@PLUGINFILE@@/.test(u)) return "";
+    if (/^(https?:|mailto:|data:)/i.test(u)) return u;
+    if (/^\/\//.test(u)) return "https:" + u;
+    if (!base) return "";
+    try { return new URL(u, base).href; } catch (e) { return ""; }
   }
   function fileNameOf(u) {
     var s = String(u || "").split(/[?#]/)[0].split("/").pop();
@@ -57,6 +74,68 @@
   function ytId(u) { var m = /(?:youtube(?:-nocookie)?\.com\/(?:embed\/|watch\?(?:[^#]*&)?v=|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/.exec(String(u || "")); return m ? m[1] : ""; }
   function ytStart(u) { var m = /[?&#](?:start|t)=(\d+)/.exec(String(u || "")); return m ? m[1] : ""; }
 
+  // ───────────── Contexto de conversão (avisos presos ao bloco e ao lugar de origem) ─────────────
+  var RANK = { ok: 0, info: 0, revisar: 1, pendente: 2 };
+  function newCtx(opts) {
+    return {
+      out: [], buf: [], bufNotes: [], acc: null, accNotes: [], opts: opts || {}, orphans: [], lastTitle: "",
+      where: function () { return this.lastTitle ? "em «" + this.lastTitle + "»" : "no início"; },
+      // anexa um aviso a um bloco já criado
+      tag: function (block, level, msg) {
+        if (!block) return;
+        var i = block._imp || (block._imp = { status: "ok", notes: [] });
+        if (!i.notes.some(function (n) { return n.msg === msg; })) i.notes.push({ msg: msg, level: level, where: this.where() });
+        if ((RANK[level] || 0) > (RANK[i.status] || 0)) i.status = level;
+      },
+      // aviso de um trecho de texto ainda sem bloco: vai para o próximo parágrafo criado
+      note: function (msg, level) { this.bufNotes.push({ msg: msg, level: level || "revisar", where: this.where() }); },
+      // aviso sem bloco (conteúdo que não pôde ser importado)
+      orphan: function (msg, level) { var w = this.where(); if (!this.orphans.some(function (o) { return o.msg === msg && o.where === w; })) this.orphans.push({ msg: msg, level: level || "revisar", where: w }); },
+    };
+  }
+  function flush(ctx) {
+    if (ctx.buf.length) {
+      var body = ctx.buf.join(""); ctx.buf = [];
+      if (!isBlank(body)) {
+        var b = mk("prose", { body: body });
+        ctx.out.push(b);
+        ctx.bufNotes.forEach(function (n) { ctx.tag(b, n.level, n.msg); });
+        ctx.bufNotes = [];
+      }
+    }
+    if (ctx.bufNotes.length && !ctx.buf.length && !ctx.pendingRun) {
+      var last = ctx.out[ctx.out.length - 1];
+      ctx.bufNotes.forEach(function (n) { if (last) ctx.tag(last, n.level, n.msg); else ctx.orphan(n.msg, n.level); });
+      ctx.bufNotes = [];
+    }
+  }
+  function closeAcc(ctx) {
+    if (!ctx.acc) return;
+    flush(ctx);
+    var b = mk("accordion", { items: ctx.acc });
+    ctx.out.push(b);
+    ctx.accNotes.forEach(function (n) { ctx.tag(b, n.level, n.msg); });
+    ctx.acc = null; ctx.accNotes = [];
+  }
+  function sub(el, ctx) {
+    var s = newCtx(ctx.opts); s.lastTitle = ctx.lastTitle;
+    walkChildren(el, s); closeAcc(s); flush(s);
+    var notes = [];
+    s.out.forEach(function (b) { if (b._imp) b._imp.notes.forEach(function (n) { notes.push(n); }); });
+    s.orphans.forEach(function (n) { notes.push(n); });
+    return { blocks: s.out, notes: notes };
+  }
+  function bodyOf(blocks) {
+    var dropped = {};
+    var body = blocks.map(function (b) {
+      if (b.type === "prose") return b.props.body;
+      if (b.type === "titulo") return "<p><strong>" + b.props.text + "</strong></p>";
+      dropped[b.type] = 1;
+      return "";
+    }).join("");
+    return { body: body, dropped: Object.keys(dropped) };
+  }
+
   // ───────────── HTML → HTML limpo (só o que a aula aceita) ─────────────
   var SKIP = { script: 1, style: 1, noscript: 1, link: 1, meta: 1, head: 1, title: 1, button: 1, form: 1, input: 1, select: 1, textarea: 1, nav: 1, svg: 1, canvas: 1, object: 1, embed: 1, template: 1 };
   var INLINE = { a: 1, abbr: 1, b: 1, strong: 1, i: 1, em: 1, u: 1, sub: 1, sup: 1, br: 1, code: 1, mark: 1, small: 1, span: 1, font: 1, s: 1, del: 1, ins: 1, cite: 1, q: 1, kbd: 1, "var": 1, samp: 1, time: 1, label: 1, bdi: 1, wbr: 1, big: 1, tt: 1, strike: 1, dfn: 1 };
@@ -64,14 +143,25 @@
 
   function hasBlock(el) { return !!el.querySelector(MEDIA_SEL); }
 
+  function chipOf(latex, ctx) {
+    var chip = ctx.opts.chip || (G.InlineMath && G.InlineMath.chipHtml);
+    return chip ? chip(latex) : "$" + esc(latex) + "$";
+  }
   function mathInline(html, ctx) {
     if (html.indexOf("\\(") < 0) return html;
-    var chip = ctx.opts.chip || (G.InlineMath && G.InlineMath.chipHtml);
     return html.replace(/\\\(([\s\S]*?)\\\)/g, function (all, tex) {
       var latex = unesc(tex).replace(/<[^>]*>/g, "").trim();
-      if (!latex) return all;
-      return chip ? chip(latex) : "$" + esc(latex) + "$";
+      return latex ? chipOf(latex, ctx) : all;
     });
+  }
+
+  // Fórmula que o Moodle desenhou como imagem: o texto alternativo costuma trazer o LaTeX.
+  function formulaImg(img) {
+    var cls = img.getAttribute("class") || "", src = img.getAttribute("src") || "", alt = (img.getAttribute("alt") || "").trim();
+    var isF = /\b(texrender|mathjax|latex|equation|math)\b/i.test(cls) || /filter\/tex|texrender|latex\.php|mathjax|\/tex\/pix/i.test(src);
+    if (!isF) return null;
+    var tex = alt.replace(/^\$\$?\s*|\s*\$\$?$/g, "").replace(/^\\\(|\\\)$/g, "").trim();
+    return { latex: /[\\^_{}=]/.test(tex) ? tex : "" };
   }
 
   function inlineHtml(node, ctx) {
@@ -82,7 +172,13 @@
       var t = c.tagName.toLowerCase();
       if (SKIP[t]) return;
       if (t === "br") { out += "<br>"; return; }
-      if (t === "img") { ctx.note("imagem dentro de lista ou tabela não vai junto (" + (fileNameOf(c.getAttribute("src")) || "sem nome") + ")"); return; }
+      if (t === "img") {
+        var f = formulaImg(c);
+        if (f && f.latex) { out += chipOf(f.latex, ctx); return; }
+        var nm = fileNameOf(c.getAttribute("src")) || "sem nome";
+        ctx.note((f ? "fórmula como imagem sem código (" + nm + "): recrie a expressão" : "imagem dentro de lista, tabela ou texto corrido não veio (" + nm + ")"), "revisar");
+        return;
+      }
       var inner = inlineHtml(c, ctx);
       switch (t) {
         case "b": case "strong": out += isBlank(inner) ? inner : "<strong>" + inner + "</strong>"; break;
@@ -92,13 +188,15 @@
         case "s": case "del": case "strike": out += isBlank(inner) ? inner : "<s>" + inner + "</s>"; break;
         case "code": case "kbd": case "samp": case "tt": out += isBlank(inner) ? inner : "<code>" + inner + "</code>"; break;
         case "a": {
-          var href = (c.getAttribute("href") || "").trim();
-          if (/^(https?:\/\/|mailto:)/i.test(href) && !/\/pluginfile\.php|\/draftfile\.php/i.test(href)) out += "<a href=\"" + escAttr(href) + "\">" + inner + "</a>";
-          else {
-            if (/@@PLUGINFILE@@|\/pluginfile\.php|\/draftfile\.php/i.test(href)) ctx.warn("anexo do Moodle não importado: " + (fileNameOf(href) || plain(inner)));
-            else if (href && href.charAt(0) !== "#") ctx.note("link interno do Moodle virou texto: " + plain(inner));
-            out += inner;
-          }
+          var raw = (c.getAttribute("href") || "").trim(), label = plain(c.textContent) || fileNameOf(raw);
+          if (!raw || /^javascript:/i.test(raw)) { out += inner; break; }
+          if (raw.charAt(0) === "#") { ctx.note("link interno para uma seção virou texto: «" + label + "»", "info"); out += inner; break; }
+          if (/@@PLUGINFILE@@/.test(raw)) { ctx.note("anexo do Moodle não importado: " + (fileNameOf(raw) || label), "revisar"); out += inner; break; }
+          var abs = absolute(raw, ctx.opts.baseUrl);
+          if (!abs) { ctx.note("link sem endereço completo (" + raw + "): informe a URL original para resolver. Ficou só o texto «" + label + "»", "revisar"); out += inner; break; }
+          if (!/^(https?:\/\/|mailto:)/i.test(abs)) { out += inner; break; }
+          if (COURSE_LINK.test(abs)) ctx.note((/pluginfile|draftfile/i.test(abs) ? "anexo" : "link") + " do curso de origem (só abre com acesso a ele): «" + label + "»", "revisar");
+          out += "<a href=\"" + escAttr(abs) + "\">" + inner + "</a>";
           break;
         }
         default: out += inner; // span, font, small… viram só o conteúdo
@@ -115,64 +213,58 @@
       Array.prototype.forEach.call(li.childNodes, function (c) {
         if (c.nodeType === 1 && /^(ul|ol)$/i.test(c.tagName)) nested += listHtml(c, ctx);
         else if (c.nodeType === 1 && /^(p|div)$/i.test(c.tagName)) txt += (txt ? "<br>" : "") + inlineHtml(c, ctx);
-        else { var w = document_fragment_like(c); txt += inlineHtml(w, ctx); }
+        else txt += inlineHtml({ childNodes: [c] }, ctx);
       });
       out += "<li>" + mathInline(txt.trim(), ctx) + nested + "</li>";
     });
     return out + "</" + tag + ">";
   }
-  // Envolve um único nó para reaproveitar inlineHtml (que lê os filhos de um elemento).
-  function document_fragment_like(n) { return { childNodes: [n] }; }
 
   // ───────────── Blocos ─────────────
-  function newCtx(opts) {
-    return { out: [], buf: [], acc: null, opts: opts || {}, warnings: [], notes: [],
-      warn: function (m) { if (this.warnings.indexOf(m) < 0) this.warnings.push(m); },
-      note: function (m) { if (this.notes.indexOf(m) < 0) this.notes.push(m); } };
-  }
-  function flush(ctx) {
-    if (ctx.buf.length) {
-      var body = ctx.buf.join(""); ctx.buf = [];
-      if (!isBlank(body)) ctx.out.push(mk("prose", { body: body }));
-    }
-  }
-  function closeAcc(ctx) {
-    if (!ctx.acc) return;
-    flush(ctx);
-    ctx.out.push(mk("accordion", { items: ctx.acc }));
-    ctx.acc = null;
-  }
-  function sub(el, ctx) {
-    var s = newCtx(ctx.opts); s.warn = ctx.warn.bind(ctx); s.note = ctx.note.bind(ctx);
-    walkChildren(el, s); closeAcc(s); flush(s);
-    return s.out;
-  }
-  function bodyOf(blocks) {
-    return blocks.map(function (b) {
-      if (b.type === "prose") return b.props.body;
-      if (b.type === "titulo") return "<p><strong>" + esc(b.props.text) + "</strong></p>";
-      return "";
-    }).join("");
-  }
-
   function addImage(ctx, img, caption) {
-    var src = (img.getAttribute("src") || "").trim();
-    var cls = (img.getAttribute("class") || "");
+    var src = (img.getAttribute("src") || "").trim(), cls = (img.getAttribute("class") || "");
     var w = parseInt(img.getAttribute("width"), 10), h = parseInt(img.getAttribute("height"), 10);
     if (/\b(icon|emoticon|smiley)\b/i.test(cls) || (w && w <= 32) || (h && h <= 32)) return;
-    var alt = plain(img.getAttribute("alt"));
+    var f = formulaImg(img);
+    if (f && f.latex) { flush(ctx); var eq = mk("equacao", { latex: f.latex }); ctx.out.push(eq); ctx.tag(eq, "info", "fórmula que era imagem virou equação editável"); return; }
+    var alt = plain(img.getAttribute("alt")), name = fileNameOf(src);
     flush(ctx);
-    var shown = "";
-    if (/^data:image\//i.test(src) || (/^https?:\/\//i.test(src) && !isMoodleLocal(src))) shown = src;
-    else ctx.warn("imagem do Moodle não veio" + (fileNameOf(src) ? " (" + fileNameOf(src) + ")" : "") + ": o bloco foi criado vazio, envie o arquivo nele");
-    ctx.out.push(mk("imagem", { src: shown, slotId: "", caption: esc(plain(caption) || alt), credit: "", ratio: w && h ? Math.round(w) + "/" + Math.round(h) : "16/9" }));
+    var shown = "", kind, origem = "";
+    if (/^data:image\//i.test(src)) { shown = src; kind = "importada"; }
+    else if (/^https?:\/\//i.test(src) && !isMoodleLocal(src)) { shown = src; kind = "referenciada"; }
+    else {
+      kind = "reenviar"; origem = absolute(src, ctx.opts.baseUrl) || name;
+    }
+    var block = mk("imagem", { src: shown, slotId: "", caption: esc(plain(caption)), alt: alt, credit: "", ratio: w && h ? Math.round(w) + "/" + Math.round(h) : "16/9" });
+    if (kind === "reenviar" && origem) block.props.origemArquivo = origem;
+    block._imp = { status: "ok", notes: [], img: kind };
+    ctx.out.push(block);
+    if (kind === "reenviar") ctx.tag(block, "pendente", (f ? "fórmula como imagem sem código" : "imagem vinculada ao curso de origem") + (name ? " (" + name + ")" : "") + ": reenvie o arquivo");
+    else if (kind === "referenciada") ctx.tag(block, "info", "imagem só referenciada pelo endereço original: se o site sair do ar, ela some. Envie o arquivo para guardá-la na aula");
+    if (f && kind !== "reenviar") ctx.tag(block, "revisar", "fórmula como imagem sem código" + (name ? " (" + name + ")" : "") + ": a imagem foi mantida; recrie a expressão para poder editá-la");
+    if (!alt && !caption) ctx.tag(block, "revisar", "imagem sem texto alternativo nem legenda");
+  }
+
+  function linkBlock(ctx, rotulo, title, url, msg) {
+    flush(ctx);
+    var b = mk("prose", { body: "<p>" + esc(rotulo) + ": <a href=\"" + escAttr(url) + "\">" + esc(title || fileNameOf(url) || url) + "</a></p>" });
+    ctx.out.push(b); ctx.tag(b, "revisar", msg);
   }
 
   function addEmbed(ctx, el) {
-    var src = (el.getAttribute("src") || "").trim(), title = plain(el.getAttribute("title"));
+    var raw = (el.getAttribute("src") || "").trim(), title = plain(el.getAttribute("title")), src = absolute(raw, ctx.opts.baseUrl);
     flush(ctx);
-    if (/\/h5p\/|h5p\.org|h5pactivity/i.test(src)) { ctx.warn("H5P não importado" + (title ? ": " + title : "")); return; }
-    if (!src || isMoodleLocal(src)) { ctx.warn("conteúdo incorporado do Moodle não importado" + (title ? ": " + title : "")); return; }
+    var isH5p = /\/h5p\/|h5p\.org|h5pactivity/i.test(raw);
+    if (isH5p) {
+      if (/^https?:/i.test(src)) linkBlock(ctx, "Atividade interativa (H5P)", title || "abrir no Moodle", src, "interação importada como link: recrie no ClassAtelier ou mantenha o H5P no Moodle");
+      else ctx.orphan("H5P não importado" + (title ? ": " + title : "") + " (sem endereço utilizável: informe a URL original)", "pendente");
+      return;
+    }
+    if (!src || isMoodleLocal(src)) {
+      if (/^https?:/i.test(src)) linkBlock(ctx, "Conteúdo incorporado", title || "abrir", src, "conteúdo incorporado do Moodle virou link");
+      else ctx.orphan("conteúdo incorporado do Moodle não importado" + (title ? ": " + title : ""), "pendente");
+      return;
+    }
     var id = ytId(src);
     if (id) { ctx.out.push(mk("video", { id: id, title: title || "Vídeo", caption: "", credit: "", start: ytStart(src) })); return; }
     var h = parseInt(el.getAttribute("height"), 10), w = el.getAttribute("width");
@@ -181,29 +273,43 @@
   }
 
   function addMedia(ctx, el) {
-    var t = el.tagName.toLowerCase(), src = (el.getAttribute("src") || "").trim();
-    if (!src) { var s = el.querySelector("source[src]"); src = s ? (s.getAttribute("src") || "").trim() : ""; }
+    var t = el.tagName.toLowerCase(), raw = (el.getAttribute("src") || "").trim();
+    if (!raw) { var s = el.querySelector("source[src]"); raw = s ? (s.getAttribute("src") || "").trim() : ""; }
+    var src = absolute(raw, ctx.opts.baseUrl), nome = t === "audio" ? "Áudio" : "Vídeo";
     flush(ctx);
     if (t === "audio" && src && !isMoodleLocal(src)) { ctx.out.push(mk("audio", { src: src, spotify: "", title: plain(el.getAttribute("title")) || "Áudio", show: "", description: "", duration: "" })); return; }
-    ctx.warn((t === "audio" ? "áudio" : "vídeo") + " do Moodle não importado" + (fileNameOf(src) ? " (" + fileNameOf(src) + ")" : "") + ": envie o arquivo ou use um vídeo do YouTube");
+    if (/^https?:/i.test(src)) { linkBlock(ctx, nome + " do curso de origem", fileNameOf(src), src, nome.toLowerCase() + " hospedado no Moodle virou link (só abre com acesso ao curso): envie o arquivo ou use o YouTube"); return; }
+    ctx.orphan(nome.toLowerCase() + " do Moodle não importado" + (fileNameOf(raw) ? " (" + fileNameOf(raw) + ")" : "") + ": envie o arquivo ou use um vídeo do YouTube", "pendente");
   }
 
   function addTable(ctx, el) {
     flush(ctx);
-    var rows = [];
+    var carry = {}, rows = [], merged = false;
     Array.prototype.forEach.call(el.querySelectorAll("tr"), function (tr) {
-      if (tr.closest("table") !== el) return; // tabela dentro de tabela: ignora
-      var cells = Array.prototype.map.call(tr.children, function (c) { return /^(td|th)$/i.test(c.tagName) ? mathInline(inlineHtml(c, ctx).replace(/(<br>)+$/, "").trim(), ctx) : null; }).filter(function (x) { return x !== null; });
-      if (cells.length) rows.push({ cells: cells, head: !!tr.querySelector("th") && !tr.querySelector("td") || !!tr.closest("thead") });
+      if (tr.closest("table") !== el) return;
+      var cells = [], c = 0, isHead = false, any = false;
+      var fillCarry = function () { while (carry[c] > 0) { cells.push(""); carry[c]--; c++; merged = true; } };
+      Array.prototype.forEach.call(tr.children, function (cell) {
+        if (!/^(td|th)$/i.test(cell.tagName)) return;
+        any = true; fillCarry();
+        var cs = Math.max(1, parseInt(cell.getAttribute("colspan"), 10) || 1), rs = Math.max(1, parseInt(cell.getAttribute("rowspan"), 10) || 1);
+        cells.push(mathInline(inlineHtml(cell, ctx).replace(/(<br>)+$/, "").trim(), ctx));
+        for (var k = 1; k < cs; k++) { cells.push(""); merged = true; }
+        if (rs > 1) { for (var k2 = 0; k2 < cs; k2++) carry[c + k2] = rs - 1; merged = true; }
+        c += cs;
+      });
+      fillCarry();
+      if (any) { rows.push({ cells: cells, head: (!!tr.querySelector("th") && !tr.querySelector("td")) || !!tr.closest("thead") }); }
     });
     if (!rows.length) return;
-    var headers, body;
-    if (rows[0].head) { headers = rows[0].cells; body = rows.slice(1); }
-    else { headers = rows[0].cells; body = rows.slice(1); ctx.note("tabela sem cabeçalho: a primeira linha virou cabeçalho"); }
+    var headers = rows[0].cells, body = rows.slice(1), semCab = !rows[0].head;
     var n = Math.max.apply(null, [headers.length].concat(body.map(function (r) { return r.cells.length; })));
     var pad = function (a) { a = a.slice(); while (a.length < n) a.push(""); return a; };
     var cap = el.querySelector("caption");
-    ctx.out.push(mk("tabela", { caption: cap ? esc(plain(cap.textContent)) : "", fonte: "", headers: pad(headers), rows: body.map(function (r) { return pad(r.cells); }) }));
+    var b = mk("tabela", { caption: cap ? esc(plain(cap.textContent)) : "", fonte: "", headers: pad(headers), rows: body.map(function (r) { return pad(r.cells); }) });
+    ctx.out.push(b);
+    if (semCab) ctx.tag(b, "info", "tabela sem cabeçalho: a primeira linha virou cabeçalho");
+    if (merged) ctx.tag(b, "revisar", "tabela com células mescladas requer revisão: o ClassAtelier não mescla células; o texto ficou na primeira célula e as outras estão vazias");
   }
 
   function addCode(ctx, el) {
@@ -213,7 +319,10 @@
     if (lang === "py") lang = "python"; if (lang === "js") lang = "javascript"; if (lang === "ts") lang = "typescript";
     if (G.CODE_LANGUAGES && !G.CODE_LANGUAGES.some(function (l) { return l[0] === lang; })) lang = "text";
     var code = (codeEl || el).textContent.replace(/ /g, " ").replace(/^\n+|\s+$/g, "");
-    if (code) ctx.out.push(mk("codigo", { code: code, language: lang }));
+    if (!code) return;
+    var b = mk("codigo", { code: code, language: lang });
+    ctx.out.push(b);
+    if (!m) ctx.tag(b, "info", "linguagem do código não identificada na origem: confira no painel");
   }
 
   function addQuote(ctx, el) {
@@ -224,21 +333,31 @@
     if (q) ctx.out.push(mk("citacao", { quote: esc(q), author: esc(author), source: "", showAttribution: !!author }));
   }
 
+  function giveNotes(ctx, block, s, dropped, kind) {
+    s.notes.forEach(function (n) { ctx.tag(block, n.level, n.msg); });
+    if (dropped.length) ctx.tag(block, "revisar", "conteúdo dentro " + kind + " que não é texto (" + dropped.join(", ") + ") não foi importado");
+  }
+
   function toneBlock(ctx, el, kind) {
     flush(ctx);
-    var blocks = sub(el, ctx), title = "";
+    var s = sub(el, ctx), blocks = s.blocks, title = "";
     if (blocks.length && blocks[0].type === "titulo") title = blocks.shift().props.text;
-    var body = bodyOf(blocks);
-    if (isBlank(body)) return;
-    ctx.out.push(mk(kind, { title: title || (kind === "atencao" ? "Atenção" : "Veja bem"), body: body }));
+    var b = bodyOf(blocks);
+    if (isBlank(b.body)) return;
+    var block = mk(kind, { title: title || (kind === "atencao" ? "Atenção" : "Veja bem"), body: b.body });
+    ctx.out.push(block);
+    ctx.tag(block, "info", "caixa informativa convertida em " + (kind === "atencao" ? "Atenção" : "Destaque") + ": confira a escolha");
+    giveNotes(ctx, block, s, b.dropped, "da caixa");
   }
 
   function handleP(el, ctx) {
-    if (el.querySelector("img,iframe,video,audio,table,figure,pre")) { walkChildren(el, ctx); return; }
+    var imgs = Array.prototype.slice.call(el.querySelectorAll("img")), real = imgs.filter(function (i) { var f = formulaImg(i); return !(f && f.latex); });
+    if (real.length || el.querySelector("iframe,video,audio,table,figure,pre")) { walkChildren(el, ctx); return; }
+    // parágrafo só com a imagem de uma fórmula → bloco Equação
+    if (imgs.length === 1 && !plain(el.textContent)) { addImage(ctx, imgs[0], ""); return; }
     var html = inlineHtml(el, ctx);
     if (isBlank(html)) return;
     var text = plain(el.textContent);
-    // só um link do YouTube no parágrafo → bloco de vídeo
     var links = el.querySelectorAll("a[href]");
     if (links.length === 1 && ytId(links[0].getAttribute("href")) && plain(links[0].textContent) === text) {
       flush(ctx); var u = links[0].getAttribute("href");
@@ -254,7 +373,7 @@
     if (SKIP[t] || t === "hr") return;
     if (/^h[1-6]$/.test(t)) {
       var text = plain(inlineHtml(el, ctx).replace(/<[^>]*>/g, ""));
-      if (text) { flush(ctx); ctx.out.push(mk("titulo", { text: text, level: t === "h1" || t === "h2" ? "h2" : "h3" })); }
+      if (text) { flush(ctx); ctx.out.push(mk("titulo", { text: text, level: t === "h1" || t === "h2" ? "h2" : "h3" })); ctx.lastTitle = unesc(text); }
       return;
     }
     switch (t) {
@@ -274,18 +393,30 @@
       case "details": {
         var sm = el.querySelector("summary"), clone = el.cloneNode(true), s2 = clone.querySelector("summary");
         if (s2) s2.parentNode.removeChild(s2);
-        var body = bodyOf(sub(clone, ctx));
-        if (!ctx.acc) { flush(ctx); ctx.acc = []; }
-        ctx.acc.push({ title: sm ? inlineHtml(sm, ctx).trim() : "Detalhes", body: isBlank(body) ? "<p></p>" : body, children: [] });
-        return;
+        return addAccordionItem(ctx, sm ? inlineHtml(sm, ctx).trim() : "Detalhes", clone);
       }
       default: {
         var cls = (el.getAttribute("class") || "");
+        if (/\bcard\b/.test(cls)) {
+          var hd = el.querySelector(".card-header");
+          if (hd && el.querySelector(".card-body, .collapse")) {
+            var c2 = el.cloneNode(true), h2 = c2.querySelector(".card-header"); h2.parentNode.removeChild(h2);
+            return addAccordionItem(ctx, esc(plain(hd.textContent)), c2);
+          }
+        }
         if (/\balert-(warning|danger)\b/.test(cls)) return toneBlock(ctx, el, "atencao");
         if (/\balert-(info|success|primary|secondary|light|dark)\b|\bcallout\b/.test(cls)) return toneBlock(ctx, el, "destaque");
+        if (/\bnav-tabs\b|\btab-content\b|\bcarousel\b|\bswiper\b|\bslick-/.test(cls) || el.getAttribute("role") === "tablist") ctx.note("interação (abas ou carrossel) importada só como texto: recrie com Slider ou Accordion", "revisar");
         return walkChildren(el, ctx);
       }
     }
+  }
+  function addAccordionItem(ctx, title, bodyEl) {
+    var s = sub(bodyEl, ctx), b = bodyOf(s.blocks);
+    if (!ctx.acc) { flush(ctx); ctx.acc = []; ctx.accNotes = []; }
+    ctx.acc.push({ title: title, body: isBlank(b.body) ? "<p></p>" : b.body, children: [] });
+    s.notes.forEach(function (n) { ctx.accNotes.push(n); });
+    if (b.dropped.length) ctx.accNotes.push({ msg: "conteúdo dentro do item recolhível que não é texto (" + b.dropped.join(", ") + ") não foi importado", level: "revisar", where: ctx.where() });
   }
 
   function walkChildren(el, ctx) {
@@ -302,8 +433,9 @@
       if (c.nodeType !== 1) return;
       var t = c.tagName.toLowerCase();
       if (SKIP[t]) return;
-      if (INLINE[t] && !hasBlock(c)) { closeAcc(ctx); var w = inlineHtml({ childNodes: [c] }, ctx); run += w; return; }
-      if (t !== "details") closeAcc(ctx);
+      if (INLINE[t] && !hasBlock(c)) { closeAcc(ctx); run += inlineHtml({ childNodes: [c] }, ctx); return; }
+      var isAcc = t === "details" || (/\bcard\b/.test(c.getAttribute("class") || "") && c.querySelector(".card-header") && c.querySelector(".card-body, .collapse"));
+      if (!isAcc) closeAcc(ctx);
       endRun();
       handleBlock(c, ctx);
     });
@@ -316,22 +448,112 @@
     return new DP().parseFromString("<!doctype html><body>" + String(html || ""), "text/html").body;
   }
 
-  // HTML do Moodle → lista de blocos-filhos (ainda sem tópicos).
-  function htmlParaBlocos(html, opts) {
-    var ctx = newCtx(opts), root = parseBody(html);
-    walkChildren(root, ctx); closeAcc(ctx); flush(ctx);
-    var stats = {};
-    ctx.out.forEach(function (b) { stats[b.type] = (stats[b.type] || 0) + 1; });
-    return { children: ctx.out, warnings: ctx.warnings, notes: ctx.notes, stats: stats };
+  // ───────────── Texto simples ─────────────
+  function looksHtml(s) { return /<\s*(p|div|span|h[1-6]|ul|ol|li|table|br|img|a|strong|em|b|i|section|article|blockquote|pre|iframe|figure|details)\b[^>]*>/i.test(s); }
+  // Sem HTML: parágrafos separados por linha em branco; linhas iniciadas por «-», «•» ou «1.» viram lista.
+  function textoParaHtml(text) {
+    var lines = String(text).replace(/\r\n?/g, "\n").split("\n"), out = "", para = [], list = null;
+    var endPara = function () { if (para.length) { out += "<p>" + para.map(esc).join("<br>") + "</p>"; para = []; } };
+    var endList = function () { if (list) { out += "<" + list.tag + ">" + list.items.map(function (i) { return "<li>" + esc(i) + "</li>"; }).join("") + "</" + list.tag + ">"; list = null; } };
+    lines.forEach(function (ln) {
+      var t = ln.trim(), mb = /^[-•*–]\s+(.*)$/.exec(t), mn = /^\d+[.)]\s+(.*)$/.exec(t);
+      if (!t) { endPara(); endList(); return; }
+      if (mb || mn) { endPara(); var tag = mb ? "ul" : "ol"; if (list && list.tag !== tag) endList(); if (!list) list = { tag: tag, items: [] }; list.items.push((mb || mn)[1]); return; }
+      endList(); para.push(t);
+    });
+    endPara(); endList();
+    return out;
   }
 
-  // ───────────── Monta a aula ─────────────
-  // model: { title, eyebrow, sections: [{ name, items: [{ title, addTitle, children }] }] }
+  // ───────────── Coleta dos avisos de um conjunto de blocos ─────────────
+  function fmt(n) { return n.msg + (n.where ? " — " + n.where : ""); }
+  function coletar(children, orphans, prefix, excl) {
+    var warnings = [], notes = [], seen = {};
+    var add = function (n) {
+      var s = (prefix ? prefix + ": " : "") + fmt(n);
+      if (seen[s]) return; seen[s] = 1;
+      (n.level === "info" ? notes : warnings).push(s);
+    };
+    children.forEach(function (b) { if (excl && excl[b.id]) return; if (b._imp) b._imp.notes.forEach(add); });
+    (orphans || []).forEach(add);
+    return { warnings: warnings, notes: notes };
+  }
+  function contarTipos(children, excl) {
+    var stats = {};
+    children.forEach(function (b) { if (excl && excl[b.id]) return; stats[b.type] = (stats[b.type] || 0) + 1; });
+    return stats;
+  }
+
+  // HTML do Moodle (ou texto simples) → lista de blocos-filhos (ainda sem tópicos).
+  // opts: { baseUrl, chip, plain, detectPlain }
+  function htmlParaBlocos(html, opts) {
+    opts = opts || {};
+    var plainMode = !!opts.plain || (!!opts.detectPlain && !looksHtml(String(html || "")));
+    if (plainMode) html = textoParaHtml(html);
+    var ctx = newCtx(opts), root = parseBody(html);
+    walkChildren(root, ctx); closeAcc(ctx); flush(ctx);
+    var c = coletar(ctx.out, ctx.orphans);
+    return { children: ctx.out, orphans: ctx.orphans, warnings: c.warnings, notes: c.notes, stats: contarTipos(ctx.out), plain: plainMode };
+  }
+
+  // ───────────── Resumo de um bloco (para a prévia) ─────────────
+  var TIPOS = { prose: "Parágrafo", titulo: "Título", imagem: "Imagem", video: "Vídeo", tabela: "Tabela", citacao: "Citação", codigo: "Código", accordion: "Accordion", equacao: "Equação", externalembed: "Incorporado", destaque: "Destaque", atencao: "Atenção", audio: "Áudio" };
+  function resumo(b) {
+    var p = b.props || {}, t = "";
+    switch (b.type) {
+      case "titulo": t = p.text; break;
+      case "prose": t = p.body; break;
+      case "imagem": t = p.caption || p.alt || (p.origemArquivo ? fileNameOf(p.origemArquivo) : "") || "(sem legenda)"; break;
+      case "video": case "audio": case "externalembed": t = p.title; break;
+      case "tabela": t = (p.headers || []).join(" · "); break;
+      case "citacao": t = p.quote; break;
+      case "codigo": t = String(p.code || "").split("\n")[0]; break;
+      case "accordion": t = (p.items || []).map(function (i) { return i.title; }).join(" / "); break;
+      case "equacao": t = p.latex; break;
+      default: t = p.title || p.body || "";
+    }
+    if (G.InlineMath && G.InlineMath.htmlWithoutInlineMath && /aula-ieq/.test(String(t))) t = G.InlineMath.htmlWithoutInlineMath(String(t)); // fórmula na linha vira $latex$
+    else t = String(t == null ? "" : t).replace(/<span class="aula-ieq[\s\S]*?<\/span><\/span><\/span>|<span class="aula-ieq[^>]*>[\s\S]*?<\/span>/g, "[fórmula]");
+    t = strip(t);
+    return { tipo: TIPOS[b.type] || b.type, texto: t.length > 90 ? t.slice(0, 89) + "…" : t };
+  }
+
+  // ───────────── Modelo: filtrar, avisos, montar a aula ─────────────
+  function itensDoModelo(model) { var all = []; model.sections.forEach(function (s) { s.items.forEach(function (it) { all.push(it); }); }); return all; }
+  function filtrar(model, excl) {
+    excl = excl || {};
+    var secs = [];
+    model.sections.forEach(function (s) {
+      var items = [];
+      s.items.forEach(function (it) {
+        var kids = it.children.filter(function (k) { return !excl[k.id]; });
+        if (kids.length) items.push(Object.assign({}, it, { children: kids }));
+      });
+      if (items.length) secs.push(Object.assign({}, s, { items: items }));
+    });
+    return Object.assign({}, model, { sections: secs });
+  }
+  function avisos(model, excl) {
+    var items = itensDoModelo(model), w = [], n = [];
+    items.forEach(function (it) {
+      var c = coletar(it.children, it.orphans, items.length > 1 && it.title ? it.title : "", excl);
+      c.warnings.forEach(function (x) { if (w.indexOf(x) < 0) w.push(x); });
+      c.notes.forEach(function (x) { if (n.indexOf(x) < 0) n.push(x); });
+    });
+    return { warnings: w, notes: n };
+  }
+  function contar(model, excl) {
+    var stats = {};
+    itensDoModelo(model).forEach(function (it) { var s = contarTipos(it.children, excl); Object.keys(s).forEach(function (k) { stats[k] = (stats[k] || 0) + s[k]; }); });
+    return stats;
+  }
+  function limpo(k) { var c = Object.assign({}, k); delete c._imp; return c; }
+
+  // model: { title, eyebrow, origem, sections: [{ name, items: [{ title, addTitle, children }] }] }
   // opts:  { hero: bool, baseMeta }
   function montarAula(model, opts) {
     opts = opts || {};
-    var blocks = [];
-    var words = 0;
+    var blocks = [], words = 0;
     model.sections.forEach(function (s) { s.items.forEach(function (it) { it.children.forEach(function (c) {
       if (c.type === "prose") words += plain(String(c.props.body).replace(/<[^>]*>/g, " ")).split(" ").length;
     }); }); });
@@ -342,7 +564,7 @@
     model.sections.forEach(function (s) {
       if (s.name && dividers) blocks.push(mkRoot("divider", { label: esc(s.name) }));
       s.items.forEach(function (it) {
-        var kids = it.children.slice();
+        var kids = it.children.map(limpo);
         if (it.addTitle && it.title) kids.unshift(mk("titulo", { text: esc(it.title), level: "h2" }));
         var cur = null;
         kids.forEach(function (k) {
@@ -356,7 +578,19 @@
       var t = mkRoot("topic", {}); t.props.children = b.__kids; return t;
     });
     var meta = Object.assign({}, opts.baseMeta || {}, { title: model.title || "" });
+    if (model.origem) meta.importedFrom = Object.assign({}, model.origem, { em: new Date().toISOString() });
     return { meta: meta, blocks: blocks };
+  }
+
+  // Colagem (HTML, conteúdo formatado ou texto simples): vira um modelo de uma seção e um item.
+  // opts: { title, baseUrl, chip }
+  function htmlParaModelo(html, opts) {
+    opts = Object.assign({ detectPlain: true }, opts || {});
+    var r = htmlParaBlocos(html, opts);
+    var first = r.children.filter(function (b) { return b.type === "titulo"; })[0];
+    var title = opts.title || (first ? unesc(first.props.text) : "") || "Aula importada";
+    var model = { title: title, eyebrow: "", origem: opts.baseUrl ? { tipo: "moodle", url: opts.baseUrl } : null, fonte: r.plain ? "texto" : "html", sections: [{ name: "", items: [{ title: "", addTitle: false, children: r.children, orphans: r.orphans }] }] };
+    return { model: model, warnings: r.warnings, notes: r.notes, stats: r.stats, plain: r.plain };
   }
 
   // ───────────── Backup do Moodle (.mbz) ─────────────
@@ -391,7 +625,6 @@
         names: Object.keys(tar), has: function (n) { return !!tar[n]; },
         text: async function (n) { return new TextDecoder("utf-8").decode(tar[n]); },
         base64: async function (n) { return b64(tar[n]); },
-        size: function (n) { return tar[n] ? tar[n].length : 0; },
       };
     }
     var JS = (opts && opts.JSZip) || G.JSZip;
@@ -402,7 +635,6 @@
       names: Object.keys(zip.files), has: function (n) { return !!zip.files[n] && !zip.files[n].dir; },
       text: function (n) { return zip.file(n).async("string"); },
       base64: function (n) { return zip.file(n).async("base64"); },
-      size: function (n) { var f = zip.file(n); return f && f._data && f._data.uncompressedSize || 0; },
     };
   }
 
@@ -414,13 +646,10 @@
   function kid(el, tag) { if (!el) return null; for (var i = 0; i < el.children.length; i++) if (el.children[i].tagName === tag) return el.children[i]; return null; }
   function kt(el, tag) { var k = kid(el, tag); return k ? k.textContent : ""; }
 
-  function plainToHtml(text) {
-    return String(text).split(/\n{2,}/).map(function (p) { return p.trim() ? "<p>" + esc(p.trim()).replace(/\n/g, "<br>") + "</p>" : ""; }).join("");
-  }
   function asHtml(text, format) {
     text = String(text || "");
     if (!text.trim()) return "";
-    if ((String(format) === "2" || (String(format) === "0" && !/<[a-z][\s\S]*>/i.test(text)))) return plainToHtml(text);
+    if (String(format) === "2" || (String(format) === "0" && !/<[a-z][\s\S]*>/i.test(text))) return textoParaHtml(text);
     return text;
   }
 
@@ -436,7 +665,6 @@
     var tipo = kt(info, "type") || "course";
     var tituloCurso = plain(kt(info, "original_course_fullname"));
 
-    // arquivos (para imagens)
     var files = {};
     if (arq.has("files.xml")) {
       Array.prototype.forEach.call(xml(await arq.text("files.xml")).getElementsByTagName("file"), function (f) {
@@ -460,7 +688,6 @@
       var url = "data:" + (f.mime || "application/octet-stream") + ";base64," + raw;
       return opts.shrink && /^image\/(png|jpe?g|webp)$/i.test(f.mime) ? await opts.shrink(url, f.mime) : url;
     };
-    // troca @@PLUGINFILE@@/nome pelas imagens que vieram no backup
     var resolveFiles = async function (html, refs) {
       var names = {}, re = /@@PLUGINFILE@@\/([^"'<>\s)]+)/g, m;
       while ((m = re.exec(html))) names[m[1]] = 1;
@@ -474,7 +701,6 @@
       return html;
     };
 
-    // seções
     var secs = [], secById = {};
     Array.prototype.forEach.call(bk.querySelectorAll("contents > sections > section"), function (s) {
       var o = { id: kt(s, "sectionid"), name: plain(kt(s, "title")), dir: kt(s, "directory"), items: [], sequence: [] };
@@ -489,7 +715,6 @@
       S.summary = kt(sx, "summary");
       S.name = plain(S.name.replace(/<[^>]*>/g, ""));
     }
-    // atividades
     var acts = {};
     Array.prototype.forEach.call(bk.querySelectorAll("contents > activities > activity"), function (a) {
       acts[kt(a, "moduleid")] = { id: kt(a, "moduleid"), section: kt(a, "sectionid"), mod: kt(a, "modulename"), title: plain(kt(a, "title")), dir: kt(a, "directory") };
@@ -523,7 +748,6 @@
         }
         return await resolveFiles(html, refs);
       };
-      if (a.mod === "resource") base.supported = true;
       return base;
     };
     secs.forEach(function (S) {
@@ -534,7 +758,6 @@
       }
       seq.forEach(function (id) { S.items.push(makeItem(acts[id])); });
     });
-    // atividades sem seção conhecida
     var orphans = Object.keys(acts).filter(function (id) { return !secById[acts[id].section]; });
     if (orphans.length) secs.push({ id: "x", name: "", items: orphans.map(function (id) { return makeItem(acts[id]); }) });
     secs = secs.filter(function (S) { return S.items.length; });
@@ -545,7 +768,7 @@
 
   // Converte os itens escolhidos (keys) do backup em modelo + avisos.
   async function itensParaModelo(backup, keys, opts) {
-    var warnings = [], notes = [], stats = {}, model = { title: backup.title, eyebrow: backup.courseTitle && backup.courseTitle !== backup.title ? backup.courseTitle : "", sections: [] };
+    var model = { title: backup.title, eyebrow: backup.courseTitle && backup.courseTitle !== backup.title ? backup.courseTitle : "", origem: { tipo: "backup .mbz", curso: backup.courseTitle || backup.title }, fonte: "mbz", sections: [] };
     var want = keys ? keys.reduce(function (o, k) { o[k] = 1; return o; }, {}) : null;
     for (var i = 0; i < backup.sections.length; i++) {
       var S = backup.sections[i], out = { name: S.name, items: [] };
@@ -553,22 +776,12 @@
         var it = S.items[j];
         if (!it.supported || !it.build || (want && !want[it.key])) continue;
         var html = await it.build(), r = htmlParaBlocos(html, opts);
-        r.warnings.forEach(function (w) { var m = it.title + ": " + w; if (warnings.indexOf(m) < 0) warnings.push(m); });
-        r.notes.forEach(function (n) { if (notes.indexOf(n) < 0) notes.push(n); });
-        Object.keys(r.stats).forEach(function (k) { stats[k] = (stats[k] || 0) + r.stats[k]; });
-        if (r.children.length) out.items.push({ title: it.title, addTitle: !!it.addTitle, children: r.children });
+        if (r.children.length) out.items.push({ title: it.title, addTitle: !!it.addTitle, children: r.children, orphans: r.orphans });
       }
       if (out.items.length) model.sections.push(out);
     }
-    return { model: model, warnings: warnings, notes: notes, stats: stats };
-  }
-
-  // Colagem simples (HTML): vira um modelo de uma seção e um item.
-  function htmlParaModelo(html, opts) {
-    opts = opts || {};
-    var r = htmlParaBlocos(html, opts);
-    var firstH = r.children.length && r.children[0].type === "titulo" ? unesc(r.children[0].props.text) : "";
-    return { model: { title: opts.title || firstH || "Aula importada", eyebrow: "", sections: [{ name: "", items: [{ title: "", addTitle: false, children: r.children }] }] }, warnings: r.warnings, notes: r.notes, stats: r.stats };
+    var a = avisos(model);
+    return { model: model, warnings: a.warnings, notes: a.notes, stats: contar(model) };
   }
 
   // Redução de imagens grandes (só no navegador; no node as imagens passam como estão).
@@ -590,7 +803,7 @@
     });
   }
 
-  var API = { htmlParaBlocos: htmlParaBlocos, htmlParaModelo: htmlParaModelo, montarAula: montarAula, lerBackup: lerBackup, itensParaModelo: itensParaModelo, shrinkImage: shrinkImage, _ytId: ytId };
+  var API = { htmlParaBlocos: htmlParaBlocos, htmlParaModelo: htmlParaModelo, montarAula: montarAula, lerBackup: lerBackup, itensParaModelo: itensParaModelo, shrinkImage: shrinkImage, filtrar: filtrar, avisos: avisos, contar: contar, resumo: resumo, TIPOS: TIPOS, _ytId: ytId, _textoParaHtml: textoParaHtml };
   G.Importador = API;
   if (typeof module !== "undefined" && module.exports) module.exports = API;
 })();
