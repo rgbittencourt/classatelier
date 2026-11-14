@@ -60,9 +60,9 @@
   }
   function prepareLatex(src) {
     src = String(src == null ? "" : src);
-    if (!/['\u0080-￿]/.test(src)) return src;
+    if (!/['\u0080-\uFFFF]|[_^]\s*\{/.test(src)) return src;
     try {
-      var out = "", i = 0, n = src.length, stack = [], depth = 0, font = "textit";
+      var out = "", i = 0, n = src.length, stack = [], depth = 0, font = "textit", gs = [];   // gs: cada grupo aberto está em expoente/índice?
       while (i < n) {
         var c = src[i];
         if (c === "\\") {
@@ -75,16 +75,25 @@
             }
             if (FONT_CMDS[name]) {
               var k2 = j; while (src[k2] === " ") k2++;
-              if (src[k2] === "{") { stack.push({ d: depth + 1, f: font }); font = FONT_CMDS[name]; out += src.slice(i, k2 + 1); depth++; i = k2 + 1; continue; }
+              if (src[k2] === "{") { stack.push({ d: depth + 1, f: font }); font = FONT_CMDS[name]; out += src.slice(i, k2 + 1); depth++; gs.push(gs.length ? gs[gs.length - 1] : false); i = k2 + 1; continue; }
             }
             out += src.slice(i, j); i = j; continue;
           }
           out += src.slice(i, i + 2); i += 2; continue;
         }
-        if (c === "{") { depth++; out += c; i++; continue; }
+        if (c === "{") {
+          var pre0 = out.replace(/\s+$/, ""), inS = gs.length ? gs[gs.length - 1] : false;
+          depth++; gs.push(inS || ((pre0.slice(-1) === "_" || pre0.slice(-1) === "^") && pre0.slice(-2, -1) !== "\\")); out += c; i++; continue;
+        }
         if (c === "}") {
           if (stack.length && stack[stack.length - 1].d === depth) font = stack.pop().f;
-          depth--; out += c; i++; continue;
+          depth--; gs.pop(); out += c; i++; continue;
+        }
+        if ((c === " " || c === "\t" || c === "\n") && gs.length && gs[gs.length - 1]) {
+          // Em índice/expoente o TeX ignora espaços e não põe espaço em volta de > = ∧… — o que foi digitado vale como espaço.
+          var j3 = i; while (j3 < n && (src[j3] === " " || src[j3] === "\t" || src[j3] === "\n")) j3++;
+          if (!(j3 >= n || src[j3] === "}" || out.slice(-1) === "{" || /(\\|&)$/.test(out))) out += "\\ ";
+          i = j3; continue;
         }
         if (c === "'") {
           var prev = i ? src[i - 1] : "";

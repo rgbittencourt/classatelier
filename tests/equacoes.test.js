@@ -144,6 +144,14 @@ Object.entries(MAIN).forEach(([k, s]) => { const r = tryR(s); check(!r.err, "cas
       "\\sigma_{curso='Ciência da Computação'}(Aluno)", "\\sigma_{nome='João Silva'}(Aluno)", "\\sigma_{ano='2 anos'}", "restrição(Aluno)", "\\pi_{código,nome}(Aluno)",
       "\\mathrm{seleção}(A)", "f'(x)=g'(x)", "x='abc', y=''", "a'b'c", "'sem fechar", "\\text{ç}+ç", "Tempo='10 min' \\Rightarrow ação"
     ].forEach((s) => { const h = tryR(P(s)); check(!h.err, "renderiza: " + s + " " + (h.err || "")); if (!h.err) check(noBackslashC(h), "sem «\\c» na tela: " + s); });
+    // espaços digitados em índice/expoente (o TeX os ignoraria)
+    check(P("\\sigma_{idade > 18 \\land nota < 7}(A)") === "\\sigma_{idade\\ >\\ 18\\ \\land\\ nota\\ <\\ 7}(A)", "espaços em índice viram espaço visível: " + P("\\sigma_{idade > 18 \\land nota < 7}(A)"));
+    check(P("\\sigma_{ a > 7 }") === "\\sigma_{a\\ >\\ 7}", "espaço logo após { e antes de } é descartado: " + P("\\sigma_{ a > 7 }"));
+    check(P("a > 7 \\land b") === "a > 7 \\land b", "fora de índice nada muda (o KaTeX já espaça)");
+    check(P("x^{a  +  b}") === "x^{a\\ +\\ b}", "expoente com espaços duplos vira um espaço cada: " + P("x^{a  +  b}"));
+    check(P("\\frac{a > b}{c}") === "\\frac{a > b}{c}", "fração fora de índice não muda");
+    check(P("\\sigma_{\\frac{a > b}{c}}") === "\\sigma_{\\frac{a\\ >\\ b}{c}}", "grupo dentro de índice herda: " + P("\\sigma_{\\frac{a > b}{c}}"));
+    ["\\sigma_{idade > 18 \\land nota < 7}(A)", "x_{ i }^{ n + 1 }", "\\sum_{i = 1}^{n} i", "\\lim_{x \\to 0} f(x)", "\\int_{ 0 }^{ 1 } x\\,dx"].forEach((s) => { const h = tryR(P(s)); check(!h.err, "renderiza com espaços em índice: " + s + " " + (h.err || "")); });
     check(/Ciência\s*da|Ci<\/span>/.test(html("x='Ciência da Computação'")) || true, "ok");
     const txt = (h) => h.replace(/<span class="katex-mathml">.*?<\/span><span class="katex-html"/s, "<span class=\"katex-html\"").replace(/<[^>]+>/g, "");
     check(/2\s+anos/.test(txt(html("x='2 anos'"))), "'2 anos' mantém o espaço no desenho");

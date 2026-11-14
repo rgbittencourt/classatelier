@@ -4,12 +4,16 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.27.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.27.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.27.1 · 14/11/2026 · Equação: espaços digitados em índices e expoentes
+
+- Dentro de **índices e expoentes** (`\sigma_{idade > 18 \land nota < 7}`, `x^{n + 1}`) o TeX ignora espaços e não deixa folga em volta de `>`, `=`, `∧`. Agora os espaços **digitados** viram espaços visíveis, e o que está fora de índices continua com o espaçamento automático do KaTeX. Espaços logo depois de `{` e antes de `}` são descartados.
 
 ### 1.27.0 · 14/11/2026 · Equação: botões de sempre de volta e modelos com letras de exemplo
 
