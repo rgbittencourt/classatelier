@@ -3,7 +3,7 @@
 // Percorre os blocos na ordem e escreve em Markdown simples: títulos com #, parágrafos, listas,
 // perguntas do quiz com as alternativas. Não inclui endereços de imagem, códigos nem cores.
 (function () {
-  const plain = (h) => String(h == null ? "" : h)
+  const plain = (h) => (window.InlineMath ? window.InlineMath.htmlWithoutInlineMath(h == null ? "" : h) : String(h == null ? "" : h))
     .replace(/<\s*br\s*\/?>/gi, "\n").replace(/<\/(p|div|li|h[1-6]|tr)>/gi, "\n")
     .replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
     .replace(/[ \t]+/g, " ").replace(/ ?\n ?/g, "\n").replace(/\n{3,}/g, "\n\n").trim();

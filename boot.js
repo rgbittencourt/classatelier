@@ -13,8 +13,8 @@
 (function () {
   var BASE = window.AULA_BASE || "";
   // Versão do ClassAtelier (Versionamento Semântico; histórico em CHANGELOG.md).
-  window.CLASSATELIER_VERSION = "1.28.1";
-  var BUILD_REV = "20261114-v1.28.1a";
+  window.CLASSATELIER_VERSION = "1.29.0";
+  var BUILD_REV = "20261114-v1.29.0a";
   var theme = window.resolveAulaTheme();
   window.AULA_ACTIVE_THEME = theme;
 
@@ -81,6 +81,8 @@
   // 6b2) Catálogo da paleta de equações (matemática, física, química e bioquímica); só do editor
   w('<script src="' + attr(rev(BASE + "equacao-catalogo.js")) + '"><\/script>');
   w('<script src="' + attr(rev(BASE + "equacao-quimica.js")) + '"><\/script>');
+  // 6b2b) Fórmula na linha (no meio do parágrafo) e paleta de letras gregas e símbolos; só do editor
+  w('<script src="' + attr(rev(BASE + "equacao-inline.js")) + '"><\/script>');
   // 6b3) Corretor ortográfico próprio (só do editor): motor Hunspell leve + marcação pontilhada; dicionários em vendor/dict/ (carregados sob demanda)
   w('<script src="' + attr(rev(BASE + "corretor-motor.js")) + '"><\/script>');
   w('<script src="' + attr(rev(BASE + "corretor.js")) + '"><\/script>');

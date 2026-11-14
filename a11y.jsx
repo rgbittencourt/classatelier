@@ -22,7 +22,7 @@
   };
 
   const entities = { "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'", "&nbsp;": " " };
-  const plain = (h) => String(h == null ? "" : h).replace(/<[^>]*>/g, " ").replace(/&(amp|lt|gt|quot|#39|nbsp);/g, (m) => entities[m]).replace(/\s+/g, " ").trim();
+  const plain = (h) => (window.InlineMath ? window.InlineMath.htmlWithoutInlineMath(h == null ? "" : h) : String(h == null ? "" : h)).replace(/<[^>]*>/g, " ").replace(/&(amp|lt|gt|quot|#39|nbsp);/g, (m) => entities[m]).replace(/\s+/g, " ").trim();
   const hasTranscript = (p) => p.showTranscript !== false && (String(p.transcript || "").trim().length >= 80 || /^https?:\/\//i.test(String(p.transcriptUrl || "").trim()));
   const clip = (t, n = 60) => (t.length > n ? t.slice(0, n - 1) + "…" : t);
 

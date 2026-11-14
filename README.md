@@ -17,7 +17,7 @@ O SCORM pode ser configurado como **1.2** — padrão de maior compatibilidade �
 
 ## Versão do aplicativo
 
-ClassAtelier **1.28.1** (Versionamento Semântico). O histórico está em [`CHANGELOG.md`](CHANGELOG.md). O ClassAcervo tem repositório e versão próprios (ver a seção abaixo).
+ClassAtelier **1.29.0** (Versionamento Semântico). O histórico está em [`CHANGELOG.md`](CHANGELOG.md). O ClassAcervo tem repositório e versão próprios (ver a seção abaixo).
 
 ## Slides
 

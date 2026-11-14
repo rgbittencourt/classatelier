@@ -111,7 +111,11 @@ const KATEX_VERSION = "0.19.1";
 const KATEX_CDN_CSS = { href: "https://unpkg.com/katex@" + KATEX_VERSION + "/dist/katex.min.css", integrity: "sha384-WwGtaC6ywCHxA5cstpj/3+xIZvTez8dq2IcBQaXRkenHZ7FVVq1ZROtURwfbtTlG" };
 const KATEX_CDN_MHCHEM = { src: "https://unpkg.com/katex@" + KATEX_VERSION + "/dist/contrib/mhchem.min.js", integrity: "sha384-fB8BH//9nBzROkMUsu/Dr35jWHIbnKesUo9rW0hfEgw8mZGnkAyBAjKX9F98OVuo" };
 const KATEX_CDN_JS = { src: "https://unpkg.com/katex@" + KATEX_VERSION + "/dist/katex.min.js", integrity: "sha384-a1WQdjRj162i159OYq041X6I4K8NenkrI09LlPmiHg0YOb7CR+wJOraXwK9abpnE" };
-function lessonUsesMath(lesson) { return !!(window.listEquations && window.listEquations((lesson && lesson.blocks) || []).length); }
+function lessonUsesMath(lesson) {
+  if (window.listEquations && window.listEquations((lesson && lesson.blocks) || []).length) return true;
+  // Fórmula na linha (no meio do parágrafo): guardada como <span class="aula-ieq"> já desenhado; precisa só do CSS do KaTeX.
+  try { return JSON.stringify((lesson && lesson.blocks) || []).indexOf("aula-ieq") >= 0; } catch (e) { return false; }
+}
 async function buildExportHTML(lesson, opts = {}) {
   const fontsMode = opts.fonts || "embed";
   // Pacote .zip (fontes externas) → bibliotecas locais em vendor/. Arquivo único → CDN (senão passaria de 3 MB).

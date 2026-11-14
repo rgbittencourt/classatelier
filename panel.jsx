@@ -1217,6 +1217,20 @@ function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquati
           </Field>
           <p style={hint}>Clique no ponto do parágrafo onde a fórmula deve entrar e use o botão: o texto se divide ali e a equação fica no meio, em linha própria.</p>
         </>}
+        {window.InlineMath && <>
+          <div style={{ height: 14 }} />
+          <Field label="Fórmula e símbolos dentro do texto">
+            <div style={{ display: "grid", gap: 8 }}>
+              <button type="button" data-act="inline-math" onClick={() => { const r = window.InlineMath.insertFromSelection(window.__lzCaret); if (r && !r.ok) window.alert(r.msg); }} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 12px", borderRadius: 10, border: "1px solid var(--tool-line, #d8d3c6)", background: "#fff", cursor: "pointer", fontSize: 13, fontFamily: "inherit", color: "var(--tool-ink)" }}>
+                <span aria-hidden="true" style={{ fontStyle: "italic", fontFamily: "'STIX Two Math','Cambria Math',serif", width: 16, textAlign: "center" }}>fx</span> Inserir fórmula na linha
+              </button>
+              <button type="button" data-act="symbols" data-ca-keep onClick={() => { const r = window.InlineMath.openSymbolsForText(window.__lzCaret); if (r && !r.ok) window.alert(r.msg); }} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 12px", borderRadius: 10, border: "1px solid var(--tool-line, #d8d3c6)", background: "#fff", cursor: "pointer", fontSize: 13, fontFamily: "inherit", color: "var(--tool-ink)" }}>
+                <span aria-hidden="true" style={{ fontFamily: "'STIX Two Math','Cambria Math',serif", width: 16, textAlign: "center" }}>Ω</span> Letras gregas e símbolos
+              </button>
+            </div>
+          </Field>
+          <p style={hint}>Clique no ponto do parágrafo e use os botões: a fórmula entra <strong>no meio da frase</strong>, sem linha própria nem número. Também dá para digitar <code>$\sigma_{"{idade>18}"}$</code> direto no texto, ou selecionar um trecho e usar <strong>fx</strong> na barra de seleção. Clique numa fórmula para editar.</p>
+        </>}
         {cursorActions.onInsertCode && <>
           <div style={{ height: 14 }} />
           <Field label="Código no meio do texto">

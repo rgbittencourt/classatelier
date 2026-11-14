@@ -4,12 +4,17 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.28.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.29.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.29.0 · 14/11/2026 · Fórmula na linha e paleta de letras gregas e símbolos
+
+- **Fórmula na linha:** uma fórmula pequena **no meio da frase**, sem linha própria e sem número. Três jeitos de criar: digitar `$\sigma_{idade>18}$` (vira fórmula ao digitar o segundo `$`), selecionar um trecho como `x^2` e usar **fx** na barra de seleção, ou **Inserir fórmula na linha** no painel do Parágrafo. Clique na fórmula para editar (campo LaTeX, prévia ao vivo, **Excluir** e **Virar texto**). Ctrl+Z e Ctrl+Y valem logo após criar. Fica guardada no HTML do parágrafo (já desenhada), então sai igual no Visualizar, na aula exportada, no PDF e no Moodle; a exportação passa a carregar o CSS do KaTeX quando há fórmula na linha. Aceita palavras acentuadas, aspas simples e espaços em índices, como o bloco Equação. O texto corrido, os slides e a Acessibilidade leem a fórmula como `$…$`.
+- **Botão Ω** na barra de seleção do texto (e **Letras gregas e símbolos** no painel do Parágrafo): paleta com gregas minúsculas e maiúsculas, operadores, setas, lógica e conjuntos e outros, com busca por nome (*sigma*, *pertence*…). O símbolo entra como caractere comum (σ, ≤, ∈, →), no cursor ou no lugar do trecho selecionado. A mesma paleta existe dentro da janela de edição da fórmula.
 
 ### 1.28.1 · 14/11/2026 · Botão «Ortografia» na barra
 

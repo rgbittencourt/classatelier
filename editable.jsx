@@ -360,6 +360,9 @@ function MarkToolbar() {
       </>}
       <span style={{ width: 1, height: 18, background: "rgba(255,255,255,0.22)", margin: "0 3px" }} />
       <button title="Adicionar ou editar link" aria-label="Adicionar ou editar link" onClick={applyLink} style={tbBtn}>🔗</button>
+      <span style={{ width: 1, height: 18, background: "rgba(255,255,255,0.22)", margin: "0 3px" }} />
+      <button title="Letras gregas e símbolos (σ, ≤, ∈, →…)" aria-label="Letras gregas e símbolos" data-tb="symbols" data-ca-keep onClick={() => window.InlineMath && window.InlineMath.openSymbolsForText()} style={{ ...tbBtn, fontFamily: "'STIX Two Math','Cambria Math','Times New Roman',serif", fontSize: 16 }}>Ω</button>
+      <button title="Fórmula na linha: o trecho selecionado vira uma fórmula dentro do parágrafo (ou digite $fórmula$)" aria-label="Fórmula na linha" data-tb="inline-math" onClick={() => window.InlineMath && window.InlineMath.insertFromSelection()} style={{ ...tbBtn, fontFamily: "'STIX Two Math','Cambria Math','Times New Roman',serif", fontStyle: "italic", fontSize: 14 }}>fx</button>
       <button title="Termo de glossário" onClick={applyTermo} style={tbBtn}>
         <span style={{ borderBottom: "1.5px dotted rgba(255,255,255,0.85)", paddingBottom: 1, fontSize: 13, fontWeight: 600 }}>termo</span>
       </button>
