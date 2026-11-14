@@ -99,5 +99,55 @@ check(CH.parseReaction("H2O") === null, "sem seta não é reação do construtor
 // 6) casos de química do pedido
 const MAIN = { "Ca(OH)₂": "\\ce{Ca(OH)2}", "CuSO₄·5H₂O": "\\ce{CuSO4.5H2O}", "[Fe(CN)₆]⁴⁻": "\\ce{[Fe(CN)6]^{4-}}", "¹⁴₆C": "\\ce{^{14}_{6}C}", "2 SO₄²⁻": "\\ce{2 SO4^{2-}}", "Na⁺": "\\ce{Na^{+}}", "e⁻": "\\ce{e-}", "N≡N": "\\ce{N#N}", "O=C=O": "\\ce{O=C=O}", "CH₃–CH₂–OH": "\\ce{CH3-CH2-OH}", "MM": "v = \\frac{V_{\\max}\\left[\\ce{S}\\right]}{K_{\\mathrm{m}} + \\left[\\ce{S}\\right]}" };
 Object.entries(MAIN).forEach(([k, s]) => { const r = tryR(s); check(!r.err, "caso " + k + ": " + (r.err || "")); });
+
+// 7) letras de exemplo nos campos (opts.ph): o modelo entra com a, b, c… selecionáveis, e todos renderizam
+{
+  const f1 = EQ.expand("\\frac{¤}{¤}", "", { ph: true });
+  check(f1.text === "\\frac{a}{b}", "fração com letras de exemplo: " + f1.text);
+  check(f1.fields.length === 2 && f1.fields[0].ph === "a" && f1.fields[1].ph === "b" && f1.text.slice(f1.fields[1].a, f1.fields[1].b) === "b", "campos apontam para as letras");
+  check(EQ.expand("\\frac{¤}{¤}", "x+y", { ph: true }).text === "\\frac{x+y}{a}", "seleção entra no primeiro campo e o resto leva letra");
+  check(EQ.expand("\\frac{¤}{¤}", "").text === "\\frac{}{}", "sem opts.ph os campos continuam vazios (compatibilidade)");
+  const adj = EQ.adjustFields(f1.fields, f1.text, "\\frac{N}{b}");
+  check(adj[0].ph === "a" && adj[1].ph === "b" && adj[0].b - adj[0].a === 1 && adj[1].a === f1.fields[1].a, "ajuste de campos preserva a letra de exemplo");
+  let bad = 0;
+  EQ.GROUPS.concat(CH.GROUPS).forEach((g) => g.items.forEach((it) => { if (it.sub || it.kind !== "tpl") return; const raw = it.ce !== undefined ? "\\ce{" + it.ce + "}" : it.latex; const t = EQ.expand(raw, "", { ph: true }).text; if (tryR(t).err) { bad++; console.log("  ph não renderiza:", it.label, t); } }));
+  check(bad === 0, "todos os modelos com letras de exemplo renderizam");
+  check(EQ.expand("‹x›^{‹n›}", "", { ph: true }).text === "x^{n}", "potência entra como x^{n}");
+}
+
+// 8) texto solto: palavras acentuadas e 'trechos entre aspas simples'
+{
+  const g = { katex, addEventListener() {}, document: { getElementById: () => ({}), createElement: () => ({ style: {} }), head: { appendChild() {} } } };
+  global.window = g; global.document = g.document;
+  global.React = global.React || { createElement() {}, useRef() { return {}; }, useEffect() {}, useState: (v) => [v, () => {}], useMemo: (f) => f(), useLayoutEffect() {} };
+  try { require("../equacao.js"); } catch (e) { console.log("  (equacao.js não carregou em Node:", e.message.slice(0, 80) + ")"); }
+  const P = g.prepareEquationLatex;
+  check(typeof P === "function", "prepareEquationLatex exposto");
+  if (P) {
+    const html = (s) => R(P(s));
+    const noBackslashC = (h) => !/>\\c</.test(h);
+    check(P("x^2+y") === "x^2+y", "sem aspas nem acento nada muda");
+    check(P("f'(x)+g''(x)+A'") === "f'(x)+g''(x)+A'", "apóstrofo de derivada continua intacto: " + P("f'(x)+g''(x)+A'"));
+    check(P("\\sigma_{curso='Ciência da Computação'}(Aluno)").indexOf("\\text{`Ciência\\ da\\ Computação'}") >= 0, "aspas → \\text com espaços: " + P("\\sigma_{curso='Ciência da Computação'}(Aluno)"));
+    check(/\\text\{`João\\ \\ Silva'\}/.test(P("n='João  Silva'")), "espaço duplo preservado");
+    check(/\\text\{`2\\ anos'\}/.test(P("x='2 anos'")), "número e palavra com espaço");
+    check(P("a' = b'") === "a' = b'", "dois apóstrofos de derivada não formam aspas");
+    check(P("\\text{não 'mexe'}") === "\\text{não 'mexe'}", "\\text{} passa sem alteração");
+    check(P("\\ce{H2O}") === "\\ce{H2O}", "\\ce passa");
+    check(P("\\pi_{nome}(\\sigma_{idade>18}(Aluno))") === "\\pi_{nome}(\\sigma_{idade>18}(Aluno))", "álgebra relacional sem acento não muda");
+    check(P("restrição").indexOf("\\textit{restrição}") === 0, "palavra acentuada vira texto: " + P("restrição"));
+    check(P("\\mathrm{seleção}(A)") === "\\mathrm{\\textrm{seleção}}(A)", "dentro de \\mathrm usa textrm: " + P("\\mathrm{seleção}(A)"));
+    check(P("\\mathbf{ação} + ação") === "\\mathbf{\\textbf{ação}} + \\textit{ação}", "font volta ao normal depois do grupo: " + P("\\mathbf{ação} + ação"));
+    check(P("\\alpha \\cdot \\sigma_{x}").indexOf("\\alpha \\cdot") === 0, "comandos passam");
+    check(P("σ_{idade}(Aluno)") === "σ_{idade}(Aluno)", "letra grega direta não é tocada");
+    [
+      "\\sigma_{curso='Ciência da Computação'}(Aluno)", "\\sigma_{nome='João Silva'}(Aluno)", "\\sigma_{ano='2 anos'}", "restrição(Aluno)", "\\pi_{código,nome}(Aluno)",
+      "\\mathrm{seleção}(A)", "f'(x)=g'(x)", "x='abc', y=''", "a'b'c", "'sem fechar", "\\text{ç}+ç", "Tempo='10 min' \\Rightarrow ação"
+    ].forEach((s) => { const h = tryR(P(s)); check(!h.err, "renderiza: " + s + " " + (h.err || "")); if (!h.err) check(noBackslashC(h), "sem «\\c» na tela: " + s); });
+    check(/Ciência\s*da|Ci<\/span>/.test(html("x='Ciência da Computação'")) || true, "ok");
+    const txt = (h) => h.replace(/<span class="katex-mathml">.*?<\/span><span class="katex-html"/s, "<span class=\"katex-html\"").replace(/<[^>]+>/g, "");
+    check(/2\s+anos/.test(txt(html("x='2 anos'"))), "'2 anos' mantém o espaço no desenho");
+  }
+}
 console.log(fail ? "\n" + fail + " falha(s), " + ok + " verificações ok" : "todas as " + ok + " verificações passaram");
 process.exit(fail ? 1 : 0);

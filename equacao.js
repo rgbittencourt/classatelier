@@ -29,6 +29,89 @@
   }
   injectCss();
 
+  // ── Texto «solto» na fórmula ──────────────────────────────────────────────────────────────────────
+  // 1) 'trecho entre aspas simples' vira texto reto, com os espaços e números do jeito que foram escritos
+  //    (σ_{curso='Ciência da Computação'}); apóstrofo de derivada (f'(x), A') continua sendo linha.
+  // 2) palavra com letra acentuada (restrição, seleção, João) vira texto: no modo matemático o KaTeX não
+  //    sabe desenhar ç, ã, é… e mostraria «\c» na tela.
+  // \text{…}, \ce{…}, \pu{…} e afins passam sem mexer. Se algo falhar, a fórmula original é usada.
+  var RAW_CMDS = { text: 1, textrm: 1, textit: 1, textbf: 1, textsf: 1, texttt: 1, textnormal: 1, mbox: 1, hbox: 1, ce: 1, pu: 1, href: 1, url: 1, includegraphics: 1, htmlClass: 1, htmlId: 1, htmlStyle: 1, htmlData: 1, verb: 1 };
+  var FONT_CMDS = { mathrm: "textrm", operatorname: "textrm", mathbf: "textbf", boldsymbol: "textbf", mathit: "textit", mathsf: "textsf", mathtt: "texttt", mathnormal: "textit" };
+  var LETTER = /[A-Za-zÀ-ɏ]/;
+  function isNonAscii(ch) { return ch > "\u007f"; }
+  function escText(t) {
+    return t.replace(/[\\{}$#%&_^~ ]/g, function (c) {
+      if (c === " ") return "\\ ";
+      if (c === "\\") return "\\textbackslash ";
+      if (c === "~") return "\\textasciitilde ";
+      if (c === "^") return "\\textasciicircum ";
+      return "\\" + c;
+    });
+  }
+  function skipGroup(s, i) {          // s[i] === "{" → índice logo depois da chave que fecha
+    var d = 0;
+    for (; i < s.length; i++) {
+      var c = s[i];
+      if (c === "\\") { i++; continue; }
+      if (c === "{") d++;
+      else if (c === "}") { d--; if (d === 0) return i + 1; }
+    }
+    return s.length;
+  }
+  function prepareLatex(src) {
+    src = String(src == null ? "" : src);
+    if (!/['\u0080-￿]/.test(src)) return src;
+    try {
+      var out = "", i = 0, n = src.length, stack = [], depth = 0, font = "textit";
+      while (i < n) {
+        var c = src[i];
+        if (c === "\\") {
+          var m = /^\\([A-Za-z]+)\*?/.exec(src.slice(i, i + 40));
+          if (m) {
+            var name = m[1], j = i + m[0].length;
+            if (RAW_CMDS[name]) {
+              var k = j; while (src[k] === " ") k++;
+              if (src[k] === "{") { var e = skipGroup(src, k); out += src.slice(i, e); i = e; continue; }
+            }
+            if (FONT_CMDS[name]) {
+              var k2 = j; while (src[k2] === " ") k2++;
+              if (src[k2] === "{") { stack.push({ d: depth + 1, f: font }); font = FONT_CMDS[name]; out += src.slice(i, k2 + 1); depth++; i = k2 + 1; continue; }
+            }
+            out += src.slice(i, j); i = j; continue;
+          }
+          out += src.slice(i, i + 2); i += 2; continue;
+        }
+        if (c === "{") { depth++; out += c; i++; continue; }
+        if (c === "}") {
+          if (stack.length && stack[stack.length - 1].d === depth) font = stack.pop().f;
+          depth--; out += c; i++; continue;
+        }
+        if (c === "'") {
+          var prev = i ? src[i - 1] : "";
+          var opener = !/[A-Za-z0-9À-ɏ}\])'′]/.test(prev);
+          if (opener && i + 1 < n && src[i + 1] !== " ") {
+            var close = src.indexOf("'", i + 1);
+            while (close > 0 && src[close - 1] === "\\") close = src.indexOf("'", close + 1);
+            if (close > i + 1) {
+              out += "\\text{`" + escText(src.slice(i + 1, close)) + "'}";
+              i = close + 1; continue;
+            }
+          }
+          out += c; i++; continue;
+        }
+        if (LETTER.test(c)) {
+          var j2 = i, acc = false;
+          while (j2 < n && LETTER.test(src[j2])) { if (isNonAscii(src[j2])) acc = true; j2++; }
+          var word = src.slice(i, j2);
+          out += acc ? "\\" + font + "{" + word + "}" : word;
+          i = j2; continue;
+        }
+        out += c; i++;
+      }
+      return out;
+    } catch (err) { return src; }
+  }
+
   // Devolve { html } ou { error }. Nunca lança.
   function renderEquation(latex, opts) {
     var src = String(latex == null ? "" : latex).trim();
@@ -37,7 +120,10 @@
     try {
       var o = KATEX_OPTS;
       if (opts && opts.compact) { o = {}; for (var k in KATEX_OPTS) o[k] = KATEX_OPTS[k]; o.displayMode = false; }
-      return { html: window.katex.renderToString(src, o) };
+      var pre = prepareLatex(src), html;
+      try { html = window.katex.renderToString(pre, o); }
+      catch (e1) { if (pre === src) throw e1; html = window.katex.renderToString(src, o); }   // se o pré-processamento atrapalhar, vale a fórmula original
+      return { html: html };
     }
     catch (e) { return { error: String((e && e.message) || e).replace(/^KaTeX parse error:\s*/i, "") }; }
   }
@@ -111,6 +197,14 @@
       }
     };
     React.useLayoutEffect(fit, [r.html, size, autoFit, props.number, props.compact]);
+    // As fontes do KaTeX chegam depois da primeira medição: ao terminar de carregar, mede de novo
+    // (senão a fórmula podia ficar com barra de rolagem mesmo com «Reduzir sozinha para caber» ligado).
+    useEffect(function () {
+      if (!autoFit || !document.fonts) return;
+      var on = function () { fit(); };
+      try { document.fonts.ready.then(on); document.fonts.addEventListener("loadingdone", on); } catch (e) {}
+      return function () { try { document.fonts.removeEventListener("loadingdone", on); } catch (e) {} };
+    }, [r.html, size, autoFit, props.compact]);
     useEffect(function () {
       var f = figRef.current; if (!f || !window.ResizeObserver || !autoFit) return;
       var w = f.clientWidth, ro = new ResizeObserver(function () { if (f.clientWidth !== w) { w = f.clientWidth; fit(); } });
@@ -132,6 +226,7 @@
 
   window.Equacao = Equacao;
   window.renderEquation = renderEquation;
+  window.prepareEquationLatex = prepareLatex;
   window.nextEquationNumber = nextEquationNumber;
   window.listEquations = listEquations;
   window.autoNumberEquations = autoNumberEquations;

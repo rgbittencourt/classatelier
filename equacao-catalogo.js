@@ -54,9 +54,9 @@
       tpl("^{¤}", "Expoente (do que vem antes)", "potência sobrescrito elevado"),
       tpl("_{¤}", "Subscrito (do que vem antes)", "índice subscrito"),
       tpl("_{¤}^{¤}", "Subscrito e expoente (do que vem antes)", "índice expoente juntos"),
-      tpl("{¤}^{¤}", "Potência: base e expoente", "potência elevado base"),
-      tpl("{¤}_{¤}", "Índice: base e subscrito", "subscrito base"),
-      tpl("{¤}_{¤}^{¤}", "Base com subscrito e expoente", "xi ao quadrado índice expoente"),
+      tpl("‹x›^{‹n›}", "Potência: base e expoente", "potência elevado base"),
+      tpl("‹x›_{‹i›}", "Índice: base e subscrito", "subscrito base"),
+      tpl("‹x›_{‹i›}^{‹2›}", "Base com subscrito e expoente", "xi ao quadrado índice expoente"),
       sub("Delimitadores (acompanham a altura)"),
       tpl("\\left( ¤ \\right)", "Parênteses", "parêntese ( )"),
       tpl("\\left[ ¤ \\right]", "Colchetes", "colchete [ ]"),
@@ -280,7 +280,11 @@
   // Marcas de campo: «¤» (campo vazio) e «‹texto›» (campo com um texto de exemplo, que fica selecionado).
   // Devolve { text, fields: [{a, b}, …] } (posições dentro de `text`, na ordem de preenchimento). O trecho
   // selecionado vai para o primeiro campo. Sem campos, `fields` fica vazio e o cursor vai para o fim.
-  function expand(snippet, selected) {
+  // Com opts.ph, um campo vazio entra com uma letra de exemplo (a, b, c…) que fica selecionada: é só digitar
+  // por cima. O campo guarda a letra em `ph`, para o editor saber se ela ainda é o exemplo (não foi editada).
+  var PH = "abcdefgh";
+  function expand(snippet, selected, opts) {
+    var ph = !!(opts && opts.ph), nph = 0;
     var s = String(snippet);
     s = s.replace(/\{¤\}/g, "{" + F + "}").replace(/\[¤\]/g, "[" + F + "]");
     var out = "", fields = [], used = false;
@@ -295,8 +299,10 @@
       if (ch !== F) { out += ch; continue; }
       var inside = (s.charAt(i - 1) === "{" && s.charAt(i + 1) === "}") || (s.charAt(i - 1) === "[" && s.charAt(i + 1) === "]") || (s.charAt(i - 1) === "‹");
       if (!inside) out += "{";
-      var txt2 = (!used && selected) ? selected : "";
-      used = true; fields.push({ a: out.length, b: out.length + txt2.length }); out += txt2;
+      var txt2 = (!used && selected) ? selected : "", fld;
+      if (!txt2 && ph) { txt2 = PH.charAt(nph++ % PH.length); fld = { a: out.length, b: out.length + 1, ph: txt2 }; }
+      else fld = { a: out.length, b: out.length + txt2.length };
+      used = true; fields.push(fld); out += txt2;
       if (!inside) out += "}";
     }
     return { text: out, fields: fields };
@@ -311,10 +317,10 @@
     var grown = false;
     return fields.map(function (f) {
       // A edição começa e termina dentro do campo (ou nas bordas dele): o campo cresce ou encolhe com ela.
-      if (!grown && f.a <= p && oldEnd <= f.b) { grown = true; return { a: f.a, b: f.b + delta }; }
+      if (!grown && f.a <= p && oldEnd <= f.b) { grown = true; return Object.assign({}, f, { a: f.a, b: f.b + delta }); }
       if (f.b <= p) return f;
-      if (f.a >= oldEnd) return { a: f.a + delta, b: f.b + delta };
-      return { a: Math.min(f.a, p), b: Math.max(Math.min(f.a, p), f.b + delta) };
+      if (f.a >= oldEnd) return Object.assign({}, f, { a: f.a + delta, b: f.b + delta });
+      return Object.assign({}, f, { a: Math.min(f.a, p), b: Math.max(Math.min(f.a, p), f.b + delta) });
     });
   }
   // O cursor está dentro de um \ce{…}? Devolve { start, end } do miolo (entre as chaves) ou null.

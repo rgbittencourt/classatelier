@@ -615,16 +615,81 @@ const EQ_BTN = { border: "1px solid var(--tool-line-2)", background: "#fff", bor
 const EQ_TPL_BTN = { ...EQ_BTN, border: "1px dashed var(--tool-accent, #C4553A)", background: "var(--tool-surface, #faf8f3)", paddingRight: 11 };
 const EQ_SUBH = { flexBasis: "100%", fontSize: 10.5, fontWeight: 700, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--tool-ink-3)", margin: "8px 0 0" };
 
+// Atalhos rápidos: os botões de sempre do painel (estruturas, símbolos, conjuntos e lógica), com o mesmo
+// comportamento de antes: um clique insere o trecho no cursor (o «¤» marca onde o cursor fica; um trecho
+// selecionado entra ali). Sem campos nem Tab: para isso há as paletas.
+const EQ_RAP_STRUCT = [
+  ["a/b", "\\frac{¤}{}", "Fração"], ["√", "\\sqrt{¤}", "Raiz quadrada"], ["ⁿ√", "\\sqrt[¤]{}", "Raiz de índice n"],
+  ["xⁿ", "^{¤}", "Potência (expoente)"], ["xₙ", "_{¤}", "Índice (subscrito)"], ["Σ", "\\sum_{i=1}^{n} ¤", "Somatório"],
+  ["∫", "\\int_{a}^{b} ¤\\,dx", "Integral"], ["lim", "\\lim_{x \\to ¤}", "Limite"], ["vec", "\\vec{¤}", "Vetor (seta em cima)"],
+  ["x̄", "\\bar{¤}", "Barra (média)"], ["∂", "\\frac{\\partial ¤}{\\partial x}", "Derivada parcial"], ["abc", "\\text{¤}", "Texto dentro da fórmula"],
+  ["( )", "\\left( ¤ \\right)", "Parênteses que crescem"],
+];
+const EQ_RAP_SYMS = [
+  ["±", "\\pm "], ["×", "\\times "], ["·", "\\cdot "], ["÷", "\\div "], ["≤", "\\leq "], ["≥", "\\geq "], ["≠", "\\neq "], ["≈", "\\approx "],
+  ["∞", "\\infty "], ["→", "\\rightarrow "], ["⇒", "\\Rightarrow "], ["°", "^{\\circ}"], ["∝", "\\propto "], ["∈", "\\in "],
+];
+const EQ_RAP_SETS = [
+  ["∪", "\\cup ", "União"], ["∩", "\\cap ", "Interseção"], ["∖", "\\setminus ", "Diferença (A menos B)"], ["△", "\\triangle ", "Diferença simétrica"],
+  ["Ā", "\\overline{¤}", "Complementar (barra)"], ["Aᶜ", "^{c}", "Complementar (expoente c)"], ["∅", "\\emptyset ", "Conjunto vazio"],
+  ["∈", "\\in ", "Pertence"], ["∉", "\\notin ", "Não pertence"], ["⊂", "\\subset ", "Contido (próprio)"], ["⊆", "\\subseteq ", "Contido ou igual"],
+  ["⊄", "\\not\\subset ", "Não contido"], ["⊃", "\\supset ", "Contém (próprio)"], ["⊇", "\\supseteq ", "Contém ou igual"], ["A×B", "\\times ", "Produto cartesiano"],
+  ["{ }", "\\left\\{ ¤ \\right\\}", "Conjunto entre chaves"], ["{x|}", "\\left\\{ x \\mid ¤ \\right\\}", "Conjunto por propriedade"], ["|A|", "\\left| ¤ \\right|", "Cardinalidade"],
+  ["⋃", "\\bigcup_{i=1}^{n} ¤", "União de vários conjuntos"], ["⋂", "\\bigcap_{i=1}^{n} ¤", "Interseção de vários conjuntos"], ["𝒫", "\\mathcal{P}(¤)", "Conjunto das partes"],
+  ["ℕ", "\\mathbb{N}", "Naturais"], ["ℤ", "\\mathbb{Z}", "Inteiros"], ["ℚ", "\\mathbb{Q}", "Racionais"], ["ℝ", "\\mathbb{R}", "Reais"], ["ℂ", "\\mathbb{C}", "Complexos"],
+];
+const EQ_RAP_LOGIC = [
+  ["∧", "\\land ", "E (conjunção)"], ["∨", "\\lor ", "OU (disjunção)"], ["¬", "\\neg ", "Negação"], ["⊕", "\\oplus ", "OU exclusivo (XOR)"],
+  ["→", "\\rightarrow ", "Implicação"], ["↔", "\\leftrightarrow ", "Bicondicional"], ["⇒", "\\Rightarrow ", "Implica (⇒)"], ["⇔", "\\Leftrightarrow ", "Se e somente se (⇔)"],
+  ["≡", "\\equiv ", "Equivalente"], ["∀", "\\forall ", "Para todo"], ["∃", "\\exists ", "Existe"], ["∄", "\\nexists ", "Não existe"],
+  ["⊤", "\\top ", "Verdadeiro"], ["⊥", "\\bot ", "Falso"], ["∴", "\\therefore ", "Portanto"], ["∵", "\\because ", "Pois"],
+  ["⊢", "\\vdash ", "Prova (deriva)"], ["⊨", "\\models ", "Satisfaz (modela)"], ["↑", "\\uparrow ", "NAND (barra de Sheffer)"], ["↓", "\\downarrow ", "NOR (seta de Peirce)"],
+  ["p̄", "\\overline{¤}", "Negação (barra em cima)"],
+];
+function EqQuick({ onInsert }) {
+  const row = (list, withTitle) => (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+      {list.map(([l, sn, t]) => <button key={(t || sn) + l} type="button" title={t || sn.trim()} aria-label={t ? t : "Inserir " + sn.trim()} data-eq-quick={t || sn.trim()} onClick={() => onInsert(sn)} style={{ ...EQ_BTN, fontSize: 14 }}>{l}</button>)}
+    </div>
+  );
+  const det = (label, list) => (
+    <details data-eq-quick-group={label} style={{ border: "1px solid var(--tool-line)", borderRadius: 9, margin: "0 0 6px", background: "#fff" }}>
+      <summary style={{ cursor: "pointer", padding: "7px 10px", fontSize: 12.5, fontWeight: 650 }}>{label}</summary>
+      <div style={{ padding: "0 10px 10px" }}>{row(list)}</div>
+    </details>
+  );
+  return (
+    <div data-eq="quick" style={{ margin: "0 0 10px" }}>
+      <div style={{ ...EQ_SUBH, margin: "0 0 5px" }}>Estruturas</div>
+      {row(EQ_RAP_STRUCT)}
+      <div style={{ ...EQ_SUBH, margin: "10px 0 5px" }}>Símbolos</div>
+      {row(EQ_RAP_SYMS)}
+      <div style={{ height: 8 }} />
+      {det("Operações de conjuntos", EQ_RAP_SETS)}
+      {det("Operadores lógicos", EQ_RAP_LOGIC)}
+    </div>
+  );
+}
+
 function eqKatex(latex) {
   try { return window.katex ? window.katex.renderToString(latex, { throwOnError: true, displayMode: false, output: "html", strict: "ignore", trust: false }) : null; } catch (e) { return null; }
 }
+// Rosto do botão = a fórmula como ela sairia na página, com letras de exemplo nos campos (a, b, c…)
+// em vez de quadradinhos vazios. Alguns modelos têm rosto próprio, mais claro que letras soltas.
+const EQ_FACE_OVR = {
+  "Expoente (do que vem antes)": "x^{2}", "Subscrito (do que vem antes)": "x_{i}", "Subscrito e expoente (do que vem antes)": "x_{i}^{2}",
+};
 function eqFace(it) {
+  if (EQ_FACE_OVR[it.label]) return EQ_FACE_OVR[it.label];
+  const raw = it.ce !== undefined ? "\\ce{" + it.ce + "}" : it.latex;
+  // Modelo com campos: o rosto é exatamente o que será inserido (com as letras de exemplo nos campos).
+  if (it.kind === "tpl" && (!it.face || it.face.indexOf("\\square") >= 0)) return window.EQ.expand(raw, "", { ph: true }).text;
   let f = it.face || (it.ce !== undefined ? "\\ce{" + it.ce.split("¤").join("$\\square$") + "}" : it.latex);
   return f.split("‹").join("").split("›").join("").split("¤").join("\\square ");
 }
 function eqCode(it) {
   const raw = it.ce !== undefined ? "\\ce{" + it.ce + "}" : it.latex;
-  return window.EQ.expand(raw, "").text;
+  return window.EQ.expand(raw, "", { ph: true }).text;
 }
 function EqFace({ html, fallback }) {
   return html ? <span aria-hidden="true" dangerouslySetInnerHTML={{ __html: html }} /> : <span aria-hidden="true" style={{ fontSize: 11 }}>{fallback}</span>;
@@ -841,7 +906,7 @@ function EquationPanel({ p, setP, onRenumber }) {
     const ta = ref.current; if (!ta) return;
     const end = from + text.length, outer = sess.current;
     if (fields.length) {
-      const fresh = fields.map((f) => ({ a: f.a + from, b: f.b + from }));
+      const fresh = fields.map((f) => Object.assign({}, f, { a: f.a + from, b: f.b + from }));
       // Modelo inserido dentro de um campo de outro modelo: os campos novos vêm primeiro e, ao terminar, o Tab
       // continua nos campos que faltavam do modelo de fora (frações e raízes aninhadas).
       let all = fresh, ends = [end];
@@ -866,9 +931,16 @@ function EquationPanel({ p, setP, onRenumber }) {
     if (!touched.current) { a = b = text.length; }
     return { ta, text, a, b };
   };
+  // Trecho selecionado que vira conteúdo do modelo. Se for só a letra de exemplo de um campo que ainda não foi
+  // editado (a, b, c…), conta como vazio: o novo modelo entra no lugar dela, com as próprias letras.
+  const realSel = (text, a, b) => {
+    const t = text.slice(a, b), sc = sess.current;
+    if (sc && t && sc.fields.some((f) => f.ph && f.a === a && f.b === b && f.ph === t)) return "";
+    return t;
+  };
   const insertSnippet = (snippet, opts) => {
     const { text, a, b } = selectionNow();
-    const ex = EQ.expand(snippet, opts && opts.noSelection ? "" : text.slice(a, b));
+    const ex = EQ.expand(snippet, opts && opts.noSelection ? "" : realSel(text, a, b), { ph: true });
     writeRange(a, b, ex.text); touched.current = true;
     startSession(ex.fields, ex.text, a);
   };
@@ -876,7 +948,7 @@ function EquationPanel({ p, setP, onRenumber }) {
   const insertItem = (it) => {
     const { text, a, b } = selectionNow();
     const inCe = EQ.insideCe(text, a);
-    let from = a, to = b, sel = text.slice(a, b), snippet;
+    let from = a, to = b, sel = realSel(text, a, b), snippet;
     if (it.ce !== undefined) {
       snippet = inCe ? it.ce : "\\ce{" + it.ce + "}";
       if (inCe && ARROW.test(it.ce) && !/^\[/.test(it.ce.slice(2))) { snippet = (text.charAt(a - 1) === " " || a === inCe.start ? "" : " ") + it.ce + " "; }
@@ -884,10 +956,20 @@ function EquationPanel({ p, setP, onRenumber }) {
       snippet = it.latex;
       if (inCe) { from = to = inCe.end + 1; sel = ""; }
     }
-    const ex = EQ.expand(snippet, sel);
+    const ex = EQ.expand(snippet, sel, { ph: true });
     writeRange(from, to, ex.text); touched.current = true;
     startSession(ex.fields, ex.text, from);
     setStatus(ex.fields.length ? "Modelo inserido. Preencha os campos: Tab vai para o próximo." : "Inserido.");
+  };
+  // Atalho rápido (estilo de sempre): insere no cursor; «¤» marca onde o cursor fica e é trocado pelo trecho selecionado.
+  const insertQuick = (snippet) => {
+    const { text, a, b } = selectionNow();
+    const sel = text.slice(a, b), mark = snippet.indexOf("¤");
+    const out = snippet.replace("¤", sel);
+    writeRange(a, b, out); touched.current = true; endSession();
+    const ta = ref.current, pos = a + (mark >= 0 ? mark + sel.length : out.length);
+    if (ta) { ta.setSelectionRange(pos, pos); ta.focus(); }
+    refreshFound(); setStatus("Inserido.");
   };
   const insertRaw = (latex) => { const { a, b } = selectionNow(); writeRange(a, b, latex); touched.current = true; endSession(); setStatus("Inserido no cursor."); };
   const replaceRange = (from, to, latex) => { writeRange(from, to, latex); endSession(); setTimeout(refreshFound, 0); };
@@ -959,6 +1041,8 @@ function EquationPanel({ p, setP, onRenumber }) {
       {err ? <p style={{ ...hint, color: "#9a2f1b" }} role="alert">Erro na fórmula: {err} Seu texto foi mantido: corrija o trecho acima ou use «Desfazer».</p> : <p id="eq-hint" style={hint}>{inSession ? "Preenchendo o modelo: Tab vai ao próximo campo, Shift+Tab volta, Alt+→ sai da estrutura, Esc encerra." : "A fórmula aparece pronta na página. Clique num modelo para inserir no cursor; com um trecho selecionado, ele entra no primeiro campo."}</p>}
       <div role="status" aria-live="polite" data-eq="status" style={{ ...hint, minHeight: 16 }}>{status}</div>
     </Field>
+    <EqQuick onInsert={insertQuick} />
+    <div style={{ ...EQ_SUBH, margin: "2px 0 6px" }}>Mais modelos, com campos e busca</div>
     <div role="group" aria-label="Paleta" style={{ display: "flex", gap: 6, margin: "0 0 8px" }}>
       <button type="button" data-eq-mode="mat" aria-pressed={mode === "mat"} aria-expanded={mode === "mat"} onClick={() => pickMode("mat")} style={segBtn(mode === "mat")}>∑  Matemática e Física</button>
       <button type="button" data-eq-mode="quim" aria-pressed={mode === "quim"} aria-expanded={mode === "quim"} onClick={() => pickMode("quim")} style={segBtn(mode === "quim")}>⚗  Química e Bioquímica</button>

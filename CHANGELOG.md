@@ -4,12 +4,20 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.26.3** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.27.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.27.0 · 14/11/2026 · Equação: botões de sempre de volta e modelos com letras de exemplo
+
+- **Atalhos rápidos de volta.** O painel da Equação mostra de novo, à vista, os botões de antes: **Estruturas** (a/b, √, ⁿ√, xⁿ, xₙ, Σ, ∫, lim, vec, x̄, ∂, abc, parênteses) e **Símbolos** (± × · ÷ ≤ ≥ ≠ ≈ ∞ → ⇒ ° ∝ ∈), mais **Operações de conjuntos** e **Operadores lógicos** (recolhidos). Funcionam como antes: um clique insere no cursor; o texto selecionado entra dentro da estrutura. As paletas **Matemática e Física** e **Química e Bioquímica** continuam logo abaixo, em «Mais modelos, com campos e busca».
+- **Modelos com letras de exemplo.** Os modelos das paletas entram com letras no lugar dos campos vazios (`\frac{a}{b}`, `x^{n}`) e a primeira fica selecionada: é só digitar por cima (`N` vira `N^{A}` com Tab). Se você inserir um modelo dentro de uma letra de exemplo ainda não editada, ele toma o lugar dela.
+- **Botões que mostram o resultado.** Os quadradinhos vazios dos botões da paleta foram trocados pelo modelo desenhado com as mesmas letras que entram no campo, e a prévia mostra o mesmo.
+- **Reduzir sozinha para caber** confere de novo a medida quando as fontes da fórmula terminam de carregar (antes a fórmula podia ficar com barra de rolagem mesmo com a opção ligada). O limite continua sendo 40% do tamanho escolhido.
+- **Palavras acentuadas e 'trechos entre aspas simples'.** Dá para escrever `restrição`, `seleção`, `João` direto na fórmula (antes o ç/ã saía como «c» com «\c» na tela). Um trecho entre aspas simples, como `\sigma_{curso='Ciência da Computação'}(Aluno)`, vira texto reto com os **espaços e números exatamente como digitados**. O apóstrofo de derivada (`f'(x)`, `A'`) continua funcionando. Textos já dentro de `\text{…}` e fórmulas químicas `\ce{…}` não são tocados.
 
 ### 1.26.3 · 14/11/2026 · Acessibilidade sem tela em branco; sublinhado contínuo
 
