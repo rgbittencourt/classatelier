@@ -446,7 +446,7 @@ function QuizEditor({ p, setP }) {
 }
 
 // ── the panel ──
-function PropertiesPanel({ block, update, mergePrev, onRenumberEquations, onInsertEquation, onInsertImage, onInsertCode, onBreakProse, onBreakTopic, onBreakPage }) {
+function PropertiesPanel({ block, update, mergePrev, onRenumberEquations, onInsertEquation, onInsertImage, onInsertCode, onBreakProse, onBreakTopic, onBreakPage, mergeProse }) {
   if (!block) {
     return <div style={{ padding: 24, color: "var(--tool-ink-3)", fontSize: 13, lineHeight: 1.5 }}>Selecione um bloco na página para editar suas propriedades, ou arraste um bloco da biblioteca à esquerda.</div>;
   }
@@ -490,7 +490,7 @@ function PropertiesPanel({ block, update, mergePrev, onRenumberEquations, onInse
       {/* Conteúdo estrutural por tipo */}
       <div style={ps.group}>
         <p style={ps.groupTitle}>Conteúdo</p>
-        {renderTypeContent(block, p, setP, mergePrev, onRenumberEquations, onInsertEquation, { onInsertImage, onInsertCode, onBreakProse, onBreakTopic, onBreakPage })}
+        {renderTypeContent(block, p, setP, mergePrev, onRenumberEquations, onInsertEquation, { onInsertImage, onInsertCode, onBreakProse, onBreakTopic, onBreakPage, mergeProse })}
         <div style={{ height: 8 }} />
       </div>
     </div>
@@ -1164,7 +1164,7 @@ function EquationPanel({ p, setP, onRenumber }) {
 }
 
 function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquation, cursorActions = {}) {
-  const { onInsertImage, onBreakProse, onBreakTopic, onBreakPage } = cursorActions;
+  const { onInsertImage, onBreakProse, onBreakTopic, onBreakPage, mergeProse } = cursorActions;
   const def = window.BLOCK_BY_TYPE[block.type];
   switch (block.type) {
     case "pagebreak":
@@ -1316,6 +1316,20 @@ function renderTypeContent(block, p, setP, mergePrev, onRenumber, onInsertEquati
             </div>
           </Field>
           <p style={hint}>Clique no ponto do texto e use o botão. <strong>Parágrafo</strong>: vira dois parágrafos, para não ficar longo demais. <strong>Tópico</strong>: o Tópico de conteúdo se divide em dois, e o que vem depois do cursor passa para o segundo. <strong>Quebra de página (PDF)</strong>: o parágrafo se divide no cursor e o PDF muda de página exatamente ali.</p>
+        </>}
+        {mergeProse && <>
+          <div style={{ height: 14 }} />
+          <Field label="Juntar parágrafos">
+            <div style={{ display: "grid", gap: 8 }}>
+              {[["up", "Juntar com o parágrafo de cima", "⤒"], ["down", "Juntar com o parágrafo de baixo", "⤓"]].map(([dir, label, icon]) => {
+                const fn = mergeProse[dir];
+                return <button key={dir} type="button" data-act={"merge-" + dir} disabled={!fn} onClick={fn || undefined} title={fn ? label : "Não há um parágrafo colado " + (dir === "up" ? "acima" : "abaixo") + " (outro bloco está no meio, ou é o começo/fim do tópico)"} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "9px 12px", borderRadius: 10, border: "1px solid var(--tool-line, #d8d3c6)", background: "var(--tool-surface, #fff)", color: "var(--tool-ink, #1b1a17)", fontSize: 13, fontWeight: 600, cursor: fn ? "pointer" : "not-allowed", opacity: fn ? 1 : 0.45, textAlign: "left" }}>
+                  <span aria-hidden="true" style={{ width: 16, textAlign: "center", fontWeight: 700 }}>{icon}</span> {label}
+                </button>;
+              })}
+            </div>
+          </Field>
+          <p style={hint}>Os dois viram um só bloco, sem o espaço grande entre eles. Se a separação tinha cortado uma frase ao meio, ela volta inteira; senão, os parágrafos ficam um sobre o outro com o espaçamento normal de texto. Ctrl+Z desfaz.</p>
         </>}
       </>);
     case "pitaco":

@@ -582,6 +582,35 @@ function ClassAtelierApp() {
     saveImageCopy(img);
   };
 
+  // «Juntar parágrafos»: o parágrafo `blockId` e o vizinho de cima ou de baixo (só se forem dois parágrafos colados)
+  // viram um bloco só. Se a separação tinha cortado uma frase ao meio, ela volta inteira.
+  const proseNeighbors = (blockId) => {
+    const src = collectBlockLists(lesson.blocks).find((ref) => ref.list.some((b) => b.id === blockId));
+    if (!src) return { up: null, down: null };
+    const i = src.list.findIndex((b) => b.id === blockId), me = src.list[i];
+    const ok = (o) => o && o.type === "prose" && (o.slide || 0) === (me.slide || 0);
+    return { up: ok(src.list[i - 1]) ? src.list[i - 1].id : null, down: ok(src.list[i + 1]) ? src.list[i + 1].id : null };
+  };
+  const mergeProse = (blockId, dir) => {
+    const next = JSON.parse(JSON.stringify(lesson));
+    const src = collectBlockLists(next.blocks, undefined, [], true).find((ref) => ref.list.some((b) => b.id === blockId));
+    if (!src) return;
+    const i = src.list.findIndex((b) => b.id === blockId);
+    const ia = dir === "up" ? i - 1 : i, ib = ia + 1;
+    const A = src.list[ia], B = src.list[ib];
+    if (!A || !B || A.type !== "prose" || B.type !== "prose" || (A.slide || 0) !== (B.slide || 0)) { showToast("Só dá para juntar dois parágrafos colados, sem outro bloco no meio."); return; }
+    const a = String(A.props.body || ""), b = String(B.props.body || "");
+    const glue = !!(B.props && B.props.joinMid) && /<\/p>\s*$/.test(a) && /^\s*<p[^>]*>/.test(b);
+    let body = glue ? a.replace(/<\/p>\s*$/, "") + b.replace(/^\s*<p[^>]*>/, "") : a + b;
+    if (emptyHtml(a)) body = b; else if (emptyHtml(b)) body = a;
+    const merged = { ...A, props: { ...A.props, body } };
+    if (!(merged.props.inlineVideo && merged.props.inlineVideo.id) && B.props && B.props.inlineVideo) merged.props.inlineVideo = B.props.inlineVideo;
+    src.list.splice(ia, 2, merged);
+    commit(next);
+    setSelected(merged.id);
+    showToast(glue ? "Parágrafos juntados: a frase voltou inteira." : "Parágrafos juntados num bloco só.");
+  };
+
   // «Quebrar parágrafo no cursor»: o parágrafo vira dois, no ponto do cursor (o segundo sem capitular).
   const breakProseAtCaret = (blockId) => {
     const sp = window.splitProseAtCaret ? window.splitProseAtCaret(blockId) : null;
@@ -593,7 +622,7 @@ function ClassAtelierApp() {
     const i = src.list.findIndex((b) => b.id === blockId);
     const prose = src.list[i];
     const n = window.newChildBlock("prose");
-    n.props = { ...n.props, body: sp.after, dropcap: false, align: prose.props && prose.props.align };
+    n.props = { ...n.props, body: sp.after, dropcap: false, align: prose.props && prose.props.align, joinMid: !!sp.mid };
     if (prose.slide != null) n.slide = prose.slide;
     src.list.splice(i, 1, { ...prose, props: { ...prose.props, body: sp.before } }, n);
     commit(next);
@@ -993,7 +1022,7 @@ function ClassAtelierApp() {
             {printView
               ? <window.PrintPanel info={pvInfo} onRemove={removeBreakById} onPrint={printPDF} onClose={() => setPrintView(false)} />
               : selBlock
-              ? <window.PropertiesPanel block={selBlock} update={(patch) => updateBlock(selBlock.id, patch)} mergePrev={mergeInfo(selBlock) ? () => mergeTopicWithPrevious(selBlock) : null} onRenumberEquations={() => commit(window.autoNumberEquations(lesson, true))} onInsertEquation={() => insertEquationInProse(selBlock.id)} onInsertImage={() => openImageDialog(selBlock.id)} onInsertCode={() => insertCodeBlock(selBlock.id)} onBreakProse={() => breakProseAtCaret(selBlock.id)} onBreakTopic={() => breakTopicAtCaret(selBlock.id)} onBreakPage={() => insertPageBreakAtCursor(selBlock.id)} />
+              ? <window.PropertiesPanel block={selBlock} update={(patch) => updateBlock(selBlock.id, patch)} mergePrev={mergeInfo(selBlock) ? () => mergeTopicWithPrevious(selBlock) : null} onRenumberEquations={() => commit(window.autoNumberEquations(lesson, true))} onInsertEquation={() => insertEquationInProse(selBlock.id)} onInsertImage={() => openImageDialog(selBlock.id)} onInsertCode={() => insertCodeBlock(selBlock.id)} onBreakProse={() => breakProseAtCaret(selBlock.id)} onBreakTopic={() => breakTopicAtCaret(selBlock.id)} onBreakPage={() => insertPageBreakAtCursor(selBlock.id)} mergeProse={selBlock.type === "prose" ? (() => { const nb = proseNeighbors(selBlock.id); return { up: nb.up ? () => mergeProse(selBlock.id, "up") : null, down: nb.down ? () => mergeProse(selBlock.id, "down") : null }; })() : null} />
               : <LessonMeta lesson={lesson} setLesson={(L) => setLesson(L)} />}
           </>) : (
             <button onClick={() => setRightOpen(true)} title="Abrir painel de propriedades" aria-label="Abrir painel de propriedades" aria-expanded="false"

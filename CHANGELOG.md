@@ -4,12 +4,16 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.33.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.34.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.34.0 · 14/11/2026 · Juntar parágrafos
+
+- No painel do **Parágrafo**, novo campo **Juntar parágrafos**: «Juntar com o parágrafo de cima» e «Juntar com o parágrafo de baixo». Os dois blocos viram um só, sem o espaço grande que ficava entre eles. Se a separação (por «Quebrar parágrafo aqui») tinha cortado uma frase ao meio, ela volta inteira; senão, os parágrafos ficam um sobre o outro, com o espaçamento normal de texto. Ctrl+Z desfaz. Só vale para dois parágrafos colados (sem outro bloco no meio).
 
 ### 1.33.0 · 14/11/2026 · Visualizar impressão (folhas A4) e Apresentar por «Título de seção»
 
