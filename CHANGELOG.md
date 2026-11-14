@@ -17,6 +17,8 @@ Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 - **Barra de baixo (nova)**, no centro, visível também no modo Visualizar: **Biblioteca, Abrir, Salvar, Pasta e Histórico**. A janela da Pasta abre para cima.
 - **Menu da esquerda:** **Termos e links** e **Ortografia** passam para lá, logo abaixo de Manual e Acervo.
 - **Imprimir PDF** agora está dentro do menu **Exportar**.
+- **Correção no Visualizar:** o botão redondo do sumário da aula (círculo escuro) ficava por cima do **Exportar**; agora fica logo abaixo da barra.
+- Com a janela estreita e o painel da direita aberto, **Importar e Exportar nunca saem da tela**: os demais ícones da barra rolam.
 - Nenhuma função mudou, só o lugar dos botões. Os identificadores `data-act` continuam os mesmos.
 
 ### 1.30.1 · 14/11/2026 · Importação do Moodle mais completa

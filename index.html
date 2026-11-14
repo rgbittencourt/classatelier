@@ -28,6 +28,8 @@
     @container tb (max-width: 1180px) { .tb-label { display: none; } .tb-title { display: none !important; } }
     @container tb (max-width: 960px) { .tb-theme-name { display: none; } .tb-seg-label { display: none; } .tb-sec { display: none !important; } .tb-more { display: block; } }
     @container tb (max-width: 600px) { .tb-theme { display: none; } }
+    /* No Visualizar, o botão flutuante do sumário (círculo escuro) ficava por cima do Exportar: desce abaixo da barra */
+    [data-lz-canvas] .aula-sumario__fab { top: 64px; }
     .tb-scroll { scrollbar-width: none; } .tb-scroll::-webkit-scrollbar { display: none; }
     @container tb (max-width: 640px) { .tb-imp-label { display: none; } }
     /* Barra inferior (arquivos e revisão): some o rótulo, fica o ícone, quando a coluna estreita */
