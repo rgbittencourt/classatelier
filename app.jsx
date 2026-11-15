@@ -986,13 +986,13 @@ function ClassAtelierApp() {
   return (
     <div style={{ display: "grid", gridTemplateColumns: mode === "preview" ? "1fr" : "248px 1fr " + (rightOpen ? "320px" : "40px"), height: "calc(100vh - var(--credits-h, 0px))", overflow: "hidden", transition: "grid-template-columns 160ms ease" }}>
       {mode === "edit" && (
-        <Palette onDragType={setDragType} onAdd={(t) => (t === "pagebreak" ? insertPageBreakAtCursor() : insertBlock(t, null))} onRichNotes={() => setRichOpen(true)} />
+        <Palette onDragType={setDragType} onAdd={(t) => (t === "pagebreak" ? insertPageBreakAtCursor() : t === "codigo" ? insertCodeBlock(null) : insertBlock(t, null))} onRichNotes={() => setRichOpen(true)} />
       )}
 
       <div style={{ display: "flex", flexDirection: "column", minWidth: 0, minHeight: 0, overflow: "hidden", borderLeft: mode === "edit" ? "1px solid var(--tool-line)" : "none", borderRight: mode === "edit" ? "1px solid var(--tool-line)" : "none" }}>
         <Topbar
           lesson={lesson} setLesson={commit} mode={mode} setMode={setMode}
-          onUndo={undo} canUndo={history.current.length > 0} onInsertCode={mode === "edit" ? () => insertCodeBlock(null) : null}
+          onUndo={undo} canUndo={history.current.length > 0}
           onExportHTML={exportHTML} onExportStandaloneHTML={exportStandaloneHTML} onExportDelivery={exportDelivery} onExportSCORM={() => setScormOpen(true)} onPrintPDF={printPDF} onPresent={() => setPresenting({ at: mode === "edit" ? window.presentStartIndex(lesson, selected) : 0 })} onSlides={() => setSlidesOpen(true)}
           onOpenProject={openProjectClick} onImport={() => setImportOpen(true)} onDownloadProject={downloadProject}
           onRichNotes={() => setRichOpen(true)} onA11y={() => setA11yOpen((v) => !v)} a11yOpen={a11yOpen} a11yCount={a11yCount} onLibrary={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(false); setLibOpen(true); }} onCourse={async () => { try { await flushCurrent(); } catch (e) {} setLibPre(true); setLibOpen(true); }}
@@ -1381,7 +1381,7 @@ function RichNotesDialog({ lesson, onClose, onUpdate }) {
 const emptyNote={padding:18,border:"1px dashed var(--tool-line-2)",borderRadius:9,color:"var(--tool-ink-3)",fontSize:12};
 
 // ── Top bar ──
-function Topbar({ onPresent, onSlides, onInsertCode, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportDelivery, onExportSCORM, onPrintPDF, onImport, onA11y, a11yOpen, a11yCount, onClear, canClear, onRepublish, onMoodle, onCopyText, onDownloadText, onToAuthor, authorLinked }) {
+function Topbar({ onPresent, onSlides, onCourse, lesson, mode, setMode, onUndo, canUndo, onExportHTML, onExportStandaloneHTML, onExportDelivery, onExportSCORM, onPrintPDF, onImport, onA11y, a11yOpen, a11yCount, onClear, canClear, onRepublish, onMoodle, onCopyText, onDownloadText, onToAuthor, authorLinked }) {
   const [busy, setBusy] = useStateA(false);
   const [menu, setMenu] = useStateA(false);
   const wrap = async (fn) => { setBusy(true); setMenu(false); try { await fn(); } finally { setBusy(false); } };
@@ -1396,7 +1396,7 @@ function Topbar({ onPresent, onSlides, onInsertCode, onCourse, lesson, mode, set
       <div style={{ display: "flex", alignItems: "center", gap: 8, flex: "1 1 0", minWidth: 0, justifyContent: "flex-end" }}>
         <div className="tb-scroll" style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, overflowX: "auto", padding: "2px 0" }}>
         <button onClick={onUndo} disabled={!canUndo} title="Desfazer (⌘Z)" style={{ ...ghostBtn, opacity: canUndo ? 1 : 0.4 }}><window.TIcon name="undo" size={15} /></button>
-        {onInsertCode && <button data-act="insert-code-toolbar" onMouseDown={(e) => e.preventDefault()} onClick={onInsertCode} title="Inserir bloco de código: no cursor do parágrafo, depois do bloco selecionado ou no fim da aula" aria-label="Inserir bloco de código" style={{ ...ghostBtn, width: "auto", padding: "0 8px", font: "700 13px ui-monospace, Menlo, monospace" }}>{"</>"}</button>}
+        
         <button data-act="clear" onClick={onClear} disabled={!canClear} title="Limpar página" style={{ ...ghostBtn, opacity: canClear ? 1 : 0.4, color: canClear ? "var(--coral-deep)" : "var(--tool-ink-3)" }}><window.TIcon name="trash" size={15} /></button>
         <button onClick={onA11y} aria-pressed={!!a11yOpen} title="Acessibilidade: verifica imagens sem descrição, contraste, títulos, links, vídeos e tabelas" style={{ ...textBtn, position: "relative", background: a11yOpen ? "var(--tool-surface)" : undefined }}><window.TIcon name="a11y" size={15} /><span className="tb-label">Acessibilidade</span>{a11yCount > 0 && <span aria-label={a11yCount + " itens para revisar"} style={{ minWidth: 17, height: 17, padding: "0 5px", borderRadius: 999, background: "#b3372a", color: "#fff", fontSize: 10.5, fontWeight: 800, display: "inline-grid", placeItems: "center", marginLeft: 2 }}>{a11yCount > 99 ? "99+" : a11yCount}</span>}</button>
         <div style={{ display: "flex", background: "var(--tool-surface)", border: "1px solid var(--tool-line)", borderRadius: 9, padding: 3 }}>

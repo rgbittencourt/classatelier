@@ -4,12 +4,17 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.35.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.35.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.35.1 · 14/11/2026 · Barra superior mais enxuta
+
+- Saiu o botão **</>** da barra superior: ele repetia o que já existia na paleta e no painel do Parágrafo («Inserir bloco de código no cursor»).
+- Na paleta, o **duplo clique em «Código»** passou a inserir **no cursor** (divide o parágrafo ali), logo depois do bloco selecionado ou, sem seleção, no fim da aula, como já fazia o botão que saiu. Arrastar o item continua colocando o bloco onde você soltar.
 
 ### 1.35.0 · 14/11/2026 · Folhas A4 na Visualizar impressão
 
