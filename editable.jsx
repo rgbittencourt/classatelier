@@ -142,6 +142,14 @@ function clearMarks() {
   const range = sel.getRangeAt(0);
   const host = closestEditable(range.commonAncestorContainer);
   if (!host) return;
+  // termo de glossário tocado pela seleção: sai por inteiro (balão de definição incluído), ficando só a palavra
+  const termos = Array.from(host.querySelectorAll(".termo")).filter((t) => { try { return range.intersectsNode(t); } catch (e) { return false; } });
+  if (termos.length) {
+    termos.forEach((t) => { const pop = t.querySelector(".termo__pop"); if (pop) pop.remove(); unwrap(t); });
+    host.normalize();
+    fireInput(host);
+    if (range.collapsed) { sel.removeAllRanges(); return; }
+  }
   const frag = range.cloneContents();
   const tmp = document.createElement("div");
   tmp.appendChild(frag);

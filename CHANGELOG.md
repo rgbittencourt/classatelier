@@ -4,12 +4,17 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.36.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.36.2** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.36.2 · 15/11/2026 · «Termos e links» encontra mais links e desmarcar o termo funciona
+
+- Passou a listar também vídeos embutidos no texto, endereços de imagem, endereços sem «https://» (www…, domínios como youtu.be/… ou gov.br) e DOIs (10.xxxx/…); ao abrir, o ClassAtelier completa o endereço.
+- **Desmarcar termo:** «Limpar marcas» sobre um termo agora tira a marca inteira (antes sobrava o balão de definição escondido no texto e o termo continuava listado). O item do Glossário criado pelo botão «termo» sai junto; itens que já existiam no glossário ficam, com um aviso.
 
 ### 1.36.1 · 15/11/2026 · «Termos e links» que funciona e quebra de página arrastável para qualquer lugar
 

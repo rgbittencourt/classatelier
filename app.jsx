@@ -96,7 +96,9 @@ const RN_TXT = (h) => { const s = String(h == null ? "" : h); if (!/[<&]/.test(s
 const RN_ESC = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const RN_URLKEY = /^(href|url|link|\w+Url|\w+Href|\w+Link)$/i;
 const RN_ISURL = (v) => typeof v === "string" && /^(https?:\/\/|www\.)\S+$/i.test(v.trim());
-const RN_RAW = /https?:\/\/[^\s<>"')\]]*[^\s<>"')\].,;:!?]/g;
+const RN_END = `[^\\s<>"')\\]]*[^\\s<>"')\\].,;:!?]`;
+const RN_RAW = new RegExp(`https?:\\/\\/${RN_END}|\\bwww\\.${RN_END}|\\bdoi:\\s?10\\.\\d{4,9}\\/${RN_END}|(?<![\\w/.])10\\.\\d{4,9}\\/${RN_END}|(?<![\\w@/.-])(?:[a-z0-9-]+\\.)+(?:com|org|net|edu|gov|io|dev|app|info|br|pt|be|ly)(?![\\w-])(?:\\/${RN_END})?`, "gi");
+const rnOpenUrl = (h) => { const t = String(h || "").trim(); if (/^https?:\/\//i.test(t)) return t; if (/^www\./i.test(t)) return "https://" + t; const d = t.replace(/^doi:\s?/i, ""); if (/^10\.\d{4,9}\//.test(d)) return "https://doi.org/" + d; return /^[\w-]+(\.[\w-]+)+(\/|$)/.test(t) ? "https://" + t : t; };
 const RN_YT = (v) => { const t = String(v || "").trim(); const m = t.match(/(?:youtu\.be\/|[?&]v=|embed\/|shorts\/)([\w-]{11})/); return m ? m[1] : (/^[\w-]{11}$/.test(t) ? t : ""); };
 const rnTermOf = (el) => { const pop = el.querySelector(".termo__pop"); return { term: ((pop && pop.querySelector(".termo__word") && pop.querySelector(".termo__word").textContent) || (el.childNodes[0] && el.childNodes[0].textContent) || "").trim(), def: ((pop && pop.querySelector(".termo__def") && pop.querySelector(".termo__def").textContent) || "").trim() }; };
 // acordeões que fazem o papel de glossário: título «Glossário…» logo antes, ou o próprio título do acordeão
@@ -121,7 +123,7 @@ function richNotesOf(blocks) {
       box.querySelectorAll(".termo").forEach((el, n) => { const t = rnTermOf(el); if (t.term && t.def) terms.push({ mode: "termo", path, nth: n, term: t.term, def: t.def, owner }); });
       box.querySelectorAll("a[href]").forEach((el, n) => { const href = (el.getAttribute("href") || "").trim(); if (!href || href[0] === "#" || /^javascript:/i.test(href)) return; links.push({ mode: "a", path, nth: n, href, label: (el.textContent || href).trim(), owner }); });
     }
-    if (s.indexOf("://") < 0) return;
+    if (!/:\/\/|www\.|10\.\d{4,9}\/|\.(com|org|net|edu|gov|io|dev|app|info|br|pt|be|ly)\b/i.test(s)) return;
     const masked = s.replace(/<a\b[^>]*>[\s\S]*?<\/a>|<[^>]+>/gi, (m) => " ".repeat(m.length));
     let m; RN_RAW.lastIndex = 0;
     while ((m = RN_RAW.exec(masked))) links.push({ mode: "text", path, start: m.index, end: m.index + m[0].length, href: m[0], label: "", ctx: RN_TXT(s.slice(Math.max(0, m.index - 70), m.index)).slice(-48), owner });
@@ -138,7 +140,8 @@ function richNotesOf(blocks) {
     }
     Object.keys(v).forEach((k) => {
       const x = v[k];
-      if (RN_URLKEY.test(k) && RN_ISURL(x)) links.push({ mode: "value", path: path.concat(k), href: x.trim(), label: RN_TXT(v.title || v.text || v.label || v.buttonLabel || ""), owner: o });
+      if (k === "inlineVideo" && x && typeof x === "object" && RN_YT(x.id)) links.push({ mode: "video", path: path.concat(k, "id"), href: "https://www.youtube.com/watch?v=" + RN_YT(x.id), label: RN_TXT(x.title) || "Vídeo no texto", owner: o });
+      if ((RN_URLKEY.test(k) || /^(src|embed\w*)$/i.test(k)) && RN_ISURL(x)) links.push({ mode: "value", path: path.concat(k), href: x.trim(), label: RN_TXT(v.title || v.text || v.label || v.buttonLabel || ""), owner: o });
       else if (!(k === "id" || k === "type")) walk(x, path.concat(k), o);
     });
   };
@@ -218,10 +221,10 @@ function reviseRichNotes(blocks, note, next) {
   par[last] = box.innerHTML;
   return root;
 }
-function addGlossaryTerm(blocks, term, def) {
+function addGlossaryTerm(blocks, term, def, fromTermo) {
   const root = JSON.parse(JSON.stringify(blocks || []));
   const gl = rnGlossaryIds(root);
-  const item = { title: RN_ESC(term), body: "<p>" + RN_ESC(def) + "</p>", children: [] };
+  const item = { title: RN_ESC(term), body: "<p>" + RN_ESC(def) + "</p>", children: [], ...(fromTermo ? { fromTermo: true } : {}) };
   const find = (list) => list.find((b) => b.type === "accordion" && gl.has(b.id));
   let acc = find(root);
   if (!acc) for (const b of root) if (isTopicType(b.type) && b.props && Array.isArray(b.props.children)) { acc = find(b.props.children); if (acc) break; }
@@ -897,6 +900,28 @@ function ClassAtelierApp() {
   const [clearOpen, setClearOpen] = useStateA(false);
   const [busyMsg, setBusyMsg] = useStateA(null);
   const [richOpen, setRichOpen] = useStateA(false);
+  // termo desmarcado no texto → sai do glossário se foi o botão «termo» que o colocou lá (item com fromTermo)
+  const prevInline = useRefA(null);
+  useEffectA(() => {
+    const t = setTimeout(() => {
+      const cur = richNotesOf(lesson.blocks);
+      const inline = new Set(cur.terms.filter((n) => n.mode === "termo").map((n) => n.term.toLowerCase()));
+      const prev = prevInline.current; prevInline.current = inline;
+      if (!prev) return;
+      const gone = [...prev].filter((x) => !inline.has(x));
+      if (!gone.length) return;
+      const at = (path) => path.reduce((o, k) => (o == null ? o : o[k]), lesson.blocks);
+      const victims = cur.terms.filter((n) => n.mode === "acc" && gone.indexOf(n.term.toLowerCase()) >= 0 && (at(n.path) || {}).fromTermo === true).sort((a, b) => b.path[b.path.length - 1] - a.path[a.path.length - 1]);
+      if (!victims.length) {
+        const stay = cur.terms.filter((n) => n.mode === "acc" && gone.indexOf(n.term.toLowerCase()) >= 0);
+        if (stay.length) showToast("«" + stay.map((n) => n.term).join("», «") + "» continua no Glossário da aula. Para tirar, use Termos e links › Remover.");
+        return;
+      }
+      setLesson((L) => ({ ...L, blocks: victims.reduce((bl, n) => reviseRichNotes(bl, n, null), L.blocks) }));
+      showToast("«" + victims.map((n) => n.term).join("», «") + "» saiu do Glossário porque o termo foi desmarcado no texto.");
+    }, 700);
+    return () => clearTimeout(t);
+  }, [lesson.blocks]);
   // termo marcado no texto → entra também no glossário (acordeão) da aula, se ela já tiver um
   useEffectA(() => {
     const onTermo = (e) => {
@@ -906,7 +931,7 @@ function ClassAtelierApp() {
         if (!rnGlossaryIds(cur).size) { showToast("Termo «" + d.term + "» marcado no texto. A aula ainda não tem glossário: em «Termos e links» use «Adicionar termo» para criar."); return; }
         const dup = richNotesOf(cur).terms.some((n) => n.mode === "acc" && n.term.toLowerCase() === d.term.toLowerCase());
         if (dup) { showToast("«" + d.term + "» já está no glossário da aula."); return; }
-        setLesson((L) => ({ ...L, blocks: addGlossaryTerm(L.blocks, d.term, d.def) }));
+        setLesson((L) => ({ ...L, blocks: addGlossaryTerm(L.blocks, d.term, d.def, true) }));
         showToast("«" + d.term + "» também foi adicionado ao Glossário da aula.");
       }, 450);
     };
@@ -1495,7 +1520,7 @@ function RichNoteRow({ kind, note, uses, onSave, onRemove, onGo }) {
         {isTerm && note.mode === "acc" && uses > 0 && <span style={{ fontSize: 10.5, color: "var(--tool-ink-3)" }}>aparece {uses}× no texto</span>}
       </div>
       {isTerm ? <p style={{ margin: "4px 0 0", fontSize: 12.5, lineHeight: 1.45, color: "var(--tool-ink-2)" }}>{note.def || <em style={{ color: "var(--tool-ink-3)" }}>sem definição</em>}</p>
-        : <a href={/^www\./i.test(note.href) ? "https://" + note.href : note.href} target="_blank" rel="noopener noreferrer" style={{ display: "block", marginTop: 3, fontSize: 12, wordBreak: "break-all", color: "var(--tool-accent, #2a6df4)" }}>{note.href} ↗</a>}
+        : <a href={rnOpenUrl(note.href)} target="_blank" rel="noopener noreferrer" style={{ display: "block", marginTop: 3, fontSize: 12, wordBreak: "break-all", color: "var(--tool-accent, #2a6df4)" }}>{note.href} ↗</a>}
       {where && <div style={{ marginTop: 4, fontSize: 11, color: "var(--tool-ink-3)" }}>em: {where}</div>}
       <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
         <button style={small} onClick={() => setEdit(true)}>Editar</button>
