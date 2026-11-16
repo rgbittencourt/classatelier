@@ -4,12 +4,18 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.36.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.36.1** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.36.1 · 15/11/2026 · «Termos e links» que funciona e quebra de página arrastável para qualquer lugar
+
+- **Termos e links:** a janela agora varre a aula inteira. Em **Glossário** lista os termos do acordeão «Glossário…» da aula e os termos marcados no texto; em **Links** lista os links do texto, os endereços de Materiais extras, Referências, Vídeos e URLs soltas. Cada item mostra onde está, pode ser editado, removido e tem «Ir ao bloco»; os links abrem em outra aba para conferir. Termos do glossário mostram quantas vezes aparecem no texto (ou «não aparece no texto»). Há filtro de busca e **«＋ Adicionar termo»**, que cria o item no acordeão (ou o glossário, se a aula não tiver).
+- **Marcar termo (botão «termo»):** o termo marcado no texto agora entra também no acordeão do Glossário da aula, sem duplicar; se a aula não tiver glossário, um aviso explica como criar.
+- **Quebra de página:** em «Visualizar impressão» o marcador pode ser solto em qualquer lugar: no vão entre blocos, no branco do pé da página e antes de blocos da raiz (como a síntese).
 
 ### 1.36.0 · 15/11/2026 · Visualizar impressão fiel ao PDF (margens e largura da folha)
 

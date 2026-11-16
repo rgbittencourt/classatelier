@@ -91,16 +91,62 @@ function transformRichStrings(value, fn) {
   if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([k,v]) => [k, transformRichStrings(v, fn)]));
   return value;
 }
+// ── Termos e links: varre a aula inteira (termos marcados no texto, glossário em acordeão, endereços de materiais/vídeos/referências e URLs soltas) ──
+const RN_TXT = (h) => { const s = String(h == null ? "" : h); if (!/[<&]/.test(s)) return s.replace(/\s+/g, " ").trim(); const b = document.createElement("div"); b.innerHTML = s; return (b.textContent || "").replace(/\s+/g, " ").trim(); };
+const RN_ESC = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const RN_URLKEY = /^(href|url|link|\w+Url|\w+Href|\w+Link)$/i;
+const RN_ISURL = (v) => typeof v === "string" && /^(https?:\/\/|www\.)\S+$/i.test(v.trim());
+const RN_RAW = /https?:\/\/[^\s<>"')\]]*[^\s<>"')\].,;:!?]/g;
+const RN_YT = (v) => { const t = String(v || "").trim(); const m = t.match(/(?:youtu\.be\/|[?&]v=|embed\/|shorts\/)([\w-]{11})/); return m ? m[1] : (/^[\w-]{11}$/.test(t) ? t : ""); };
+const rnTermOf = (el) => { const pop = el.querySelector(".termo__pop"); return { term: ((pop && pop.querySelector(".termo__word") && pop.querySelector(".termo__word").textContent) || (el.childNodes[0] && el.childNodes[0].textContent) || "").trim(), def: ((pop && pop.querySelector(".termo__def") && pop.querySelector(".termo__def").textContent) || "").trim() }; };
+// acordeões que fazem o papel de glossário: título «Glossário…» logo antes, ou o próprio título do acordeão
+function rnGlossaryIds(blocks) {
+  const ids = new Set();
+  const lists = [blocks || []];
+  (blocks || []).forEach((b) => { if (isTopicType(b.type) && b.props && Array.isArray(b.props.children)) lists.push(b.props.children); });
+  lists.forEach((list) => list.forEach((b, i) => {
+    if (b.type !== "accordion") return;
+    const near = [list[i - 1], list[i - 2]].some((x) => x && x.type === "titulo" && /gloss/i.test(RN_TXT(x.props && x.props.text)));
+    if (near || /gloss/i.test(RN_TXT(b.props && b.props.title))) ids.add(b.id);
+  }));
+  return ids;
+}
 function richNotesOf(blocks) {
-  const glossary = new Map(), links = new Map();
-  const scan = (value) => transformRichStrings(value, (html) => {
-    const box = document.createElement("div"); box.innerHTML = html;
-    box.querySelectorAll(".termo").forEach((el) => { const pop=el.querySelector(".termo__pop"), term=(pop?.querySelector(".termo__word")?.textContent || el.childNodes[0]?.textContent || "").trim(), def=(pop?.querySelector(".termo__def")?.textContent || "").trim(); if(term&&def) glossary.set(term+"\0"+def,{term,def}); });
-    box.querySelectorAll("a[href]").forEach((el) => { const href=(el.getAttribute("href")||"").trim(), label=(el.textContent||href).trim(); if(href&&!href.startsWith("#")) links.set(href+"\0"+label,{href,label}); });
-    return html;
-  });
-  (blocks||[]).forEach((b) => { scan(b.props); if(isTopicType(b.type)) (b.props.children||[]).forEach((c)=>scan(c.props)); });
-  return { glossary:[...glossary.values()], links:[...links.values()] };
+  const terms = [], links = [], parts = [], gl = rnGlossaryIds(blocks);
+  const scanStr = (s, path, owner) => {
+    if (s.length > 300000 || s.indexOf("data:") === 0) return;
+    if (!owner || !owner.inGloss) parts.push(RN_TXT(s));
+    if (/<(a|span)\b/i.test(s)) {
+      const box = document.createElement("div"); box.innerHTML = s;
+      box.querySelectorAll(".termo").forEach((el, n) => { const t = rnTermOf(el); if (t.term && t.def) terms.push({ mode: "termo", path, nth: n, term: t.term, def: t.def, owner }); });
+      box.querySelectorAll("a[href]").forEach((el, n) => { const href = (el.getAttribute("href") || "").trim(); if (!href || href[0] === "#" || /^javascript:/i.test(href)) return; links.push({ mode: "a", path, nth: n, href, label: (el.textContent || href).trim(), owner }); });
+    }
+    if (s.indexOf("://") < 0) return;
+    const masked = s.replace(/<a\b[^>]*>[\s\S]*?<\/a>|<[^>]+>/gi, (m) => " ".repeat(m.length));
+    let m; RN_RAW.lastIndex = 0;
+    while ((m = RN_RAW.exec(masked))) links.push({ mode: "text", path, start: m.index, end: m.index + m[0].length, href: m[0], label: "", ctx: RN_TXT(s.slice(Math.max(0, m.index - 70), m.index)).slice(-48), owner });
+  };
+  const walk = (v, path, owner) => {
+    if (typeof v === "string") { scanStr(v, path, owner); return; }
+    if (Array.isArray(v)) { v.forEach((x, i) => walk(x, path.concat(i), owner)); return; }
+    if (!v || typeof v !== "object") return;
+    let o = owner;
+    if (typeof v.type === "string" && v.props && typeof v.props === "object" && v.id) {
+      o = { id: v.id, type: v.type, title: RN_TXT(v.props.title || v.props.text || ""), chain: (owner ? owner.chain : []).concat(v.id), inGloss: !!(owner && owner.inGloss) || gl.has(v.id) };
+      if (v.type === "accordion" && gl.has(v.id) && Array.isArray(v.props.items)) v.props.items.forEach((it, i) => { const term = RN_TXT(it && it.title), def = RN_TXT(it && it.body); if (term || def) terms.push({ mode: "acc", path: path.concat("props", "items", i), term, def, owner: o }); });
+      if (v.type === "video" && RN_YT(v.props.id)) links.push({ mode: "video", path: path.concat("props", "id"), href: "https://www.youtube.com/watch?v=" + RN_YT(v.props.id), label: RN_TXT(v.props.title) || "Vídeo", owner: o });
+    }
+    Object.keys(v).forEach((k) => {
+      const x = v[k];
+      if (RN_URLKEY.test(k) && RN_ISURL(x)) links.push({ mode: "value", path: path.concat(k), href: x.trim(), label: RN_TXT(v.title || v.text || v.label || v.buttonLabel || ""), owner: o });
+      else if (!(k === "id" || k === "type")) walk(x, path.concat(k), o);
+    });
+  };
+  walk(blocks || [], [], null);
+  const keyOf = (n) => n.mode + ":" + n.path.join("/") + ":" + (n.nth != null ? n.nth : n.start != null ? n.start : "");
+  terms.forEach((n) => { n.key = keyOf(n); });
+  links.forEach((n) => { n.key = keyOf(n); });
+  return { terms, links, text: parts.join(" ").toLowerCase() };
 }
 function normalizeTopicStructure(blocks) {
   const rootTypes = new Set(["hero","pagebreak","sintese","referencias","parallax","topic","topic-collapsible","topic-slider","divider"]);
@@ -140,11 +186,52 @@ function extractProjectPayload(data) {
   if (!project) throw new Error("Este JSON não contém blocos editáveis. Abra o arquivo Semana01-…-ClassAtelier.json (Salvar, ou o botão JSON ClassAtelier do ClassAuthor), e não planejamento-geral.json ou o guia do professor.");
   return { meta: project.meta || {}, blocks: normalizeTopicStructure(project.blocks) };
 }
-function reviseRichNotes(blocks, kind, original, next) {
-  const editHtml = (html) => { const box=document.createElement("div"); box.innerHTML=html;
-    if(kind==="glossary") box.querySelectorAll(".termo").forEach((el)=>{ const pop=el.querySelector(".termo__pop"), term=(pop?.querySelector(".termo__word")?.textContent||el.childNodes[0]?.textContent||"").trim(), def=(pop?.querySelector(".termo__def")?.textContent||"").trim(); if(term!==original.term||def!==original.def)return; if(!next){ const text=document.createTextNode(term); el.replaceWith(text); return; } const word=pop?.querySelector(".termo__word"), definition=pop?.querySelector(".termo__def"); if(el.firstChild?.nodeType===3) el.firstChild.textContent=next.term; if(word) word.textContent=next.term; if(definition) definition.textContent=next.def; });
-    else box.querySelectorAll("a[href]").forEach((el)=>{ if((el.getAttribute("href")||"").trim()!==original.href||(el.textContent||"").trim()!==original.label)return; if(!next){ el.replaceWith(document.createTextNode(original.label)); return; } el.setAttribute("href",next.href); el.textContent=next.label; }); return box.innerHTML; };
-  return (blocks||[]).map((b)=>({ ...b, props: transformRichStrings(b.props,editHtml) }));
+function reviseRichNotes(blocks, note, next) {
+  const root = JSON.parse(JSON.stringify(blocks || []));
+  const p = note.path, last = p[p.length - 1];
+  const at = (path) => path.reduce((o, k) => (o == null ? o : o[k]), root);
+  const par = at(p.slice(0, -1));
+  if (par == null) return blocks;
+  if (note.mode === "acc") {
+    if (!next) par.splice(last, 1);
+    else { const it = par[last]; it.title = RN_ESC(next.term); if (next.def !== note.def) it.body = "<p>" + RN_ESC(next.def) + "</p>"; }
+    return root;
+  }
+  if (note.mode === "value") {
+    const gp = at(p.slice(0, -2)), idx = p[p.length - 2];
+    if (!next) { if (Array.isArray(gp) && typeof idx === "number") gp.splice(idx, 1); else par[last] = ""; }
+    else par[last] = next.href;
+    return root;
+  }
+  if (note.mode === "video") { const id = next && RN_YT(next.href); if (id) par[last] = id; return root; }
+  if (note.mode === "text") { const s = String(par[last]); par[last] = s.slice(0, note.start) + (next ? next.href : "") + s.slice(note.end); return root; }
+  const box = document.createElement("div"); box.innerHTML = par[last];
+  if (note.mode === "a") {
+    const el = box.querySelectorAll("a[href]")[note.nth]; if (!el) return blocks;
+    if (!next) el.replaceWith(document.createTextNode(el.textContent || "")); else { el.setAttribute("href", next.href); el.textContent = next.label; }
+  } else {
+    const el = box.querySelectorAll(".termo")[note.nth]; if (!el) return blocks;
+    const pop = el.querySelector(".termo__pop"), word = pop && pop.querySelector(".termo__word"), df = pop && pop.querySelector(".termo__def");
+    if (!next) el.replaceWith(document.createTextNode(rnTermOf(el).term));
+    else { if (el.firstChild && el.firstChild.nodeType === 3) el.firstChild.textContent = next.term; if (word) word.textContent = next.term; if (df) df.textContent = next.def; }
+  }
+  par[last] = box.innerHTML;
+  return root;
+}
+function addGlossaryTerm(blocks, term, def) {
+  const root = JSON.parse(JSON.stringify(blocks || []));
+  const gl = rnGlossaryIds(root);
+  const item = { title: RN_ESC(term), body: "<p>" + RN_ESC(def) + "</p>", children: [] };
+  const find = (list) => list.find((b) => b.type === "accordion" && gl.has(b.id));
+  let acc = find(root);
+  if (!acc) for (const b of root) if (isTopicType(b.type) && b.props && Array.isArray(b.props.children)) { acc = find(b.props.children); if (acc) break; }
+  if (acc) { acc.props.items = (acc.props.items || []).concat(item); return root; }
+  const rid = () => "c" + Math.random().toString(36).slice(2, 9);
+  const adds = [{ id: rid(), type: "titulo", props: { text: "Glossário rápido desta aula", level: "h2" } }, { id: rid(), type: "accordion", props: { items: [item] } }];
+  let t = -1; root.forEach((b, i) => { if (isTopicType(b.type)) t = i; });
+  if (t >= 0) root[t].props.children = (root[t].props.children || []).concat(adds);
+  else root.push({ id: "b" + Math.random().toString(36).slice(2, 9), type: "topic", bg: "neutral-default", pad: "normal", wide: false, props: { children: adds } });
+  return root;
 }
 
 // ── Biblioteca de aulas: cada aula editada fica guardada (IndexedDB) com nome e data ──
@@ -810,6 +897,22 @@ function ClassAtelierApp() {
   const [clearOpen, setClearOpen] = useStateA(false);
   const [busyMsg, setBusyMsg] = useStateA(null);
   const [richOpen, setRichOpen] = useStateA(false);
+  // termo marcado no texto → entra também no glossário (acordeão) da aula, se ela já tiver um
+  useEffectA(() => {
+    const onTermo = (e) => {
+      const d = e.detail || {}; if (!d.term || !d.def) return;
+      setTimeout(() => {
+        const cur = lessonRef.current.blocks || [];
+        if (!rnGlossaryIds(cur).size) { showToast("Termo «" + d.term + "» marcado no texto. A aula ainda não tem glossário: em «Termos e links» use «Adicionar termo» para criar."); return; }
+        const dup = richNotesOf(cur).terms.some((n) => n.mode === "acc" && n.term.toLowerCase() === d.term.toLowerCase());
+        if (dup) { showToast("«" + d.term + "» já está no glossário da aula."); return; }
+        setLesson((L) => ({ ...L, blocks: addGlossaryTerm(L.blocks, d.term, d.def) }));
+        showToast("«" + d.term + "» também foi adicionado ao Glossário da aula.");
+      }, 450);
+    };
+    window.addEventListener("lz-termo-added", onTermo);
+    return () => window.removeEventListener("lz-termo-added", onTermo);
+  }, []);
   const [a11yOpen, setA11yOpen] = useStateA(false);
   const [presenting, setPresenting] = useStateA(null); // { at } enquanto o modo apresentação está aberto
   const [slidesOpen, setSlidesOpen] = useStateA(false); // diálogo «Gerar slides»
@@ -1055,7 +1158,7 @@ function ClassAtelierApp() {
       {scormCheck && <ScormCheckDialog title={scormCheck.title} load={scormCheck.load} onClose={() => setScormCheck(null)} />}
       {clearOpen && <ClearDialog count={(lesson.blocks || []).length} onClose={() => setClearOpen(false)} onConfirm={clearLesson} />}
       {a11yOpen && <window.A11yPanel lesson={lesson} onClose={() => setA11yOpen(false)} onGoto={gotoBlock} ignored={(lesson.meta && lesson.meta.a11yIgnored) || []} onIgnored={(list) => setLesson((L) => ({ ...L, meta: { ...(L.meta || {}), a11yIgnored: list } }))} />}
-      {richOpen && <RichNotesDialog lesson={lesson} onClose={() => setRichOpen(false)} onUpdate={(kind, original, next) => { pushHistory(); setLesson((L) => ({ ...L, blocks: reviseRichNotes(L.blocks, kind, original, next) })); }} />}
+      {richOpen && <RichNotesDialog lesson={lesson} onClose={() => setRichOpen(false)} onUpdate={(note, next) => { pushHistory(); setLesson((L) => ({ ...L, blocks: reviseRichNotes(L.blocks, note, next) })); }} onAdd={(term, def) => { pushHistory(); setLesson((L) => ({ ...L, blocks: addGlossaryTerm(L.blocks, term, def) })); showToast("Termo «" + term + "» adicionado ao glossário."); }} onGo={(o) => { setRichOpen(false); gotoBlock(o.id, o.chain); }} />}
     </div>
   );
 }
@@ -1373,10 +1476,86 @@ function CourseDialog({ entries, onClose, onConfirm, onCheck, onMoodle }) {
   );
 }
 
-function RichNotesDialog({ lesson, onClose, onUpdate }) {
-  const notes = richNotesOf(lesson.blocks);
-  const Row = ({ kind, note }) => { const [a,setA]=useStateA(kind==="glossary"?note.term:note.label), [b,setB]=useStateA(kind==="glossary"?note.def:note.href); return <div style={{ border:"1px solid var(--tool-line)", borderRadius:10, padding:12, background:"#fff", marginBottom:10 }}><label style={dlgLabel}>{kind==="glossary"?"Termo":"Texto do link"}</label><input style={dlgInput} value={a} onChange={(e)=>setA(e.target.value)} /><label style={{...dlgLabel,marginTop:9}}>{kind==="glossary"?"Definição":"Endereço"}</label><textarea style={{...dlgInput,minHeight:58,resize:"vertical"}} value={b} onChange={(e)=>setB(e.target.value)} /><div style={{display:"flex",justifyContent:"space-between",marginTop:9}}><button style={{...ghostBtn,width:"auto",padding:"0 10px",color:"var(--coral-deep)"}} onClick={()=>onUpdate(kind,note,null)}>Remover</button><button style={{...primaryBtn,height:32}} onClick={()=>onUpdate(kind,note,kind==="glossary"?{term:a.trim(),def:b.trim()}:{label:a.trim(),href:b.trim()})}>Salvar</button></div></div> };
-  return <div style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(20,20,28,.48)",display:"grid",placeItems:"center",padding:20}} onMouseDown={onClose}><section onMouseDown={(e)=>e.stopPropagation()} style={{width:"min(980px,96vw)",maxHeight:"88vh",display:"flex",flexDirection:"column",background:"var(--tool-surface)",borderRadius:14,overflow:"hidden",boxShadow:"0 24px 70px rgba(0,0,0,.3)"}}><header style={{display:"flex",justifyContent:"space-between",alignItems:"start",padding:"18px 22px",background:"#fff",borderBottom:"1px solid var(--tool-line)"}}><div><h2 style={{margin:0,fontSize:18}}>Termos e links</h2><p style={{margin:"5px 0 0",fontSize:12,color:"var(--tool-ink-3)"}}>Revise, edite ou remova todas as ocorrências do conteúdo.</p></div><button style={ghostBtn} onClick={onClose}>×</button></header><div className="tool-scroll" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:18,padding:18,overflow:"auto"}}><section><h3 style={{fontSize:14}}>Glossário · {notes.glossary.length}</h3>{notes.glossary.map((n,i)=><Row key={i} kind="glossary" note={n} />)}{!notes.glossary.length&&<p style={emptyNote}>Nenhum termo encontrado.</p>}</section><section><h3 style={{fontSize:14}}>Links · {notes.links.length}</h3>{notes.links.map((n,i)=><Row key={i} kind="link" note={n} />)}{!notes.links.length&&<p style={emptyNote}>Nenhum link encontrado.</p>}</section></div></section></div>;
+function RichNoteRow({ kind, note, uses, onSave, onRemove, onGo }) {
+  const [edit, setEdit] = useStateA(false);
+  const isTerm = kind === "term";
+  const [a, setA] = useStateA(isTerm ? note.term : note.label);
+  const [b, setB] = useStateA(isTerm ? note.def : note.href);
+  const where = note.owner ? (((window.BLOCK_BY_TYPE || {})[note.owner.type] || {}).label || note.owner.type) + (note.owner.title ? " · " + note.owner.title.slice(0, 38) : "") : "";
+  const small = { ...ghostBtn, width: "auto", height: 28, padding: "0 9px", fontSize: 12 };
+  const origin = isTerm ? (note.mode === "acc" ? "Glossário" : "No texto") : ({ a: "Link no texto", text: "URL solta", value: "Endereço do bloco", video: "Vídeo" }[note.mode] || "");
+  const canEditLabel = !isTerm && note.mode === "a";
+  const canRemove = !(note.mode === "video");
+  return <div data-rn-row={kind} style={{ border: "1px solid var(--tool-line)", borderRadius: 10, padding: "10px 12px", background: "#fff", marginBottom: 8 }}>
+    {!edit ? <div>
+      <div style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+        <strong style={{ fontSize: 13.5, color: "var(--tool-ink)" }}>{isTerm ? note.term : (note.label || note.ctx || (note.mode === "video" ? "Vídeo" : "Link"))}</strong>
+        <span style={{ fontSize: 10.5, fontWeight: 600, padding: "1px 7px", borderRadius: 99, background: "var(--tool-surface)", color: "var(--tool-ink-2)" }}>{origin}</span>
+        {isTerm && note.mode === "acc" && uses === 0 && <span title="O termo não aparece em nenhum parágrafo da aula" style={{ fontSize: 10.5, fontWeight: 600, padding: "1px 7px", borderRadius: 99, background: "#fdf0e6", color: "#a24b14" }}>não aparece no texto</span>}
+        {isTerm && note.mode === "acc" && uses > 0 && <span style={{ fontSize: 10.5, color: "var(--tool-ink-3)" }}>aparece {uses}× no texto</span>}
+      </div>
+      {isTerm ? <p style={{ margin: "4px 0 0", fontSize: 12.5, lineHeight: 1.45, color: "var(--tool-ink-2)" }}>{note.def || <em style={{ color: "var(--tool-ink-3)" }}>sem definição</em>}</p>
+        : <a href={/^www\./i.test(note.href) ? "https://" + note.href : note.href} target="_blank" rel="noopener noreferrer" style={{ display: "block", marginTop: 3, fontSize: 12, wordBreak: "break-all", color: "var(--tool-accent, #2a6df4)" }}>{note.href} ↗</a>}
+      {where && <div style={{ marginTop: 4, fontSize: 11, color: "var(--tool-ink-3)" }}>em: {where}</div>}
+      <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+        <button style={small} onClick={() => setEdit(true)}>Editar</button>
+        {note.owner && <button style={small} onClick={() => onGo(note.owner)} title="Fecha esta janela e mostra o bloco na aula">Ir ao bloco</button>}
+        {canRemove && <button style={{ ...small, color: "var(--coral-deep)" }} onClick={() => onRemove(note)}>{isTerm ? "Remover" : (note.mode === "a" ? "Tirar o link" : note.mode === "text" ? "Apagar o endereço" : "Remover")}</button>}
+      </div>
+    </div> : <div>
+      {(isTerm || canEditLabel) && <><label style={dlgLabel}>{isTerm ? "Termo" : "Texto do link"}</label><input style={dlgInput} value={a} onChange={(e) => setA(e.target.value)} /></>}
+      <label style={{ ...dlgLabel, marginTop: 9 }}>{isTerm ? "Definição" : "Endereço"}</label>
+      <textarea style={{ ...dlgInput, minHeight: isTerm ? 70 : 44, resize: "vertical" }} value={b} onChange={(e) => setB(e.target.value)} />
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 9 }}>
+        <button style={{ ...ghostBtn, width: "auto", padding: "0 12px" }} onClick={() => { setEdit(false); setA(isTerm ? note.term : note.label); setB(isTerm ? note.def : note.href); }}>Cancelar</button>
+        <button style={{ ...primaryBtn, height: 32 }} onClick={() => { onSave(note, isTerm ? { term: a.trim(), def: b.trim() } : { label: canEditLabel ? a.trim() : note.label, href: b.trim() }); setEdit(false); }}>Salvar</button>
+      </div>
+    </div>}
+  </div>;
+}
+function RichNotesDialog({ lesson, onClose, onUpdate, onAdd, onGo }) {
+  const notes = React.useMemo(() => richNotesOf(lesson.blocks), [lesson.blocks]);
+  const [q, setQ] = useStateA("");
+  const [adding, setAdding] = useStateA(false);
+  const [nt, setNt] = useStateA(""), [nd, setNd] = useStateA("");
+  const f = (s) => !q.trim() || String(s).toLowerCase().indexOf(q.trim().toLowerCase()) >= 0;
+  const terms = notes.terms.filter((n) => f(n.term + " " + n.def));
+  const links = notes.links.filter((n) => f(n.href + " " + n.label + " " + (n.ctx || "")));
+  const usesOf = (t) => { const needle = t.term.toLowerCase(); if (!needle) return 0; let c = 0, i = -1; while ((i = notes.text.indexOf(needle, i + 1)) >= 0) c++; return c; };
+  const colHead = { display: "flex", alignItems: "center", justifyContent: "space-between", margin: "0 0 10px" };
+  return <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(20,20,28,.48)", display: "grid", placeItems: "center", padding: 20 }} onMouseDown={onClose}>
+    <section data-rn-dialog onMouseDown={(e) => e.stopPropagation()} style={{ width: "min(1040px,96vw)", maxHeight: "88vh", display: "flex", flexDirection: "column", background: "var(--tool-surface)", borderRadius: 14, overflow: "hidden", boxShadow: "0 24px 70px rgba(0,0,0,.3)" }}>
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: 14, padding: "16px 22px", background: "#fff", borderBottom: "1px solid var(--tool-line)" }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h2 style={{ margin: 0, fontSize: 18 }}>Termos e links</h2>
+          <p style={{ margin: "5px 0 10px", fontSize: 12, color: "var(--tool-ink-3)" }}>Tudo o que a aula tem de glossário (acordeão ou termos marcados no texto) e de endereços (links no texto, materiais, referências, vídeos e URLs soltas). Confira, corrija, remova ou vá ao bloco.</p>
+          <input style={{ ...dlgInput, maxWidth: 380 }} placeholder="Filtrar termos e links…" value={q} onChange={(e) => setQ(e.target.value)} />
+        </div>
+        <button style={ghostBtn} onClick={onClose} aria-label="Fechar">×</button>
+      </header>
+      <div className="tool-scroll" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, padding: 18, overflow: "auto", alignItems: "start" }}>
+        <section>
+          <div style={colHead}><h3 style={{ fontSize: 14, margin: 0 }}>Glossário · {notes.terms.length}</h3><button style={{ ...ghostBtn, width: "auto", padding: "0 11px", height: 30, fontSize: 12 }} onClick={() => setAdding((v) => !v)}>＋ Adicionar termo</button></div>
+          {adding && <div style={{ border: "1px solid var(--tool-accent, #2a6df4)", borderRadius: 10, padding: 12, background: "#fff", marginBottom: 10 }}>
+            <label style={dlgLabel}>Novo termo</label><input style={dlgInput} value={nt} onChange={(e) => setNt(e.target.value)} />
+            <label style={{ ...dlgLabel, marginTop: 9 }}>Definição</label><textarea style={{ ...dlgInput, minHeight: 64, resize: "vertical" }} value={nd} onChange={(e) => setNd(e.target.value)} />
+            <p style={{ margin: "8px 0 0", fontSize: 11, color: "var(--tool-ink-3)" }}>Entra no acordeão do glossário da aula; se a aula não tiver um, o ClassAtelier cria «Glossário rápido desta aula» no fim do último tópico.</p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 9 }}>
+              <button style={{ ...ghostBtn, width: "auto", padding: "0 12px" }} onClick={() => { setAdding(false); setNt(""); setNd(""); }}>Cancelar</button>
+              <button style={{ ...primaryBtn, height: 32, opacity: nt.trim() && nd.trim() ? 1 : 0.45 }} disabled={!(nt.trim() && nd.trim())} onClick={() => { onAdd(nt.trim(), nd.trim()); setNt(""); setNd(""); setAdding(false); }}>Adicionar</button>
+            </div>
+          </div>}
+          {terms.map((n) => <RichNoteRow key={n.key} kind="term" note={n} uses={n.mode === "acc" ? usesOf(n) : null} onSave={onUpdate} onRemove={(x) => onUpdate(x, null)} onGo={onGo} />)}
+          {!terms.length && <p style={emptyNote}>{notes.terms.length ? "Nenhum termo combina com o filtro." : "Nenhum termo encontrado. Use «Adicionar termo» para criar o glossário desta aula."}</p>}
+        </section>
+        <section>
+          <div style={colHead}><h3 style={{ fontSize: 14, margin: 0 }}>Links · {notes.links.length}</h3></div>
+          {links.map((n) => <RichNoteRow key={n.key} kind="link" note={n} onSave={onUpdate} onRemove={(x) => onUpdate(x, null)} onGo={onGo} />)}
+          {!links.length && <p style={emptyNote}>{notes.links.length ? "Nenhum link combina com o filtro." : "Nenhum link encontrado na aula."}</p>}
+        </section>
+      </div>
+    </section>
+  </div>;
 }
 const emptyNote={padding:18,border:"1px dashed var(--tool-line-2)",borderRadius:9,color:"var(--tool-ink-3)",fontSize:12};
 

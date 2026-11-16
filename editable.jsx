@@ -216,6 +216,8 @@ function applyTermo() {
     sel.addRange(after);
   } catch (e) { /* cross-node selection — ignore */ }
   fireInput(host);
+  // avisa o app: o termo marcado também entra no glossário (acordeão) da aula
+  try { window.dispatchEvent(new CustomEvent("lz-termo-added", { detail: { term: ((span.querySelector(".termo__word") || {}).textContent || word).trim(), def: definition } })); } catch (e) {}
 }
 
 function unwrap(node) {

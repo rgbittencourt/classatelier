@@ -203,7 +203,22 @@ function pvTargetAt(sheet, x, y) {
   const els = document.elementsFromPoint(x, y);
   let item = null;
   for (const el of els) { if (el.closest && el.closest(".pv-ui")) continue; const it = el.closest && el.closest("[data-pv-bid]"); if (it && sheet.contains(it)) { item = it; break; } }
-  if (!item) return null;
+  if (!item) {
+    // Fora de um parágrafo ou bloco (vão entre blocos, branco no pé da página, abertura, síntese…): a quebra vai
+    // antes do bloco sob o ponteiro, ou, se não houver, antes do primeiro bloco logo abaixo dele.
+    const topOf = (el) => { const r = el.hasAttribute("data-pv-root") ? (el.firstElementChild || el).getBoundingClientRect() : el.getBoundingClientRect(); return r; };
+    const usable = (el) => {
+      if (el.querySelector("[data-pv-break]")) return false;
+      if (el.hasAttribute("data-pv-root") && el.querySelector("[data-pv-bid]")) return false;
+      return topOf(el).height >= 1;
+    };
+    const idOf = (el) => el.getAttribute("data-pv-bid") || el.getAttribute("data-pv-root");
+    const cands = Array.prototype.filter.call(sheet.querySelectorAll("[data-pv-bid], [data-pv-root]"), usable);
+    const hit = cands.find((el) => { const r = topOf(el); return y >= r.top && y <= r.bottom; });
+    const el = hit || cands.find((c) => topOf(c).top > y);
+    if (!el) return null;
+    return { kind: "before", id: idOf(el), y: topOf(el).top - base - 2 };
+  }
   const id = item.getAttribute("data-pv-bid");
   if (item.getAttribute("data-type") === "prose") {
     const c = pvCaretFromPoint(document, x, y);

@@ -370,7 +370,12 @@ function BlockView({ block, mode, renderChild, renderNestedList }) {
 
 // ── Full-lesson renderer (preview + exported file) ──
 function LessonRenderer({ lesson, mode = "preview", chrome = true, pdf: pdfProp }) {
-  const blocks = (lesson.blocks || []).map((b) => <BlockView key={b.id} block={{ ...b, onChange: () => {} }} mode={mode} />);
+  // Na Visualizar impressão (pdf forçado), cada bloco da raiz ganha um invólucro sem caixa (display: contents) com o id,
+  // para a quebra de página poder ser solta antes dele. No arquivo exportado nada muda.
+  const blocks = (lesson.blocks || []).map((b) => {
+    const v = <BlockView key={b.id} block={{ ...b, onChange: () => {} }} mode={mode} />;
+    return pdfProp === true ? <div key={b.id} data-pv-root={b.id} style={{ display: "contents" }}>{v}</div> : v;
+  });
   const pdf = pdfProp !== undefined ? !!pdfProp : (typeof location !== "undefined" && new URLSearchParams(location.search).has("pdf"));
   const body = (
     <main id="app">
