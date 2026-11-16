@@ -4,12 +4,19 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.35.2** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAtelier | **1.36.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
 | ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.36.0 · 15/11/2026 · Visualizar impressão fiel ao PDF (margens e largura da folha)
+
+- **Margens:** o PDF deixa 15 mm de respiro no alto e no pé de cada página dentro de uma faixa de conteúdo. A prévia não reservava esse espaço: o texto ia até a borda da folha e as páginas não batiam com o PDF. Agora a prévia reserva as mesmas margens e pagina como o PDF.
+- **Largura da folha:** a prévia agora é desenhada numa moldura com a largura exata da folha A4 (210 mm). Antes ela usava a largura da janela do editor, e tudo o que depende da largura (título da abertura, tamanhos de fonte, grades) saía maior que no PDF.
+- **Quebra manual:** a margem que o PDF mantém depois de uma quebra sua passou a ser contada, como no papel.
+- Em testes com 15 aulas geradas (parágrafos de tamanhos variados, com e sem quebras), a prévia e o PDF gerado ficaram com o mesmo número de páginas e quase sempre com os mesmos parágrafos em cada página; nos casos de borda, um parágrafo pode cair na página vizinha.
 
 ### 1.35.2 · 14/11/2026 · «Juntar parágrafos» no lugar certo
 
