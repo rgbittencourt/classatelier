@@ -740,6 +740,8 @@ async function buildCourseSiteFiles(lessons, opts) {
   }
   await addPackageSupportFiles(zip, [], lessons);
   const title = opts.title || "Curso";
+  const classPuenteManifest = buildClassPuenteManifest(lessons, entries, title);
+  zip.file("classpuente.json", JSON.stringify(classPuenteManifest, null, 2));
   const list = entries.map((e) => `<li><a href="${xmlEscape(e.href)}"><span>${e.n}</span><strong>${xmlEscape(e.label)}</strong><i aria-hidden="true">→</i></a></li>`).join("\n");
   zip.file("index.html", `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -782,8 +784,31 @@ No Moodle, adicione cada link como recurso **URL** (ou incorpore em uma Página/
 Gere o pacote de novo no ClassAtelier e substitua os arquivos no repositório. Os endereços (\`aula-01.html\`, \`aula-02.html\`…) seguem a **ordem das aulas**: mantendo a ordem, os links no Moodle continuam valendo.
 
 A pasta \`projetos/\` guarda o arquivo \`SemanaNN-título-ClassAtelier.json\` de cada aula, para reabrir e editar no ClassAtelier.
+
+O arquivo \`classpuente.json\` registra quais aulas oferecem ClassNotlibro. Ele é lido pelo ClassPuente e não contém senhas, alunos ou anotações.
 `);
   return zip.files;
+}
+
+function buildClassPuenteManifest(lessons, entries, title) {
+  return {
+    schemaVersion: 1,
+    source: { catalog: "ClassAcervo", generator: "ClassAtelier" },
+    course: { title: title || "Curso" },
+    lessons: entries.map((entry, index) => {
+      const lesson = lessons[index] || {};
+      const integration = lesson.meta && lesson.meta.integrations && lesson.meta.integrations.classnotlibro;
+      return {
+        id: String((lesson.meta && lesson.meta.id) || lessonSlug(entry.label) || ("aula-" + entry.n)),
+        title: entry.label,
+        path: entry.href,
+        contentVersion: String((lesson.meta && lesson.meta.contentVersion) || ""),
+        classnotlibro: integration && integration.enabled
+          ? { enabled: true, launchUrl: integration.launchUrl || window.CLASSNOTLIBRO_LTI_URL || "https://caderno-aula-lti-homologacao.vercel.app/lti/launch" }
+          : { enabled: false },
+      };
+    }),
+  };
 }
 
 async function downloadCourseSite(lessons, opts) {
@@ -1039,4 +1064,5 @@ async function downloadDelivery(lesson) {
   saveBlob(blob, name + "-entrega.zip");
 }
 
-Object.assign(window, { buildDeliveryBlob, downloadDelivery, deliveryReadme, buildSCORMBlob, buildCourseSCORMBlob, projectFileName, downloadExport, downloadStandaloneHTML, buildExportHTML, downloadSCORM, downloadCourseSCORM, downloadCourseSite, publishCourseToGitHub, openPrintPreview });
+Object.assign(window, { buildClassPuenteManifest, buildDeliveryBlob, downloadDelivery, deliveryReadme, buildSCORMBlob, buildCourseSCORMBlob, projectFileName, downloadExport, downloadStandaloneHTML, buildExportHTML, downloadSCORM, downloadCourseSCORM, downloadCourseSite, publishCourseToGitHub, openPrintPreview });
+
