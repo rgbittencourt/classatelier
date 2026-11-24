@@ -1400,6 +1400,14 @@ function CourseDialog({ entries, onClose, onConfirm, onCheck, onMoodle }) {
   };
   const copy = (text) => { try { navigator.clipboard.writeText(text); } catch (e) {} };
   const move = (i, d) => setList((L) => { const n = L.slice(); const j = i + d; if (j < 0 || j >= n.length) return L; [n[i], n[j]] = [n[j], n[i]]; return n; });
+  const setClassNotlibro = (i, enabled) => setList((L) => L.map((entry, index) => {
+    if (index !== i) return entry;
+    const lesson = JSON.parse(JSON.stringify(entry.lesson || {}));
+    lesson.meta = lesson.meta || {};
+    lesson.meta.integrations = lesson.meta.integrations || {};
+    lesson.meta.integrations.classnotlibro = { ...(lesson.meta.integrations.classnotlibro || {}), enabled };
+    return { ...entry, lesson };
+  }));
   const checkCourse = () => {
     if (!title.trim()) { alert("Dê um nome ao curso."); return; }
     onCheck(title.trim() + " (SCORM " + version + ")", async () => (await window.buildCourseSCORMBlob(list.map((e) => e.lesson), { title: title.trim(), version })).blob);
@@ -1427,6 +1435,10 @@ function CourseDialog({ entries, onClose, onConfirm, onCheck, onMoodle }) {
                   <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.title}</span>
                   <button onClick={() => move(i, -1)} disabled={i === 0} title="Subir" style={{ ...ghostBtn, width: 28, height: 28, opacity: i === 0 ? 0.35 : 1 }}><window.TIcon name="up" size={14} /></button>
                   <button onClick={() => move(i, 1)} disabled={i === list.length - 1} title="Descer" style={{ ...ghostBtn, width: 28, height: 28, opacity: i === list.length - 1 ? 0.35 : 1 }}><window.TIcon name="down" size={14} /></button>
+                  <label title="Disponibilizar esta aula para integração com o ClassNotlibro pelo ClassPuente" style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11.5, color: "var(--tool-ink-2)", whiteSpace: "nowrap" }}>
+                    <input type="checkbox" checked={!!(e.lesson && e.lesson.meta && e.lesson.meta.integrations && e.lesson.meta.integrations.classnotlibro && e.lesson.meta.integrations.classnotlibro.enabled)} onChange={(event) => setClassNotlibro(i, event.target.checked)} />
+                    ClassNotlibro
+                  </label>
                 </div>
               ))}
             </div>
@@ -2322,3 +2334,4 @@ function LessonMeta({ lesson, setLesson }) {
 }
 
 Object.assign(window, { ClassAtelierApp });
+
