@@ -1,0 +1,26 @@
+/* Testes da fórmula na linha (parte sem navegador): texto simples e KaTeX. Uso: NODE_PATH=<katex> node tests/inline.test.js */
+const katex = require("katex");
+let ok = 0, fail = 0;
+const check = (c, m) => { if (c) ok++; else { fail++; console.log("FALHOU:", m); } };
+const el = () => ({ style: {}, appendChild() {}, addEventListener() {}, setAttribute() {} });
+global.document = { getElementById: () => null, createElement: el, head: { appendChild() {} }, addEventListener() {}, body: el() };
+global.window = global; global.katex = katex;
+global.NodeFilter = { SHOW_TEXT: 4 }; global.getSelection = () => ({ rangeCount: 0 });
+global.React = { createElement() {}, useRef() { return {}; }, useEffect() {}, useState: (v) => [v, () => {}], useMemo: (f) => f(), useLayoutEffect() {} };
+require("../equacao.js");
+require("../equacao-inline.js");
+const IM = window.InlineMath;
+check(!!IM, "InlineMath exposto");
+const chip = IM.chipHtml("\\sigma_{idade>18}");
+check(/^<span class="aula-ieq" contenteditable="false" data-latex="\\sigma_\{idade&gt;18\}">/.test(chip), "chip tem classe, contenteditable e data-latex escapado: " + chip.slice(0, 120));
+check(chip.indexOf("katex") > 0 && chip.indexOf("<annotation") > 0, "chip leva o KaTeX com MathML");
+const html = "<p>Veja " + chip + " e depois <b>x</b> " + IM.chipHtml("x^2") + ".</p>";
+const txt = IM.htmlWithoutInlineMath(html);
+check(txt === "<p>Veja $\\sigma_{idade&gt;18}$ e depois <b>x</b> $x^2$.</p>".replace("&gt;", ">"), "htmlWithoutInlineMath: " + txt);
+check(IM.htmlWithoutInlineMath("<p>sem fórmula</p>") === "<p>sem fórmula</p>", "sem fórmula não muda");
+const bad = IM.chipHtml("\\frac{a");
+check(/aula-ieq--err/.test(bad) && /data-latex="\\frac\{a"/.test(bad), "fórmula com erro vira chip de erro mas guarda o LaTeX");
+check(IM.chipHtml("restrição").indexOf("restri") > 0 && !/>\\c</.test(IM.chipHtml("restrição")), "acentos dentro da fórmula na linha");
+check(IM.chipHtml("a'b='João Silva'").indexOf("aula-ieq--err") < 0, "aspas simples dentro da fórmula na linha");
+console.log(fail ? fail + " falha(s), " + ok + " ok" : "todas as " + ok + " verificações da fórmula na linha passaram");
+process.exit(fail ? 1 : 0);

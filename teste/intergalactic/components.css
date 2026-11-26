@@ -1,0 +1,119 @@
+/* ============================================================
+   Intergalactic (Semrush) — COMPONENT ANATOMY
+   ------------------------------------------------------------
+   Overrides dos tokens --c-* (defaults Aula em /components.css),
+   na gramática visual do Intergalactic Design System v17:
+   · superfícies brancas, cinza frio e sombra curta;
+   · notices semânticos suaves com raio de 6px;
+   · ação principal em laranja Semrush;
+   · informação e foco em azul; sucesso em verde;
+   · tipografia sans compacta e labels em sentence case.
+   O que NÃO está declarado aqui cai nos defaults do Aula.
+   ============================================================ */
+
+:root {
+  /* Acento de interação e foco. */
+  --c-accent: var(--ocean);
+
+  /* Cards Intergalactic usam surface-rounded 6px e sombra curta. */
+  --c-card-bg: var(--bone);
+  --c-card-border: 1px solid var(--rule);
+  --c-card-radius: var(--r-md);
+  --c-card-shadow: var(--sh-1);
+  --c-media-radius: var(--r-md);
+
+  /* Botões de marca: laranja primário, raio 6px. */
+  --c-btn-radius: var(--r-md);
+  --c-btn-primary-bg: var(--terracotta);
+  --c-btn-primary-fg: #ffffff;
+  --c-chip-radius: var(--r-md);
+
+  /* Labels produtivos em 14px/600. */
+  --c-callout-label-size: 14px;
+  --c-callout-label-weight: 600;
+  --c-callout-label-ls: 0;
+  --c-callout-label-transform: none;
+
+  /* DESTAQUE → notice success. */
+  --c-dest-bg: var(--sage-soft);
+  --c-dest-border: 1px solid #59ddaa;
+  --c-dest-border-left: 1px solid #59ddaa;
+  --c-dest-radius: var(--r-md);
+  --c-dest-shadow: none;
+  --c-dest-pad: 20px 24px;
+  --c-dest-icon-bg: transparent;
+  --c-dest-icon-color: var(--sage);
+  --c-dest-icon-box: 22px;
+  --c-dest-icon-box-radius: 0;
+  --c-dest-icon-size: 20px;
+  --c-dest-icon-stroke: 2;
+  --c-dest-label-color: var(--ink);
+
+  /* ATENÇÃO → notice warning. */
+  --c-aten-bg: var(--marigold-soft);
+  --c-aten-border: 1px solid #ffb26e;
+  --c-aten-border-left: 1px solid #ffb26e;
+  --c-aten-radius: var(--r-md);
+  --c-aten-shadow: none;
+  --c-aten-pad: 20px 24px;
+  --c-aten-icon-bg: transparent;
+  --c-aten-icon-color: var(--terracotta);
+  --c-aten-icon-box: 22px;
+  --c-aten-icon-box-radius: 0;
+  --c-aten-icon-size: 20px;
+  --c-aten-icon-stroke: 2;
+  --c-aten-label-color: var(--ink);
+
+  /* REFLEXÃO → highlight advertising roxo. */
+  --c-refl-bg: var(--lavender-soft);
+  --c-refl-border: 1px solid #dcb8ff;
+  --c-refl-border-left: 1px solid #dcb8ff;
+  --c-refl-radius: var(--r-md);
+  --c-refl-shadow: none;
+  --c-refl-pad: 20px 24px 22px;
+  --c-refl-icon-bg: transparent;
+  --c-refl-icon-color: var(--lavender-deep);
+  --c-refl-icon-box: 22px;
+  --c-refl-icon-box-radius: 0;
+  --c-refl-icon-size: 20px;
+  --c-refl-icon-stroke: 2;
+  --c-refl-label-color: var(--ink);
+  --c-refl-q-font: var(--font-sans);
+  --c-refl-q-style: normal;
+
+  /* CITAÇÃO → alinhada à esquerda, sans, filete azul */
+  --c-cit-mark-display: none;
+  --c-cit-align: left;
+  --c-cit-font: var(--font-sans);
+  --c-cit-style: normal;
+  --c-cit-border-left: 3px solid var(--ocean);
+  --c-cit-pad-left: 24px;
+  --c-cit-q-margin: 0 0 18px;
+
+  /* Quiz e controles seguem surface/control rounded. */
+  --c-quiz-radius: var(--r-md);
+  --c-quiz-opt-radius: var(--r-md);
+  --c-quiz-opt-border: 1px solid var(--rule-strong);
+  --c-quiz-accent: var(--ocean);
+
+  /* Flashcards usam a elevação de card. */
+  --c-flash-radius: var(--r-md);
+  --c-flash-shadow: var(--sh-2);
+
+  /* Materiais: superfície neutra secundária. */
+  --c-mat-bg: var(--bone);
+  --c-mat-border: 1px solid var(--rule);
+  --c-mat-radius: var(--r-md);
+  --c-mat-item-radius: var(--r-md);
+
+  --c-feature-badge-radius: var(--r-md);
+
+  /* Pitaco: popper branco com raio 6px. */
+  --c-bubble-bg: var(--bone);
+  --c-bubble-radius: var(--r-md);
+
+  /* Hero combina marca primária e informação. */
+  --c-hero-eyebrow-color: var(--terracotta-deep);
+  --c-hero-eyebrow-icon: var(--terracotta);
+  --c-hero-avatar-bg: var(--terracotta);
+}

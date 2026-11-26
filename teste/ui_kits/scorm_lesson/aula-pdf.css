@@ -1,0 +1,161 @@
+/* ════════════════════════════════════════════════════════════
+   Aula — PDF / A4 print stylesheet
+   Loaded after colors_and_type.css. Active in two situations:
+     • on screen, when <html data-pdf> is set (preview of the export)
+     • at print time, via @media print (Save as PDF)
+   The React components also render fully-expanded "paper" variants
+   when in PDF mode (see usePDF() branches) — this file handles page
+   geometry, chrome removal and page-break control.
+   ════════════════════════════════════════════════════════════ */
+
+/* ───────── A4 page geometry ───────── */
+@page {
+  size: A4;                 /* 210 × 297 mm */
+  margin: 0;
+  background: var(--paper, #fbf6ee);
+}
+
+/* Page margins belong to content, not to the full-bleed band background. */
+.aula-pagebreak-marker { display: none; }
+
+/* ───────── On-screen preview (data-pdf) ───────── */
+html[data-pdf], html[data-pdf] body { background: var(--paper); }
+
+/* Center the flowing content on a paper-like column while previewing */
+html[data-pdf] #app {
+  max-width: 210mm;
+  margin: 0 auto;
+  background: var(--paper);
+}
+
+/* Chrome that never belongs on paper */
+html[data-pdf] .aula-topbar,
+html[data-pdf] .aula-progressbar,
+html[data-pdf] [data-pdf-hide] { display: none !important; }
+
+/* Soften full-bleed bands in the preview (no viewport sangria) */
+html[data-pdf] { --measure: 150mm; --page-pad: 30mm; --pdf-page-pad-y: 15mm; }
+html[data-pdf] .aula-hero { padding-top: var(--pdf-page-pad-y) !important; padding-bottom: var(--pdf-page-pad-y) !important; }
+html[data-pdf] .aula-fullbleed {
+  padding-top: var(--pdf-page-pad-y) !important;
+  padding-bottom: var(--pdf-page-pad-y) !important;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+html[data-pdf] .aula-pagebreak-marker { display: block; height: 0; }
+html[data-pdf] .aula-parallax { padding-top: var(--pdf-page-pad-y); padding-bottom: var(--pdf-page-pad-y); }
+html[data-pdf] .aula-credits { padding-top: var(--pdf-page-pad-y); padding-bottom: var(--pdf-page-pad-y); }
+html[data-pdf] .aula-figura img,
+html[data-pdf] .aula-figura image-slot,
+html[data-pdf] .aula-parallax__frame,
+html[data-pdf] .aula-fs-print-img,
+html[data-pdf] .aula-tl-img,
+html[data-pdf] .aula-ti-fig img,
+html[data-pdf] .aula-ti-slot,
+html[data-pdf] .aula-video-print img,
+html[data-pdf] .aula-case-cover,
+html[data-pdf] .aula-case-cover-img,
+html[data-pdf] .aula-case-cover image-slot { max-height: 10cm !important; }
+html[data-pdf] .aula-figura img,
+html[data-pdf] .aula-fs-print-img img,
+html[data-pdf] .aula-tl-img img,
+html[data-pdf] .aula-ti-fig img,
+html[data-pdf] .aula-video-print img,
+html[data-pdf] .aula-case-cover-img,
+html[data-pdf] .aula-case-cover image-slot,
+html[data-pdf] .aula-figura image-slot,
+html[data-pdf] .aula-ti-slot image-slot { object-fit: contain !important; }
+html[data-pdf] .termo > .termo__pop,
+html[data-pdf] .aula-tl-chev { display: none !important; }
+html[data-pdf] .aula-tl-marker { pointer-events: none; }
+html[data-pdf] .aula-parallax.is-pdf .aula-parallax__imgwrap { inset: 0; transform: none !important; will-change: auto; }
+html[data-pdf] .aula-parallax.is-pdf .aula-parallax__img { object-fit: contain; }
+
+/* ───────── Print time ───────── */
+@media print {
+  .aula-topbar, .aula-progressbar, [data-pdf-hide] { display: none !important; }
+
+  /* Let the reading measure fill the A4 column */
+  :root { --measure: 150mm; --page-pad: 30mm; --pdf-page-pad-y: 15mm; }
+
+  html, body, #app { width: 210mm; margin: 0; background: var(--paper); font-size: 11pt; line-height: 1.5; }
+
+  /* Print the background colors and highlighter marks */
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Full-bleed bands: trim the vertical air for paper */
+  .aula-fullbleed {
+    width: 210mm !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding: var(--pdf-page-pad-y) 0 !important;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  /* .aula-hero__inner already owns the 30mm content inset. */
+  .aula-hero { padding: var(--pdf-page-pad-y) 0 !important; }
+  .aula-parallax { padding-top: var(--pdf-page-pad-y); padding-bottom: var(--pdf-page-pad-y); }
+  .aula-credits { padding-top: var(--pdf-page-pad-y) !important; padding-bottom: var(--pdf-page-pad-y) !important; }
+
+  /* Shadows and blur don't print cleanly — drop them, keep a hairline */
+  * { box-shadow: none !important; backdrop-filter: none !important; }
+  .aula-card, .aula-destaque, .aula-reflexao, .aula-video-print,
+  .aula-audio-print, .aula-flashcard-print {
+    border: 1px solid var(--rule) !important;
+  }
+  .aula-topic > .aula-topic-item[data-type="tabela"] { width: 100% !important; }
+  .aula-tabela-wrap { padding: 10px !important; overflow: visible !important; }
+  .aula-tabela { min-width: 0 !important; }
+  /* White Pitaco bubble loses its shadow on paper — give it a hairline */
+  .aula-pitaco > div:last-child { border: 1px solid var(--rule) !important; }
+
+  /* Keep visual and interactive units intact. Text containers may flow
+     across pages; each individual paragraph remains together below. */
+  figure, table,
+  .aula-flashcard-print,
+  .aula-quiz-q, .aula-video-print, .aula-audio-print,
+  .aula-fs-print-item, .aula-tl-event,
+  .aula-case-card, .aula-feature, .aula-material-item,
+  .aula-figura, .aula-texto-imagem, .aula-pdf-glossary li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .aula-figura img, .aula-figura image-slot,
+  .aula-parallax__frame, .aula-fs-print-img,
+  .aula-tl-img, .aula-ti-fig img, .aula-ti-slot,
+  .aula-video-print img, .aula-case-cover,
+  .aula-case-cover-img, .aula-case-cover image-slot {
+    max-height: 10cm !important;
+  }
+  .aula-figura img, .aula-fs-print-img img, .aula-tl-img img,
+  .aula-ti-fig img, .aula-video-print img, .aula-case-cover-img,
+  .aula-case-cover image-slot,
+  .aula-figura image-slot, .aula-ti-slot image-slot {
+    object-fit: contain !important;
+  }
+
+  .termo { cursor: inherit; }
+  .termo > .termo__pop { display: none !important; }
+  .aula-tl-marker { pointer-events: none; }
+  .aula-tl-chev { display: none !important; }
+  .aula-parallax.is-pdf .aula-parallax__imgwrap { inset: 0; transform: none !important; will-change: auto; }
+  .aula-parallax.is-pdf .aula-parallax__img { object-fit: contain; }
+
+  /* Titles never orphaned at the foot of a page */
+  h1, h2, h3, h4 { break-after: avoid; page-break-after: avoid; }
+  p {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    orphans: 3;
+    widows: 3;
+  }
+  li { orphans: 3; widows: 3; }
+
+  /* Optional: start a section on a fresh page */
+  .aula-pagebreak-before { break-before: page; page-break-before: always; }
+  .aula-pagebreak-marker { display: block !important; height: 0; }
+
+  /* Links inherit ink; the href is already printed by RecursoLink */
+  a { color: var(--ink); text-decoration-color: var(--rule-strong); }
+}

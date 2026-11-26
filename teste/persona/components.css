@@ -1,0 +1,122 @@
+/* ============================================================
+   Persona (Privy) — COMPONENT ANATOMY
+   ------------------------------------------------------------
+   Overrides dos tokens --c-* (defaults Aula em /components.css),
+   na gramática visual do Persona Design System:
+   · Cards → quase-brancos (gray.0) sobre ground gray.5, com
+     borda subtle + sombra sm e raio amplo (estilo dashboard).
+   · Callouts → Banner Persona: fundo tint "0" da hue, borda
+     1px no tom 10, raio médio, ícone bare colorido, SEM filete.
+   · Botões → azul sólido #008AFF, raio 8px (padrão Persona).
+   · Citação → filete azul, alinhada à esquerda, sans.
+   · Interação/seleção/progresso → azul accent.
+   O que NÃO está declarado aqui cai nos defaults do Aula.
+   ============================================================ */
+
+:root {
+  /* Acento de interação/progresso — azul accent Persona */
+  --c-accent: var(--ocean);
+
+  /* Cards: gray.0 com borda subtle + sombra sm, raio amplo */
+  --c-card-bg: var(--bone);
+  --c-card-border: 1px solid var(--rule);
+  --c-card-radius: var(--r-xl);
+  --c-card-shadow: var(--sh-1);
+  --c-media-radius: var(--r-lg);
+
+  /* Botões Persona: azul sólido, raio 8px */
+  --c-btn-radius: var(--r-md);
+  --c-btn-primary-bg: var(--ocean);
+  --c-btn-primary-fg: #ffffff;
+  --c-chip-radius: var(--r-md);
+
+  /* Rótulo de callout: sentence-case 14px/600 (estilo banner) */
+  --c-callout-label-size: 14px;
+  --c-callout-label-weight: 600;
+  --c-callout-label-ls: 0;
+  --c-callout-label-transform: none;
+
+  /* DESTAQUE → banner "success" (green.0 / green.10) */
+  --c-dest-bg: var(--sage-soft);
+  --c-dest-border: 1px solid #BEEDCA;            /* green.10 */
+  --c-dest-border-left: 1px solid #BEEDCA;
+  --c-dest-radius: var(--r-lg);
+  --c-dest-shadow: none;
+  --c-dest-pad: 20px 24px;
+  --c-dest-icon-bg: transparent;
+  --c-dest-icon-color: #2CA94C;                  /* green.50 */
+  --c-dest-icon-box: 22px;
+  --c-dest-icon-box-radius: 0;
+  --c-dest-icon-size: 20px;
+  --c-dest-icon-stroke: 2;
+  --c-dest-label-color: var(--ink);
+
+  /* ATENÇÃO → banner "warning" (orange.0 / orange.10) */
+  --c-aten-bg: var(--marigold-soft);
+  --c-aten-border: 1px solid #FFE0AD;            /* orange.10 */
+  --c-aten-border-left: 1px solid #FFE0AD;
+  --c-aten-radius: var(--r-lg);
+  --c-aten-shadow: none;
+  --c-aten-pad: 20px 24px;
+  --c-aten-icon-bg: transparent;
+  --c-aten-icon-color: #D98600;                  /* orange.50 */
+  --c-aten-icon-box: 22px;
+  --c-aten-icon-box-radius: 0;
+  --c-aten-icon-size: 20px;
+  --c-aten-icon-stroke: 2;
+  --c-aten-label-color: var(--ink);
+
+  /* REFLEXÃO → banner roxo (purple.0 / purple.10), texto sans */
+  --c-refl-bg: var(--lavender-soft);
+  --c-refl-border: 1px solid #D6ADFF;            /* purple.10 */
+  --c-refl-border-left: 1px solid #D6ADFF;
+  --c-refl-radius: var(--r-lg);
+  --c-refl-shadow: none;
+  --c-refl-pad: 20px 24px 22px;
+  --c-refl-icon-bg: transparent;
+  --c-refl-icon-color: #6D00D9;                  /* purple.50 */
+  --c-refl-icon-box: 22px;
+  --c-refl-icon-box-radius: 0;
+  --c-refl-icon-size: 20px;
+  --c-refl-icon-stroke: 2;
+  --c-refl-label-color: var(--ink);
+  --c-refl-q-font: var(--font-sans);
+  --c-refl-q-style: normal;
+
+  /* CITAÇÃO → alinhada à esquerda, sans, filete azul */
+  --c-cit-mark-display: none;
+  --c-cit-align: left;
+  --c-cit-font: var(--font-sans);
+  --c-cit-style: normal;
+  --c-cit-border-left: 3px solid var(--ocean);
+  --c-cit-pad-left: 24px;
+  --c-cit-q-margin: 0 0 18px;
+
+  /* QUIZ — card amplo, opções raio 8, seleção azul */
+  --c-quiz-radius: var(--r-xl);
+  --c-quiz-opt-radius: var(--r-md);
+  --c-quiz-opt-border: 1px solid var(--rule-strong);
+  --c-quiz-accent: var(--ocean);
+
+  /* FLASHCARDS — cartões com sombra md (flutuam sobre o ground) */
+  --c-flash-radius: var(--r-xl);
+  --c-flash-shadow: var(--sh-2);
+
+  /* MATERIAIS — card gray.0 com borda subtle */
+  --c-mat-bg: var(--bone);
+  --c-mat-border: 1px solid var(--rule);
+  --c-mat-radius: var(--r-xl);
+  --c-mat-item-radius: var(--r-md);
+
+  /* FEATURE GRID — badges arredondados (squircle 12px) */
+  --c-feature-badge-radius: var(--r-lg);
+
+  /* PITACO — balão quase-branco com borda subtle */
+  --c-bubble-bg: var(--bone);
+  --c-bubble-radius: var(--r-xl);
+
+  /* HERO — azul accent no eyebrow e avatar */
+  --c-hero-eyebrow-color: #0075D9;               /* blue.50 */
+  --c-hero-eyebrow-icon: var(--ocean);
+  --c-hero-avatar-bg: var(--ocean);
+}

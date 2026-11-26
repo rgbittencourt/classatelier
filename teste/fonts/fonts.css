@@ -1,0 +1,59 @@
+/* Aula Design System — canonical variable webfonts.
+   One file per family/style replaces the former weight-specific duplicates. */
+
+@font-face {
+  font-family: 'Newsreader';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url(./Newsreader-VariableFont_opsz_wght.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Newsreader';
+  font-style: italic;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url(./Newsreader-Italic-VariableFont_opsz_wght.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Geist';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(./Geist-VariableFont_wght.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Geist';
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url(./Geist-Italic-VariableFont_wght.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url(./JetBrainsMono-VariableFont_wght.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: italic;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url(./JetBrainsMono-Italic-VariableFont_wght.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 200 800;
+  font-stretch: 75% 100%;
+  font-display: swap;
+  src: url(./BricolageGrotesque-VariableFont_opsz_wdth_wght.ttf) format('truetype');
+}
