@@ -4,12 +4,20 @@ Este repositório tem o ClassAtelier. O ClassAcervo, que morava aqui na pasta `a
 
 | Aplicativo | Versão atual | Onde o número aparece |
 |---|---|---|
-| ClassAtelier | **1.36.2** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
-| ClassAcervo | **1.2.1** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
+| ClassAtelier | **1.37.0** | canto da paleta de blocos (ao lado do nome) e `window.CLASSATELIER_VERSION`, definido em `boot.js` |
+| ClassAcervo | **1.5.0** | repositório próprio: [`rgbittencourt/classacervo`](https://github.com/rgbittencourt/classacervo) |
 
 Ao mudar a versão do ClassAtelier, altere os dois lugares e a data abaixo.
 
 ## ClassAtelier
+
+### 1.37.0 · 26/11/2026 · Montar o curso: ordem já publicada e numeração pela ordem do curso
+
+- **Começa na ordem já publicada.** Em «Publicar no GitHub», com conta, repositório, pasta e token preenchidos, o ClassAtelier lê a página do curso que já está no GitHub e põe a lista nessa ordem; aulas novas ficam no fim. Assim, publicar de novo não troca o conteúdo de `aula-02.html` e `aula-03.html` sem querer.
+- **Aviso de endereço que muda.** Se a ordem escolhida faz alguma aula mudar de `aula-NN.html`, aparece a lista «aula-02.html → aula-03.html…» com o botão «Voltar à ordem publicada»; ao publicar assim mesmo, o ClassAtelier pede confirmação (os links já colados no Moodle passam a abrir outra aula).
+- **Numerar as aulas pela ordem do curso (1, 2, 3…).** Grava o número da posição em cada aula (`meta.weekNumber` e o rótulo «Aula N»/«Semana N»), no pacote e na Biblioteca. Vem marcado sozinho quando há números repetidos ou faltando, o que acontece quando o curso junta conjuntos de aulas gerados separadamente no ClassAuthor. Cada linha mostra «Aula 1 → 3».
+- **Atualizar também as referências no texto.** Com a numeração ligada, os trechos como «na Aula 1», «AULA 2» ou «Aulas 1 e 2» passam a citar o número novo, dentro de cada conjunto de aulas (mesmo nome de curso no ClassAuthor). «ver os trechos» mostra cada troca antes de publicar; só troca com maiúscula («nesta aula 2 exemplos» fica como está) e não mexe em links, ids nem imagens.
+- **Publicar no GitHub tira os projetos com o número antigo.** Ao publicar, um `projetos/Aula01-titulo…` que virou `Aula03-titulo…` sai do repositório, em vez de ficar duplicado.
 
 ### 1.36.2 · 15/11/2026 · «Termos e links» encontra mais links e desmarcar o termo funciona
 
