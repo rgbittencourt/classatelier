@@ -390,6 +390,16 @@ function ClassAtelierApp() {
   };
 
   const commit = (next) => { pushHistory(); setLesson(window.autoNumberEquations ? window.autoNumberEquations(next) : next); };
+  // Montar o curso numerou as aulas pela ordem (e talvez trocou referências no texto): grava na Biblioteca e,
+  // se uma delas é a aula aberta, atualiza o editor (senão o salvamento automático voltaria o número antigo).
+  const saveRenumbered = async (items) => {
+    let n = 0;
+    for (const e of items) {
+      try { await libPut(makeLibEntry(e.id, e.lesson, e.source)); n++; } catch (err) {}
+      if (e.id === curRef.current.id) { pushHistory(); setLesson(JSON.parse(JSON.stringify(e.lesson))); }
+    }
+    if (n) showToast(n === 1 ? "Número da aula atualizado na Biblioteca." : "Números de " + n + " aulas atualizados na Biblioteca.");
+  };
 
   // Children of a topic share its band; a topic-child id is found by scanning
   // each topic's props.children. These helpers keep root + child ops uniform.
@@ -1167,7 +1177,7 @@ function ClassAtelierApp() {
         onNew={async () => { await switchTo(emptyLesson(), newLessonId(), null); setLibOpen(false); setMode("edit"); }}
         onImport={window.Importador ? () => { setLibOpen(false); setImportOpen(true); } : null}
         onCourse={(entries) => setCourseEntries(entries)} />}
-      {courseEntries && <CourseDialog entries={courseEntries} onMoodle={(links) => setMoodle({ links })} onClose={() => setCourseEntries(null)} onCheck={(title, load) => setScormCheck({ title, load })}
+      {courseEntries && <CourseDialog entries={courseEntries} onRenumbered={saveRenumbered} onMoodle={(links) => setMoodle({ links })} onClose={() => setCourseEntries(null)} onCheck={(title, load) => setScormCheck({ title, load })}
         onConfirm={async (opts) => { try { await (opts.format === "site" ? window.downloadCourseSite : window.downloadCourseSCORM)(opts.lessons, opts); setCourseEntries(null); showToast("Pacote do curso gerado."); } catch (e) { alert("Erro ao gerar o pacote do curso: " + e.message); } }} />}
       {presenting && window.PresentMode && <window.PresentMode lesson={lesson} startAt={presenting.at} onClose={() => setPresenting(null)} />}
       {slidesOpen && window.SlidesDialog && <window.SlidesDialog lesson={lesson} onClose={() => setSlidesOpen(false)} />}
@@ -1368,8 +1378,14 @@ function LibraryDialog({ currentId, preselectCurrent, onClose, onOpen, onNew, on
   );
 }
 
-function CourseDialog({ entries, onClose, onConfirm, onCheck, onMoodle }) {
+function CourseDialog({ entries, onClose, onConfirm, onCheck, onMoodle, onRenumbered }) {
   const [list, setList] = useStateA(entries);
+  // Numeração pela ordem do curso: ligada sozinha quando os números repetem ou faltam (conjuntos gerados separadamente).
+  const [numbering, setNumbering] = useStateA(() => window.courseNumbersNeedFix(entries.map((e) => e.lesson)));
+  const [refsOn, setRefsOn] = useStateA(true);
+  const [showRefs, setShowRefs] = useStateA(false);
+  const [site, setSite] = useStateA({ state: "idle", entries: null, error: "" }); // página do curso já publicada
+  const appliedRef = useRefA(false); // a ordem publicada só é aplicada sozinha uma vez
   const [title, setTitle] = useStateA("");
   const [version, setVersion] = useStateA("1.2");
   const [format, setFormat] = useStateA("site");
@@ -1386,9 +1402,12 @@ function CourseDialog({ entries, onClose, onConfirm, onCheck, onMoodle }) {
   const [pubError, setPubError] = useStateA("");
   const publish = async () => {
     if (!title.trim()) { alert("Dê um nome ao curso."); return; }
+    if (!confirmChanges()) return;
     setBusy(true); setPubError(""); setPublished(null); setProgress("Começando…");
     try {
-      const res = await window.publishCourseToGitHub(list.map((e) => e.lesson), { title: title.trim(), ...gh }, setProgress);
+      const res = await window.publishCourseToGitHub(outLessons, { title: title.trim(), ...gh }, setProgress);
+      saveNumbers();
+      setSite((s) => ({ ...s, entries: outLessons.map((L, i) => ({ href: "aula-" + String(i + 1).padStart(2, "0") + ".html", title: (L.meta && L.meta.title) || "" })) }));
       try {
         const keep = { owner: gh.owner, repo: gh.repo, branch: gh.branch, folder: gh.folder, createRepo: gh.createRepo, enablePages: gh.enablePages };
         if (gh.remember) keep.token = gh.token;
@@ -1399,15 +1418,40 @@ function CourseDialog({ entries, onClose, onConfirm, onCheck, onMoodle }) {
     finally { setBusy(false); setProgress(""); }
   };
   const copy = (text) => { try { navigator.clipboard.writeText(text); } catch (e) {} };
+  // O que vai para o pacote: aulas com o número da posição e as referências no texto atualizadas (se ligado).
+  const plan = React.useMemo(() => window.courseNumberingPlan(list.map((e) => e.lesson)), [list]);
+  const outLessons = React.useMemo(() => list.map((e, i) => numbering ? window.withLessonNumber(refsOn ? plan[i].refs.lesson : e.lesson, plan[i].n) : e.lesson), [list, plan, numbering, refsOn]);
+  const refHits = numbering ? plan.reduce((n, r) => n + r.refs.hits.length, 0) : 0;
+  const numbersChange = numbering && plan.some((r) => r.old !== r.n);
+  const changes = site.entries ? window.addressChanges(list, site.entries, (e) => e.title) : [];
+  // Ao publicar numa pasta que já tem o curso: lê a página publicada e começa a lista na ordem de lá.
+  const ghKey = format === "github" && gh.token && gh.owner && gh.repo ? [gh.owner, gh.repo, gh.branch, gh.folder, gh.token].join("|") : "";
+  useEffectA(() => {
+    if (!ghKey) return;
+    let alive = true;
+    const t = setTimeout(async () => {
+      setSite((s) => ({ ...s, state: "loading", error: "" }));
+      try {
+        const res = await window.fetchPublishedCourse(gh);
+        if (!alive) return;
+        const pub = (res && res.entries) || [];
+        if (pub.length && !appliedRef.current) { appliedRef.current = true; setList((L) => window.orderLikePublished(L, pub, (e) => e.title)); }
+        setSite({ state: "ok", entries: pub, error: "" });
+      } catch (e) { if (alive) setSite((s) => ({ ...s, state: "error", error: e.message || String(e) })); }
+    }, 700);
+    return () => { alive = false; clearTimeout(t); };
+  }, [ghKey]);
+  const saveNumbers = () => { if (numbering && (numbersChange || (refsOn && refHits)) && onRenumbered) onRenumbered(list.map((e, i) => ({ ...e, lesson: outLessons[i] }))); };
+  const confirmChanges = () => !changes.length || window.confirm("Estas aulas vão mudar de endereço no site:\n\n" + changes.map((c) => "• " + c.title + ": " + c.was + " → " + c.now).join("\n") + "\n\nLinks já colados no Moodle para esses endereços passam a abrir outra aula. Publicar assim mesmo?");
   const move = (i, d) => setList((L) => { const n = L.slice(); const j = i + d; if (j < 0 || j >= n.length) return L; [n[i], n[j]] = [n[j], n[i]]; return n; });
   const checkCourse = () => {
     if (!title.trim()) { alert("Dê um nome ao curso."); return; }
-    onCheck(title.trim() + " (SCORM " + version + ")", async () => (await window.buildCourseSCORMBlob(list.map((e) => e.lesson), { title: title.trim(), version })).blob);
+    onCheck(title.trim() + " (SCORM " + version + ")", async () => (await window.buildCourseSCORMBlob(outLessons, { title: title.trim(), version })).blob);
   };
   const go = async () => {
     if (!title.trim()) { alert("Dê um nome ao curso."); return; }
     setBusy(true);
-    try { await onConfirm({ title: title.trim(), version, format, lessons: list.map((e) => e.lesson) }); } finally { setBusy(false); }
+    try { await onConfirm({ title: title.trim(), version, format, lessons: outLessons }); saveNumbers(); } finally { setBusy(false); }
   };
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 10001, background: "rgba(20,20,28,0.42)", display: "grid", placeItems: "center" }} onClick={onClose}>
@@ -1425,11 +1469,33 @@ function CourseDialog({ entries, onClose, onConfirm, onCheck, onMoodle }) {
                 <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", border: "1px solid var(--tool-line)", borderRadius: 9, background: "var(--tool-surface)" }}>
                   <span style={{ fontSize: 12, fontWeight: 700, color: "var(--tool-ink-3)", width: 20 }}>{String(i + 1).padStart(2, "0")}</span>
                   <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{e.title}</span>
+                  {plan[i] && (plan[i].old || numbering) ? <span title={numbering && plan[i].old !== plan[i].n ? "Número salvo na aula hoje → número na ordem do curso" : "Número salvo na aula"} style={{ fontSize: 11, fontWeight: 700, whiteSpace: "nowrap", padding: "2px 7px", borderRadius: 999, background: numbering && plan[i].old !== plan[i].n ? "#fdf0e3" : "var(--tool-surface-2, #eee)", color: numbering && plan[i].old !== plan[i].n ? "#9a4a12" : "var(--tool-ink-3)" }}>{plan[i].unit} {numbering && plan[i].old !== plan[i].n ? (plan[i].old || "?") + " → " + plan[i].n : plan[i].old}</span> : null}
                   <button onClick={() => move(i, -1)} disabled={i === 0} title="Subir" style={{ ...ghostBtn, width: 28, height: 28, opacity: i === 0 ? 0.35 : 1 }}><window.TIcon name="up" size={14} /></button>
                   <button onClick={() => move(i, 1)} disabled={i === list.length - 1} title="Descer" style={{ ...ghostBtn, width: 28, height: 28, opacity: i === list.length - 1 ? 0.35 : 1 }}><window.TIcon name="down" size={14} /></button>
                 </div>
               ))}
             </div>
+          </div>
+          {format === "github" && site.state === "loading" && <p style={{ ...menuSub, margin: "-6px 0 12px" }}>Lendo no GitHub a ordem já publicada…</p>}
+          {format === "github" && site.state === "ok" && site.entries && site.entries.length > 0 && <p style={{ ...menuSub, margin: "-6px 0 12px" }}>A lista começou na <b>ordem já publicada</b> nesta pasta do GitHub ({site.entries.length} aula{site.entries.length === 1 ? "" : "s"}). Aulas novas ficam no fim.</p>}
+          {format === "github" && site.state === "error" && <p style={{ ...menuSub, margin: "-6px 0 12px", color: "#8a2f18" }}>Não consegui ler a ordem já publicada: {site.error}</p>}
+          {changes.length > 0 && (
+            <div role="alert" style={{ margin: "-4px 0 14px", padding: "10px 12px", borderRadius: 9, background: "#fdecea", color: "#8a2f18", fontSize: 12.5, lineHeight: 1.5 }}>
+              <b>Atenção: {changes.length === 1 ? "uma aula muda" : changes.length + " aulas mudam"} de endereço em relação ao que está publicado.</b> Links já colados no Moodle passam a abrir outra aula.
+              <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>{changes.map((c) => <li key={c.title}>{c.title}: <code>{c.was}</code> → <code>{c.now}</code></li>)}</ul>
+              <button onClick={() => setList((L) => window.orderLikePublished(L, site.entries, (e) => e.title))} style={{ ...ghostBtn, marginTop: 8, fontSize: 12, padding: "4px 10px", height: "auto", width: "auto", background: "#fff" }}>Voltar à ordem publicada</button>
+            </div>
+          )}
+          <div style={{ marginBottom: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+            <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12.5 }}><input type="checkbox" checked={numbering} onChange={(e) => setNumbering(e.target.checked)} style={{ marginTop: 2 }} /><span><b>Numerar as aulas pela ordem do curso</b> (1, 2, 3…). Grava o número em cada aula (também na Biblioteca), e é ele que dá nome aos arquivos de <code>projetos/</code>.{window.courseNumbersNeedFix(list.map((e) => e.lesson)) ? " Recomendado: hoje há números repetidos ou faltando." : ""}</span></label>
+            {numbering && refHits > 0 && (
+              <div style={{ marginLeft: 24 }}>
+                <label style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12.5 }}><input type="checkbox" checked={refsOn} onChange={(e) => setRefsOn(e.target.checked)} style={{ marginTop: 2 }} /><span><b>Atualizar também as referências no texto</b>: {refHits} trecho{refHits === 1 ? "" : "s"} como «na Aula 1» passam a citar o número novo, dentro de cada conjunto de aulas. <button onClick={() => setShowRefs((v) => !v)} style={{ border: 0, background: "none", color: "var(--tool-accent, #2b5fb3)", cursor: "pointer", padding: 0, fontSize: 12.5, textDecoration: "underline" }}>{showRefs ? "esconder" : "ver os trechos"}</button></span></label>
+                {showRefs && <div style={{ marginTop: 6, maxHeight: 180, overflow: "auto", border: "1px solid var(--tool-line)", borderRadius: 8, padding: "8px 10px", background: "#fff", fontSize: 12, lineHeight: 1.5 }}>
+                  {plan.map((r, i) => r.refs.hits.length ? <div key={i} style={{ marginBottom: 6 }}><b>{list[i].title}</b> ({r.refs.hits.length}): {[...new Set(r.refs.hits.map((h) => h.from + " → " + h.to))].join(" · ")}</div> : null)}
+                </div>}
+              </div>
+            )}
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={dlgLabel}>Formato</label>
@@ -1465,7 +1531,7 @@ function CourseDialog({ entries, onClose, onConfirm, onCheck, onMoodle }) {
               {busy && progress && <div style={{ fontSize: 12.5, color: "var(--tool-ink-2)" }}>{progress}</div>}
               {published && (
                 <div style={{ padding: "12px 14px", borderRadius: 10, background: "#e8f5ee", color: "#1b4d36", fontSize: 12.5, lineHeight: 1.55 }}>
-                  <div style={{ fontWeight: 700, marginBottom: 4 }}>{published.sent ? "Publicado: " + published.sent + " arquivo(s) novo(s) ou alterado(s) enviado(s)" + (published.total > published.sent ? "; os outros " + (published.total - published.sent) + " já estavam iguais no GitHub." : ".") : "Nada mudou: tudo já estava publicado."}</div>
+                  <div style={{ fontWeight: 700, marginBottom: 4 }}>{published.sent ? "Publicado: " + published.sent + " arquivo(s) novo(s) ou alterado(s) enviado(s)" + (published.total > published.sent ? "; os outros " + (published.total - published.sent) + " já estavam iguais no GitHub." : ".") : (published.removed && published.removed.length ? "Publicado." : "Nada mudou: tudo já estava publicado.")}{published.removed && published.removed.length ? " Removido(s) " + published.removed.length + " arquivo(s) de projeto com o número antigo das mesmas aulas." : ""}</div>
                   <div style={{ marginBottom: 6 }}>GitHub Pages: {published.pages}. {published.pagesHint ? published.pagesHint : /desligado|não consegui/.test(published.pages) ? "Em Settings → Pages do repositório, escolha a branch e a pasta raiz." : "O site pode levar alguns minutos para aparecer na primeira vez."}</div>
                   {published.links.map((l) => (
                     <div key={l.url} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>

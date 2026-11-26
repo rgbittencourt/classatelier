@@ -720,6 +720,116 @@ async function buildCourseSCORMBlob(lessons, opts) {
   return { blob, name: lessonSlug(opts.title) };
 }
 
+// ── Ordem e numeração do curso ──
+// O número de cada aula mora em meta.weekNumber/meta.weekLabel (o ClassAuthor grava ao gerar). Conjuntos de aulas
+// gerados separadamente começam todos do 1; ao montar o curso, dá para numerar pela posição (1, 2, 3…).
+const unitOfLesson = (L) => { const m = (L && L.meta) || {}; return m.unit === "aula" || /^aula\b/i.test(String(m.weekLabel || "")) ? "Aula" : "Semana"; };
+function lessonNumber(L) {
+  const m = (L && L.meta) || {};
+  const n = Number(m.weekNumber) || 0;
+  if (n) return n;
+  const found = /(?:semana|aula)\s*0*(\d+)/i.exec(String(m.weekLabel || ""));
+  return found ? Number(found[1]) : 0;
+}
+// Cópia da aula com o número novo (o rótulo mantém o resto, ex.: «Semana 3 · 10/03» → «Semana 5 · 10/03»).
+function withLessonNumber(L, n) {
+  const out = JSON.parse(JSON.stringify(L)); out.meta = out.meta || {};
+  const unit = unitOfLesson(out);
+  out.meta.weekNumber = n;
+  const label = String(out.meta.weekLabel || "");
+  out.meta.weekLabel = /^(semana|aula)\s*\d+/i.test(label) ? label.replace(/^(semana|aula)\s*\d+/i, (all, w) => w + " " + n) : unit + " " + n;
+  return out;
+}
+// Os números atuais repetem ou pulam? (então vale numerar pela ordem do curso)
+function courseNumbersNeedFix(lessons) {
+  const nums = lessons.map(lessonNumber);
+  return nums.some((n) => !n) || new Set(nums).size !== nums.length;
+}
+// Referências no texto («veremos na Aula 2», «AULA 1», «Aulas 1 e 2»): dentro de cada conjunto (mesmo meta.courseTitle),
+// o número antigo vira o novo. Não mexe em ids, links nem imagens.
+const REF_SP = "(?:\\s|&nbsp;|\\u00a0)+";
+// Só com maiúscula («Aula 2», «AULA 2», «Semana 2»): «nesta aula 2 exemplos» não é referência a outra aula.
+const REF_RE = new RegExp("\\b(Aulas?|AULAS?|Semanas?|SEMANAS?)(" + REF_SP + ")(\\d{1,3})((?:(?:\\s*,\\s*|" + REF_SP + "(?:e|a|ou)" + REF_SP + ")\\d{1,3})*)(?![\\d.,]\\d)", "g");
+const REF_SKIP_KEY = /^(id|type|src|href|url|link|image|svg|dataUri|poster|file|fileName|bg|pad|level|variant|theme|icon)$/i;
+function renumberText(str, map, hits) {
+  return str.replace(REF_RE, (all, word, sp, first, rest) => {
+    const conv = (d) => (map.has(Number(d)) ? String(map.get(Number(d))) : d);
+    const out = word + sp + conv(first) + rest.replace(/\d{1,3}/g, conv);
+    if (out !== all && hits) hits.push({ from: all.replace(/&nbsp;| /g, " "), to: out.replace(/&nbsp;| /g, " ") });
+    return out;
+  });
+}
+function renumberValue(v, map, hits, key) {
+  if (typeof v === "string") return key && REF_SKIP_KEY.test(key) || /^(?:data:|https?:|blob:)/i.test(v) ? v : renumberText(v, map, hits);
+  if (Array.isArray(v)) return v.map((x) => renumberValue(x, map, hits));
+  if (v && typeof v === "object") { const o = {}; for (const k of Object.keys(v)) o[k] = renumberValue(v[k], map, hits, k); return o; }
+  return v;
+}
+// Para cada aula: quantos trechos mudariam e a aula já com o texto trocado. map: Map(número antigo → novo) do conjunto dela.
+function renumberLessonRefs(L, map) {
+  const hits = [];
+  const blocks = renumberValue((L && L.blocks) || [], map, hits);
+  return { lesson: { ...L, blocks }, hits };
+}
+// Plano completo: números novos pela posição e, por conjunto, o que muda no texto.
+function courseNumberingPlan(lessons) {
+  const groups = new Map(); // courseTitle -> Map(antigo -> novo)
+  const rows = lessons.map((L, i) => {
+    const old = lessonNumber(L); const n = i + 1;
+    const g = String((L.meta && L.meta.courseTitle) || "");
+    if (!groups.has(g)) groups.set(g, new Map());
+    if (old && !groups.get(g).has(old)) groups.get(g).set(old, n);
+    return { old, n, unit: unitOfLesson(L), group: g };
+  });
+  rows.forEach((r, i) => {
+    const map = new Map([...groups.get(r.group)].filter(([a, b]) => a !== b));
+    r.refs = map.size ? renumberLessonRefs(lessons[i], map) : { lesson: lessons[i], hits: [] };
+  });
+  return rows;
+}
+// Página do curso já publicada: [{ href: "aula-01.html", title }] na ordem em que aparece.
+function parsePublishedIndex(html) {
+  const out = []; const re = /<li\b[^>]*>[\s\S]*?<\/li>/gi; let m;
+  while ((m = re.exec(String(html || "")))) {
+    const a = /<a\b[^>]*?\bhref\s*=\s*(["'])([^"'#?]+)\1/i.exec(m[0]); if (!a) continue;
+    let href = a[2].replace(/^\.\//, ""); try { href = decodeURIComponent(href); } catch (e) {}
+    if (href.includes("/") || !/\.html?$/i.test(href) || /^index\.html$/i.test(href)) continue;
+    const st = /<strong[^>]*>([\s\S]*?)<\/strong>/i.exec(m[0]);
+    const title = (st ? st[1] : m[0]).replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
+    out.push({ href, title });
+  }
+  return out;
+}
+const titleKey = (t) => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+// Lê do GitHub a página do curso que já está publicada na pasta (só leitura). null se não houver.
+async function fetchPublishedCourse(opts) {
+  const token = String(opts.token || "").trim(), owner = String(opts.owner || "").trim().replace(/^@/, ""), repo = String(opts.repo || "").trim().replace(/\.git$/, "");
+  const folder = String(opts.folder || "").trim().replace(/^\/+|\/+$/g, ""); const branch = String(opts.branch || "").trim() || "main";
+  if (!token || !owner || !repo) return null;
+  const path = (folder ? folder.split("/").map(encodeURIComponent).join("/") + "/" : "") + "index.html";
+  let file;
+  try { file = await ghApi(token, "GET", `/repos/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(branch)}`); }
+  catch (e) { if (e.status === 404) return { entries: [] }; throw e; }
+  if (!file || !file.content) return { entries: [] };
+  const bin = atob(String(file.content).replace(/\s/g, ""));
+  const html = new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0)));
+  return { entries: parsePublishedIndex(html) };
+}
+// Põe a lista na ordem publicada: as aulas que já estão no site, na ordem de lá; as novas, no fim.
+function orderLikePublished(list, published, titleOf) {
+  const pos = new Map(published.map((p, i) => [titleKey(p.title), i]));
+  const inSite = list.filter((e) => pos.has(titleKey(titleOf(e)))).sort((a, b) => pos.get(titleKey(titleOf(a))) - pos.get(titleKey(titleOf(b))));
+  const fresh = list.filter((e) => !pos.has(titleKey(titleOf(e))));
+  return inSite.concat(fresh);
+}
+// Aulas que mudariam de endereço em relação ao que está publicado.
+function addressChanges(list, published, titleOf) {
+  const byTitle = new Map(published.map((p) => [titleKey(p.title), p.href]));
+  const out = [];
+  list.forEach((e, i) => { const was = byTitle.get(titleKey(titleOf(e))); const now = "aula-" + String(i + 1).padStart(2, "0") + ".html"; if (was && was !== now) out.push({ title: titleOf(e), was, now }); });
+  return out;
+}
+
 // ── Site do curso (GitHub Pages): aula-01.html, aula-02.html… + índice, com endereços estáveis ──
 async function buildCourseSiteFiles(lessons, opts) {
   if (!lessons || !lessons.length) throw new Error("Escolha pelo menos uma aula.");
@@ -781,7 +891,7 @@ No Moodle, adicione cada link como recurso **URL** (ou incorpore em uma Página/
 ## Atualizar
 Gere o pacote de novo no ClassAtelier e substitua os arquivos no repositório. Os endereços (\`aula-01.html\`, \`aula-02.html\`…) seguem a **ordem das aulas**: mantendo a ordem, os links no Moodle continuam valendo.
 
-A pasta \`projetos/\` guarda o arquivo \`SemanaNN-título-ClassAtelier.json\` de cada aula, para reabrir e editar no ClassAtelier.
+A pasta \`projetos/\` guarda o arquivo \`SemanaNN-título-ClassAtelier.json\` (ou \`AulaNN-…\`) de cada aula, para reabrir e editar no ClassAtelier.
 `);
   return zip.files;
 }
@@ -909,6 +1019,19 @@ async function publishCourseToGitHub(lessons, opts, onProgress) {
     sent++;
   }
 
+  // Limpeza: a mesma aula com outro número em projetos/ (ex.: Aula01-titulo… depois de virar Aula03-titulo…).
+  // Imagens antigas não são apagadas: uma aula pode apontar para elas pelo endereço.
+  const removed = [];
+  const newPaths = new Set(files.map((f) => prefix + f.path));
+  const projRe = /^(?:Semana|Aula)\d+-(.+)-ClassAtelier\.json$/i;
+  const slugs = new Set(files.map((f) => { const m = /^projetos\/(.+)$/.exec(f.path); const r = m && projRe.exec(m[1]); return r ? r[1] : null; }).filter(Boolean));
+  existing.forEach((sha, path) => {
+    if (!path.startsWith(prefix) || newPaths.has(path)) return;
+    const rel = path.slice(prefix.length);
+    const pm = /^projetos\/([^/]+)$/.exec(rel); const pr = pm && projRe.exec(pm[1]);
+    if (pr && slugs.has(pr[1])) { entries.push({ path, mode: "100644", type: "blob", sha: null }); removed.push(rel); }
+  });
+
   let commitUrl = null;
   if (entries.length) {
     say("Gravando a publicação…");
@@ -946,7 +1069,7 @@ async function publishCourseToGitHub(lessons, opts, onProgress) {
   }
 
   const links = [{ label: "Página do curso", url: base + "index.html" }].concat(files.filter((f) => /^aula-\d+\.html$/.test(f.path)).map((f, i) => ({ label: (lessons[i] && lessons[i].meta && lessons[i].meta.title) || "Aula " + String(i + 1).padStart(2, "0"), url: base + f.path })));
-  return { sent, total: files.length, commitUrl, pages, pagesHint, links, repoUrl: `https://github.com/${owner}/${repo}`, branch };
+  return { sent, total: files.length, removed, commitUrl, pages, pagesHint, links, repoUrl: `https://github.com/${owner}/${repo}`, branch };
 }
 
 // ── Pacote de entrega: tudo da aula em um único ZIP, com LEIA-ME que diz o que falta ──
@@ -1039,4 +1162,4 @@ async function downloadDelivery(lesson) {
   saveBlob(blob, name + "-entrega.zip");
 }
 
-Object.assign(window, { buildDeliveryBlob, downloadDelivery, deliveryReadme, buildSCORMBlob, buildCourseSCORMBlob, projectFileName, downloadExport, downloadStandaloneHTML, buildExportHTML, downloadSCORM, downloadCourseSCORM, downloadCourseSite, publishCourseToGitHub, openPrintPreview });
+Object.assign(window, { lessonNumber, withLessonNumber, courseNumbersNeedFix, courseNumberingPlan, renumberLessonRefs, parsePublishedIndex, fetchPublishedCourse, orderLikePublished, addressChanges, buildDeliveryBlob, downloadDelivery, deliveryReadme, buildSCORMBlob, buildCourseSCORMBlob, projectFileName, downloadExport, downloadStandaloneHTML, buildExportHTML, downloadSCORM, downloadCourseSCORM, downloadCourseSite, publishCourseToGitHub, openPrintPreview });

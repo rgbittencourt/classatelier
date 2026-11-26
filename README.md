@@ -17,7 +17,7 @@ O SCORM pode ser configurado como **1.2** — padrão de maior compatibilidade �
 
 ## Versão do aplicativo
 
-ClassAtelier **1.36.2** (Versionamento Semântico). O histórico está em [`CHANGELOG.md`](CHANGELOG.md). O ClassAcervo tem repositório e versão próprios (ver a seção abaixo).
+ClassAtelier **1.37.0** (Versionamento Semântico). O histórico está em [`CHANGELOG.md`](CHANGELOG.md). O ClassAcervo tem repositório e versão próprios (ver a seção abaixo).
 
 ## Slides
 
@@ -41,7 +41,7 @@ O botão **Biblioteca** guarda, neste navegador, todas as aulas que você edita 
 
 ### Publicar direto no GitHub
 
-Em **Montar curso → Publicar no GitHub**, informe a conta (ou organização), o repositório, a branch e, se quiser, uma **pasta** (um repositório pode hospedar vários cursos, ex.: `tedpro/TGE`). O ClassAtelier envia o site num único commit, só com os arquivos que mudaram, e mostra os links de cada aula para colar no Moodle. O token de acesso é digitado a cada uso (ou lembrado neste navegador, se você marcar) e vai direto do navegador para `api.github.com`. Token fino (*fine-grained*) com **Contents** e **Pages** em *Read and write* serve para repositórios da própria conta; para repositório de outra pessoa ou organização onde você é colaborador, use token clássico com o escopo `repo`.
+Em **Montar curso → Publicar no GitHub**, informe a conta (ou organização), o repositório, a branch e, se quiser, uma **pasta** (um repositório pode hospedar vários cursos, ex.: `tedpro/TGE`). O ClassAtelier envia o site num único commit, só com os arquivos que mudaram, e mostra os links de cada aula para colar no Moodle. Quando a pasta já tem o curso, a lista começa na **ordem já publicada** e o ClassAtelier avisa se alguma aula vai mudar de endereço (`aula-NN.html`). A caixa **Numerar as aulas pela ordem do curso** grava 1, 2, 3… em cada aula (também na Biblioteca) e pode atualizar as referências no texto («na Aula 1» → «na Aula 3»); projetos com o número antigo saem do repositório. O token de acesso é digitado a cada uso (ou lembrado neste navegador, se você marcar) e vai direto do navegador para `api.github.com`. Token fino (*fine-grained*) com **Contents** e **Pages** em *Read and write* serve para repositórios da própria conta; para repositório de outra pessoa ou organização onde você é colaborador, use token clássico com o escopo `repo`.
 
 ## Origem e créditos
 
